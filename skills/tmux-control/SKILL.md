@@ -394,3 +394,12 @@ The ralph-sprint system proves this coordination model at scale:
 - **Don't share a pane between agents** — one agent per pane, always
 - **Don't use sequential loops for independent tasks** — use parallel panes instead
 - **Don't rely on `sleep` for inter-agent timing** — use file signals or `wait-for` channels
+
+## Self-Improvement
+
+If you encounter a tmux pattern that fails, a missing recipe, or incorrect guidance in this skill, don't just work around it — fix the skill:
+
+1. **Create a PR** from a fresh worktree of `eins78/skills` on a new branch, fixing the issue directly
+2. **Or file an issue** on `eins78/skills` with: what failed, the actual tmux behavior, and the suggested fix
+
+Never silently work around a skill gap. The fix benefits all future sessions.
