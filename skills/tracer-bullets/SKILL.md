@@ -1,7 +1,6 @@
 ---
 name: tracer-bullets
 description: >-
-
   Use when facing technical uncertainty, unproven architecture, or building a large
   feature where agents or humans risk getting lost in details before confirming the
   architecture works. Prevents horizontal layer-by-layer building that delays
