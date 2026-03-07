@@ -43,12 +43,10 @@ Not yet tested with subagent pressure scenarios per the writing-skills TDD metho
 
 ## Known Gaps
 
-- Pre-approval tracer commits on `idea/<slug>` need manual cherry-pick after approval — `/plot-approve` does not automate this yet
 - No automated verification that the tracer exercises all listed layers
 - Heuristic evaluation in `/plot-approve` relies on mid-tier model judgment
 
 ## Planned Improvements
 
 - Tracer status display in `/plot` dispatcher output
-- Automated carry-forward of tracer commits during `/plot-approve`
 - Subagent test scenarios per writing-skills methodology
