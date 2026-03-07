@@ -13,8 +13,8 @@ Reliable patterns for programmatic tmux interaction. The #1 source of bugs is ta
 2. **Use `wait-for`** instead of `sleep` for synchronization
 3. **Pass commands to `new-window`/`split-window`** directly — avoid send-keys to freshly created panes (race condition)
 4. **Always use `-d` (detached)** with `new-window` and `split-window` — never steal focus from the user's active window
-5. **Verify targets exist** before sending: `tmux has-session -t $SESSION 2>/dev/null`
-6. **Use full binary paths** in commands sent to panes — aliases and shell functions are unavailable
+5. **Verify targets exist** before sending — use `list-panes -a` to check panes, `list-windows` for windows, `has-session` for sessions
+6. **Use full binary paths** in commands sent to panes — the pane's environment may differ from yours
 
 ## Targeting
 
@@ -47,13 +47,11 @@ tmux list-windows -F '#{window_id} #{window_index} #{window_name}'
 ### Capture pane ID at creation
 
 ```bash
-# Best pattern: capture the ID when you create the pane (-d = don't steal focus)
-PANE_ID=$(tmux split-window -d -P -F '#{pane_id}')
+# Best pattern: capture the ID when you create the pane
+# Pass the command directly to avoid the send-keys race condition
+PANE_ID=$(tmux split-window -d -P -F '#{pane_id}' 'echo hello; exec bash')
 # or
-PANE_ID=$(tmux new-window -d -P -F '#{pane_id}')
-
-# Now use it reliably
-tmux send-keys -t "$PANE_ID" 'echo hello' Enter
+PANE_ID=$(tmux new-window -d -P -F '#{pane_id}' 'echo hello; exec bash')
 ```
 
 ## Creating Panes and Windows
@@ -141,9 +139,10 @@ tmux capture-pane -t "$PANE" -p -e
 When output exceeds scrollback or you need the complete result:
 
 ```bash
-# Send command with output redirect
-tmux send-keys -t "$PANE" 'your-command > /tmp/result.out 2>&1; tmux wait-for -S cmd-done' Enter
-tmux wait-for cmd-done
+# Use a unique channel to avoid collisions with concurrent commands
+CHAN="cmd-done-$$-$RANDOM"
+tmux send-keys -t "$PANE" "your-command > /tmp/result.out 2>&1; tmux wait-for -S $CHAN" Enter
+tmux wait-for "$CHAN"
 
 # Read the complete output
 cat /tmp/result.out
@@ -180,14 +179,15 @@ tmux capture-pane -t "$PANE" -p -S -20
 ### Pattern: timeout with wait-for
 
 ```bash
-CHAN="done-$$"
+CHAN="done-$$-$RANDOM"
 tmux send-keys -t "$PANE" "long-command; tmux wait-for -S $CHAN" Enter
 
-# Wait with timeout (background a killer)
-( sleep 30 && tmux wait-for -S "$CHAN" ) &
-TIMEOUT_PID=$!
-tmux wait-for "$CHAN"
-kill $TIMEOUT_PID 2>/dev/null
+# Use `timeout` utility — exit 0 = command completed, exit 124 = timed out
+if timeout 30 tmux wait-for "$CHAN"; then
+  echo "Command completed"
+else
+  echo "Command timed out"
+fi
 ```
 
 ## Monitoring
@@ -234,10 +234,10 @@ tmux sessions started from a GUI terminal (Terminal.app, iTerm2) inherit FDA. Se
 
 ### PATH and environment
 
-Commands sent via `send-keys` run in a non-interactive shell context:
-- **Aliases are not loaded** — use full commands (e.g., `/opt/homebrew/bin/tmux` not `tmux`)
-- **PATH may be incomplete** — use absolute paths for non-standard binaries
-- **Shell functions are unavailable** — write scripts to temp files if needed
+The pane's shell environment may differ from yours — don't assume your aliases, functions, or PATH are available:
+- **Don't rely on aliases** — use full commands (e.g., `/opt/homebrew/bin/tmux` not `tmux`)
+- **PATH may differ** — use absolute paths for non-standard binaries
+- **Shell functions may not exist** — write scripts to temp files if needed
 
 ## Recipes
 
