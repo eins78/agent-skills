@@ -29,13 +29,17 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
-osascript <<EOF
-tell application "Notes"
-  set noteList to every note in folder "$FOLDER" of account "$ACCOUNT"
-  repeat with n in noteList
-    set noteName to name of n
-    set modDate to modification date of n
-    log noteName & " | " & (modDate as string)
-  end repeat
-end tell
+osascript - "$FOLDER" "$ACCOUNT" <<'EOF'
+on run argv
+  set folderName to item 1 of argv
+  set accountName to item 2 of argv
+  tell application "Notes"
+    set noteList to every note in folder folderName of account accountName
+    repeat with n in noteList
+      set noteName to name of n
+      set modDate to modification date of n
+      log noteName & " | " & (modDate as string)
+    end repeat
+  end tell
+end run
 EOF

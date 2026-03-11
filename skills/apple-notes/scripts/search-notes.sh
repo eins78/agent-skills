@@ -36,34 +36,43 @@ if [[ -z "$KEYWORD" ]]; then
 fi
 
 if [[ -n "$ACCOUNT" ]]; then
-  osascript <<EOF
-tell application "Notes"
-  set matches to every note of account "$ACCOUNT" whose name contains "$KEYWORD"
-  repeat with n in matches
-    try
-      set folderName to name of container of n
-      log (name of n) & " | " & folderName & " | " & (modification date of n as string)
-    end try
-  end repeat
-  log (count of matches) & " note(s) found"
-end tell
+  osascript - "$ACCOUNT" "$KEYWORD" <<'EOF'
+on run argv
+  set accountName to item 1 of argv
+  set theKeyword to item 2 of argv
+  tell application "Notes"
+    set resultCount to 0
+    repeat with f in every folder of account accountName
+      set folderName to name of f
+      set matches to every note of f whose name contains theKeyword
+      repeat with n in matches
+        log (name of n) & " | " & accountName & "/" & folderName & " | " & (modification date of n as string)
+        set resultCount to resultCount + 1
+      end repeat
+    end repeat
+    log resultCount & " note(s) found"
+  end tell
+end run
 EOF
 else
-  osascript <<EOF
-tell application "Notes"
-  set totalCount to 0
-  repeat with a in every account
-    set acctName to name of a
-    set matches to every note of a whose name contains "$KEYWORD"
-    repeat with n in matches
-      try
-        set folderName to name of container of n
-        log (name of n) & " | " & acctName & "/" & folderName & " | " & (modification date of n as string)
-      end try
+  osascript - "$KEYWORD" <<'EOF'
+on run argv
+  set theKeyword to item 1 of argv
+  tell application "Notes"
+    set resultCount to 0
+    repeat with a in every account
+      set acctName to name of a
+      repeat with f in every folder of a
+        set folderName to name of f
+        set matches to every note of f whose name contains theKeyword
+        repeat with n in matches
+          log (name of n) & " | " & acctName & "/" & folderName & " | " & (modification date of n as string)
+          set resultCount to resultCount + 1
+        end repeat
+      end repeat
     end repeat
-    set totalCount to totalCount + (count of matches)
-  end repeat
-  log totalCount & " note(s) found"
-end tell
+    log resultCount & " note(s) found"
+  end tell
+end run
 EOF
 fi

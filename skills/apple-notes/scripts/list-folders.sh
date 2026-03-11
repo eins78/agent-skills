@@ -26,13 +26,16 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
 fi
 
 if [[ -n "$ACCOUNT" ]]; then
-  osascript <<EOF
-tell application "Notes"
-  set folderNames to name of every folder of account "$ACCOUNT"
-  repeat with f in folderNames
-    log f
-  end repeat
-end tell
+  osascript - "$ACCOUNT" <<'EOF'
+on run argv
+  set accountName to item 1 of argv
+  tell application "Notes"
+    set folderNames to name of every folder of account accountName
+    repeat with f in folderNames
+      log f
+    end repeat
+  end tell
+end run
 EOF
 else
   osascript <<'EOF'

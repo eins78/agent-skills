@@ -36,29 +36,36 @@ if [[ -z "$NOTE_NAME" ]]; then
 fi
 
 if [[ -n "$ACCOUNT" ]]; then
-  osascript <<EOF
-tell application "Notes"
-  repeat with f in every folder of account "$ACCOUNT"
-    try
-      set n to note "$NOTE_NAME" of f
-      return "Name: " & name of n & "\nAccount: $ACCOUNT" & "\nFolder: " & (name of f) & "\nModified: " & (modification date of n as string) & "\n\n" & body of n
-    end try
-  end repeat
-  error "Note not found: $NOTE_NAME (in account $ACCOUNT)"
-end tell
-EOF
-else
-  osascript <<EOF
-tell application "Notes"
-  repeat with a in every account
-    repeat with f in every folder of a
+  osascript - "$NOTE_NAME" "$ACCOUNT" <<'EOF'
+on run argv
+  set noteName to item 1 of argv
+  set accountName to item 2 of argv
+  tell application "Notes"
+    repeat with f in every folder of account accountName
       try
-        set n to note "$NOTE_NAME" of f
-        return "Name: " & name of n & "\nAccount: " & (name of a) & "\nFolder: " & (name of f) & "\nModified: " & (modification date of n as string) & "\n\n" & body of n
+        set n to note noteName of f
+        return "Name: " & name of n & "\nAccount: " & accountName & "\nFolder: " & (name of f) & "\nModified: " & (modification date of n as string) & "\n\n" & body of n
       end try
     end repeat
-  end repeat
-  error "Note not found: $NOTE_NAME"
-end tell
+    error "Note not found: " & noteName & " (in account " & accountName & ")"
+  end tell
+end run
+EOF
+else
+  osascript - "$NOTE_NAME" <<'EOF'
+on run argv
+  set noteName to item 1 of argv
+  tell application "Notes"
+    repeat with a in every account
+      repeat with f in every folder of a
+        try
+          set n to note noteName of f
+          return "Name: " & name of n & "\nAccount: " & (name of a) & "\nFolder: " & (name of f) & "\nModified: " & (modification date of n as string) & "\n\n" & body of n
+        end try
+      end repeat
+    end repeat
+    error "Note not found: " & noteName
+  end tell
+end run
 EOF
 fi
