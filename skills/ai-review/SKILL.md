@@ -11,7 +11,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/skills
-  version: "0.0.1"
+  version: "0.0.2"
 compatibility: Claude Code, Cursor
 ---
 
@@ -79,8 +79,14 @@ Use the review script:
 # Review branch vs remote (when working on main directly)
 REVIEW_BASE_BRANCH=origin/main ./scripts/review.sh --branch
 
-# Add project context for better reviews
+# Add extra context string for better reviews
 ./scripts/review.sh --context "SwiftUI app, iOS 18+, Swift 6" path/to/file.swift
+
+# Review with a specific plan file
+./scripts/review.sh --plan PLAN.md path/to/file.swift
+
+# Skip auto-context (only send the code/diff)
+./scripts/review.sh --no-context --staged
 ```
 
 ### Step 3: Act on Feedback
@@ -99,18 +105,19 @@ After receiving the review:
 | 1 | No code to review / bad args | Check arguments |
 | 2 | Timeout (>1 hour blocked) | **Ask user for help** — do not skip the review |
 
-## Review Prompt Customization
+## Auto-Context
 
-Projects can add review context to their `CLAUDE.md`:
+The review script automatically prepends project context to every review so the reviewer understands conventions, architecture, and intent. No manual "Code Review Context" section needed in CLAUDE.md.
 
-```markdown
-## Code Review Context
-- Stack: SwiftUI + Swift 6, targeting iOS 18+
-- Review focus: Memory management, SwiftUI lifecycle correctness
-- Conventions: MVVM pattern, async/await preferred over Combine
-```
+**Included automatically** (in order):
 
-The skill will include this context automatically if present.
+1. **Implementation plan** — first found of: `--plan` flag, `PLAN.md` at repo root, most recent `.claude/plans/*.md`
+2. **Project instructions** — first found of: `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` at repo root
+3. **File tree** — repo structure at depth 3
+
+Use `--no-context` to skip this (e.g., for very large payloads).
+
+The `--context` flag adds an additional inline context string on top of the auto-context.
 
 ## Provider Configuration
 
@@ -125,4 +132,4 @@ REVIEW_PROVIDER=codex ./scripts/review.sh
 
 - Reviews are advisory — the second model may have false positives
 - Large diffs (>50KB) may be truncated. Split into smaller reviews if needed.
-- The review model does NOT have access to your full codebase — include enough context in the files you send.
+- The review model runs in prompt mode (`-p`) and cannot browse the repo. Project context is auto-included to compensate — see "Auto-Context" above.

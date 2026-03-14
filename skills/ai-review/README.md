@@ -66,7 +66,8 @@ path/to/ai-review/scripts/review.sh
 - **stdin over arguments:** Code is piped via stdin to avoid `ARG_MAX` limits with large diffs. The review instruction stays as a `-p` argument (small, safe).
 - **Basename file headers:** File headers use repo-relative paths to avoid triggering gemini's agent mode (it tries to `read_file` on absolute paths).
 - **1-hour timeout:** Quality over speed. Never skip reviews — if blocked, escalate to the human.
-- **`--include-directories`:** Gives gemini's sandbox read access to the repo root, so it can read surrounding context if needed.
+- **`--include-directories`:** Gives gemini's sandbox read access to the repo root. In `-p` mode, Gemini doesn't proactively use this, but we keep it for potential future use.
+- **Auto-context over manual context:** The script prepends project context (plan, CLAUDE.md, file tree) automatically. This eliminates the need for manual "Code Review Context" sections in CLAUDE.md. The `-p` mode is single-shot and doesn't let Gemini browse the repo, so we assemble context upfront.
 
 ## Provenance
 
@@ -80,8 +81,17 @@ Research: [AI Code Review Integration Research](https://github.com/eins78/home-w
 - No structured JSON output parsing (reviews are free-text)
 - No diff chunking for very large changesets (>500KB warning only)
 - `python3` dependency for `os.path.relpath` (could be replaced with pure bash)
+- **Agent mode:** Could drop `-p` and run Gemini in interactive mode so it explores the repo freely. Slower, uses more quota, harder to parse output — but eliminates context assembly entirely. Worth exploring for thorough reviews.
 
 ## Changelog
+
+### 0.0.2 (2026-03-14)
+
+- Auto-context: prepend project plan, CLAUDE.md, and file tree to reviews
+- `--plan PATH` flag for explicit plan file
+- `--no-context` flag to skip auto-context
+- Updated prompt to instruct reviewer about project context
+- Document agent mode as future improvement
 
 ### 0.0.1 (2026-03-14)
 

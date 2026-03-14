@@ -2,9 +2,10 @@
 set -euo pipefail
 
 # AI Code Review via Gemini CLI (or OpenAI Codex)
-# Usage: review.sh [--staged|--branch|--context "..."] [file ...]
+# Usage: review.sh [--staged|--branch|--context "..."|--plan PATH|--no-context] [file ...]
 #
 # Pipes code via stdin to avoid ARG_MAX limits with large diffs.
+# Auto-includes project context (CLAUDE.md, plans, file tree) for better reviews.
 # Timeout: 1 hour (quality over speed — never skip reviews).
 # Exit codes: 0=success, 1=no code/bad args, 2=timeout (ask human for help)
 
@@ -13,6 +14,8 @@ CONTEXT=""
 MODE="diff"
 FILES=()
 TIMEOUT_SECONDS=3600  # 1 hour
+SKIP_CONTEXT=0
+PLAN_PATH=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -32,6 +35,18 @@ while [[ $# -gt 0 ]]; do
       fi
       CONTEXT="$2"
       shift 2
+      ;;
+    --plan)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: --plan requires a path" >&2
+        exit 1
+      fi
+      PLAN_PATH="$2"
+      shift 2
+      ;;
+    --no-context)
+      SKIP_CONTEXT=1
+      shift
       ;;
     --provider)
       if [[ $# -lt 2 ]]; then
@@ -75,6 +90,60 @@ esac
 
 # Resolve repo root early (needed for file headers and gemini sandbox access)
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+# Gather project context for the reviewer (plan, instructions, file tree)
+gather_context() {
+  local ctx=""
+  local max_file_bytes=10000
+
+  # 1. Implementation plan (what the code should do)
+  local plan_file=""
+  if [[ -n "$PLAN_PATH" ]]; then
+    plan_file="$PLAN_PATH"
+  elif [[ -f "$REPO_ROOT/PLAN.md" ]]; then
+    plan_file="$REPO_ROOT/PLAN.md"
+  else
+    # Most recently modified Claude Code plan
+    local plans_dir="$REPO_ROOT/.claude/plans"
+    if [[ -d "$plans_dir" ]]; then
+      plan_file="$(ls -t "$plans_dir"/*.md 2>/dev/null | head -1)"
+    fi
+  fi
+  if [[ -n "$plan_file" && -f "$plan_file" ]]; then
+    local plan_name
+    plan_name="$(basename "$plan_file")"
+    ctx+="--- IMPLEMENTATION PLAN ($plan_name) ---"$'\n'
+    ctx+="$(head -c "$max_file_bytes" "$plan_file")"$'\n\n'
+  fi
+
+  # 2. Project instructions (conventions, architecture, design decisions)
+  for candidate in CLAUDE.md GEMINI.md AGENTS.md; do
+    local fpath="$REPO_ROOT/$candidate"
+    if [[ -f "$fpath" ]]; then
+      ctx+="--- PROJECT INSTRUCTIONS ($candidate) ---"$'\n'
+      ctx+="$(head -c "$max_file_bytes" "$fpath")"$'\n\n'
+      break  # use only the first found
+    fi
+  done
+
+  # 3. File tree (structural awareness)
+  local tree_output
+  tree_output="$(find "$REPO_ROOT" -maxdepth 3 \
+    -not -path '*/.git/*' \
+    -not -path '*/node_modules/*' \
+    -not -path '*/.build/*' \
+    -not -path '*/build/*' \
+    -not -path '*/.swiftpm/*' \
+    -not -path '*/.claude/*' \
+    -not -name '.DS_Store' \
+    -type f 2>/dev/null | sed "s|$REPO_ROOT/||" | sort | head -200)" || true
+  if [[ -n "$tree_output" ]]; then
+    ctx+="--- PROJECT FILE TREE ---"$'\n'
+    ctx+="$tree_output"$'\n\n'
+  fi
+
+  printf '%s' "$ctx"
+}
 
 # Tempfiles and process cleanup
 CODEFILE="$(mktemp /tmp/ai-review-code.XXXXXX)"
@@ -152,6 +221,17 @@ case "$MODE" in
     ;;
 esac
 
+# Prepend project context (plan, instructions, file tree)
+if [[ "$SKIP_CONTEXT" -eq 0 ]]; then
+  PROJECT_CONTEXT="$(gather_context)"
+  if [[ -n "$PROJECT_CONTEXT" ]]; then
+    CTXFILE="$(mktemp /tmp/ai-review-ctx.XXXXXX)"
+    printf '%s\n' "$PROJECT_CONTEXT" > "$CTXFILE"
+    cat "$CODEFILE" >> "$CTXFILE"
+    mv "$CTXFILE" "$CODEFILE"
+  fi
+fi
+
 # Build context line
 CONTEXT_LINE=""
 if [[ -n "$CONTEXT" ]]; then
@@ -159,16 +239,23 @@ if [[ -n "$CONTEXT" ]]; then
 "
 fi
 
-# Check size
+# Check total size (context + code)
 CODE_SIZE=$(wc -c < "$CODEFILE")
-if [[ $CODE_SIZE -gt 500000 ]]; then
-  echo "Warning: review content is very large (${CODE_SIZE} bytes). Consider reviewing fewer files." >&2
+if [[ $CODE_SIZE -gt 400000 ]]; then
+  echo "Warning: review payload is very large (${CODE_SIZE} bytes). Consider --no-context or reviewing fewer files." >&2
 fi
 
 # The review instruction (small, safe as -p argument)
+CONTEXT_PREAMBLE=""
+if [[ "$SKIP_CONTEXT" -eq 0 ]]; then
+  CONTEXT_PREAMBLE="The code is preceded by project context (implementation plan, project instructions, and file tree). Use this context to understand conventions and architecture — do not flag intentional design decisions as issues.
+
+"
+fi
+
 INSTRUCTION="You are a code reviewer. Review the following ${DESCRIPTION}.
 
-${CONTEXT_LINE}Review criteria:
+${CONTEXT_PREAMBLE}${CONTEXT_LINE}Review criteria:
 1. Correctness — bugs, logic errors, edge cases
 2. Security — injection, auth issues, data exposure
 3. Performance — unnecessary allocations, blocking calls
