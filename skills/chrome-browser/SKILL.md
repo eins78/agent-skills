@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Dedicated Chrome Browser
@@ -21,11 +21,12 @@ A dedicated headed Chrome instance with CDP for Playwright MCP. Persistent profi
 ## Architecture
 
 ```
-Chrome (dedicated CDP instance, port 9222)
-  └── ~/.cache/chrome-cdp-profile (persistent, isolated from daily Chrome)
-      ├── Claude session 1 → Playwright MCP → CDP
-      ├── Claude session 2 → Playwright MCP → CDP
-      └── User can log into sites manually (headed)
+Chrome-CDP.app (wrapper bundle, ~/.local/Applications/)
+  └── exec → Chrome binary with CDP + ergonomic flags
+      └── ~/.cache/chrome-cdp-profile (persistent, isolated from daily Chrome)
+          ├── Claude session 1 → Playwright MCP → CDP
+          ├── Claude session 2 → Playwright MCP → CDP
+          └── User can log into sites manually (headed)
 ```
 
 ## Quick Reference
@@ -38,23 +39,31 @@ curl -s http://127.0.0.1:9222/json/version
 claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://127.0.0.1:9222
 
 # Manual launch (if not using launchd)
-${CLAUDE_SKILL_DIR}/launch-chrome-cdp.sh
+${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh
+
+# Create app bundle (custom Dock icon)
+${CLAUDE_SKILL_DIR}/scripts/create-app-bundle.sh
+${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary
 ```
 
 ## Key Decisions
 
 | Decision | Rationale |
 |----------|-----------|
+| `.app` wrapper bundle | Custom Dock icon, distinct from daily Chrome; unique `CFBundleIdentifier` prevents icon merging |
+| `exec` in wrapper script | launchd tracks the real Chrome PID — signals propagate, KeepAlive works |
 | Isolated profile (`~/.cache/chrome-cdp-profile`) | Avoids single-instance lock, doesn't interfere with daily browsing |
-| Direct binary launch | `open -a` unreliably passes `--args`; binary + `disown` is reliable |
 | Headed (not headless) | User can log into sites manually, cookies persist for automation |
 | launchd KeepAlive on crash only | Restart on crash, but intentional quit stays quit |
+| `--no-first-run --no-default-browser-check` | Zero-friction automated sessions |
+| `--disable-features=Translate --disable-breakpad` | No translation popups, no crash reports |
 | User-scope MCP (`-s user`) | Available across all projects |
 
 ## Troubleshooting
 
 - **Cloudflare challenges:** If a site shows a Cloudflare challenge/waiting page, just wait — the browser MCP can usually handle it. We are very rarely actually blocked.
-- **CDP not responding:** Run `${CLAUDE_SKILL_DIR}/launch-chrome-cdp.sh` to start or check status.
+- **CDP not responding:** Run `${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh` to start or check status.
+- **Icon not showing:** Run `killall Dock` to refresh. If still missing, re-run `create-icon.sh --from-canary`.
 - **Profile conflicts:** If Chrome complains about profile lock, check for zombie Chrome processes: `ps aux | grep chrome-cdp-profile`
 
 ## Setup

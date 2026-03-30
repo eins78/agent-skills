@@ -25,8 +25,11 @@ chrome-browser/
 ├── SKILL.md                      # Lean overview, architecture, decisions
 ├── README.md                     # This file
 ├── INSTALL.md                    # Full setup checklist
-├── launch-chrome-cdp.sh          # Idempotent launch script
-└── com.example.chrome-cdp.plist  # Template launchd plist
+├── com.example.chrome-cdp.plist  # Template launchd plist
+└── scripts/
+    ├── launch-chrome-cdp.sh      # Idempotent launch script
+    ├── create-app-bundle.sh      # Creates Chrome-CDP.app wrapper bundle
+    └── create-icon.sh            # PNG → .icns converter + Canary recoloring
 ```
 
 ## Validated On
@@ -35,12 +38,14 @@ chrome-browser/
 |---------|------|--------|
 | qubert | 2026-02-25 | Working (launchd, multi-session tested) |
 | lima | 2026-03-07 | Working (launchd, Playwright MCP verified) |
+| lima | 2026-03-30 | v1.1.0: app bundle + custom icon + ergonomic flags |
 
 ## Dependencies
 
 - macOS (launchd, Chrome binary path)
 - Google Chrome installed at `/Applications/Google Chrome.app`
 - `npx` available (for `@playwright/mcp`)
+- ImageMagick (`brew install imagemagick`) — only for icon recoloring
 
 ## Limitations
 
