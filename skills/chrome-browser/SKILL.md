@@ -10,19 +10,20 @@ metadata:
 
 # Dedicated Chrome Browser
 
-A dedicated headed Chrome instance with CDP for Playwright MCP. Persistent profile (cookies/logins survive restarts), launchd-managed, multi-session safe.
+A dedicated headed Chrome for Testing (CfT) instance with CDP for Playwright MCP. Persistent profile (cookies/logins survive restarts), launchd-managed, multi-session safe. Distinct "TEST" badge icon in the Dock.
 
 ## Why
 
 - Chrome's single-instance lock prevents CDP when the default profile is in use — **dedicated user-data-dir required**
+- Chrome for Testing has its own `CFBundleIdentifier` — shows as a **separate app** in Dock/Cmd+Tab with a distinctive icon
 - Headed so the user can log into sites manually; Playwright shares the session
 - launchd auto-starts on login, restarts on crash
 
 ## Architecture
 
 ```
-Chrome-CDP.app (wrapper bundle, ~/.local/Applications/)
-  └── exec → Chrome binary with CDP + ergonomic flags
+Chrome for Testing (CfT, ~/.local/Applications/)
+  └── CDP on port 9222 + ergonomic flags
       └── ~/.cache/chrome-cdp-profile (persistent, isolated from daily Chrome)
           ├── Claude session 1 → Playwright MCP → CDP
           ├── Claude session 2 → Playwright MCP → CDP
@@ -41,17 +42,17 @@ claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://1
 # Manual launch (if not using launchd)
 ${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh
 
-# Create app bundle (custom Dock icon)
-${CLAUDE_SKILL_DIR}/scripts/create-app-bundle.sh
-${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary
+# Install / update Chrome for Testing
+${CLAUDE_SKILL_DIR}/scripts/install-cft.sh          # latest stable
+${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 ```
 
 ## Key Decisions
 
 | Decision | Rationale |
 |----------|-----------|
-| `.app` wrapper bundle | Custom Dock icon, distinct from daily Chrome; unique `CFBundleIdentifier` prevents icon merging |
-| `exec` in wrapper script | launchd tracks the real Chrome PID — signals propagate, KeepAlive works |
+| Chrome for Testing | Distinct Dock icon ("TEST" badge), own `CFBundleIdentifier`, no auto-update surprises |
+| `~/.local/Applications/` install path | User-writable, stable path independent of puppeteer cache |
 | Isolated profile (`~/.cache/chrome-cdp-profile`) | Avoids single-instance lock, doesn't interfere with daily browsing |
 | Headed (not headless) | User can log into sites manually, cookies persist for automation |
 | launchd KeepAlive on crash only | Restart on crash, but intentional quit stays quit |
@@ -63,8 +64,8 @@ ${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary
 
 - **Cloudflare challenges:** If a site shows a Cloudflare challenge/waiting page, just wait — the browser MCP can usually handle it. We are very rarely actually blocked.
 - **CDP not responding:** Run `${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh` to start or check status.
-- **Icon not showing:** Run `killall Dock` to refresh. If still missing, re-run `create-icon.sh --from-canary`.
 - **Profile conflicts:** If Chrome complains about profile lock, check for zombie Chrome processes: `ps aux | grep chrome-cdp-profile`
+- **CfT update:** Run `${CLAUDE_SKILL_DIR}/scripts/install-cft.sh` to download and install the latest stable version.
 
 ## Setup
 
