@@ -1,37 +1,25 @@
 # Chrome Browser Setup
 
-Full setup checklist for the dedicated Chrome CDP browser.
+Full setup checklist for the dedicated Chrome CDP browser using Chrome for Testing (CfT).
 
 ## Prerequisites
 
-- macOS with Google Chrome at `/Applications/Google Chrome.app`
-- `npx` available (for `@playwright/mcp`)
-- For icon recoloring: ImageMagick (`brew install imagemagick`)
+- macOS
+- `npx` available (Node.js — for downloading CfT and `@playwright/mcp`)
 
-## 1. Create the app bundle
-
-```bash
-# Creates Chrome-CDP.app wrapper at ~/.local/Applications/
-${CLAUDE_SKILL_DIR}/scripts/create-app-bundle.sh
-```
-
-This creates a `.app` bundle with its own `CFBundleIdentifier` so macOS treats it as a separate application in the Dock and Cmd+Tab.
-
-## 2. Install a custom icon (optional)
+## 1. Install Chrome for Testing
 
 ```bash
-# Recolor Chrome Canary icon to terracotta (Claude brand color)
-${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary
+# Download and install latest stable CfT
+${CLAUDE_SKILL_DIR}/scripts/install-cft.sh
 
-# Or use a different hue (purple, orange, etc.)
-${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary --hue 20   # purple
-${CLAUDE_SKILL_DIR}/scripts/create-icon.sh --from-canary --hue 90   # warm orange
-
-# Or use any custom PNG
-${CLAUDE_SKILL_DIR}/scripts/create-icon.sh /path/to/icon-1024x1024.png
+# Or a specific version
+${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147
 ```
 
-## 3. Create a launchd plist
+CfT installs to `~/.local/Applications/Google Chrome for Testing.app`. It has its own bundle ID (`com.google.chrome.for.testing`) and a distinctive "TEST" badge icon — macOS treats it as a separate app in the Dock.
+
+## 2. Create a launchd plist
 
 Use `com.example.chrome-cdp.plist` as a template. Customize:
 
@@ -48,7 +36,7 @@ cp com.yourname.chrome-cdp.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.yourname.chrome-cdp.plist
 ```
 
-## 4. Configure Playwright MCP
+## 3. Configure Playwright MCP
 
 ```bash
 claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://127.0.0.1:9222
@@ -56,7 +44,7 @@ claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://1
 
 Restart Claude Code to pick up the new MCP server.
 
-## 5. Verify
+## 4. Verify
 
 ```bash
 # CDP responding
@@ -65,8 +53,8 @@ curl -s http://127.0.0.1:9222/json/version | python3 -m json.tool
 # launchd agent loaded
 launchctl list | grep chrome-cdp
 
-# App bundle exists with icon
-ls -la ~/.local/Applications/Chrome-CDP.app/Contents/Resources/app.icns
+# CfT installed
+ls ~/.local/Applications/Google\ Chrome\ for\ Testing.app/
 
 # After restarting Claude Code, test Playwright MCP tools:
 # browser_navigate, browser_snapshot, browser_tabs should all work
@@ -77,4 +65,4 @@ ls -la ~/.local/Applications/Chrome-CDP.app/Contents/Resources/app.icns
 - **Disable old browser extensions** (e.g. claude-in-chrome) in Claude Code settings to avoid conflicts
 - **Log into sites** in the dedicated Chrome window — cookies persist across restarts
 - **Verify after reboot** — `launchctl list | grep chrome-cdp` and `curl -s http://127.0.0.1:9222/json/version`
-- **Icon not showing?** — Run `killall Dock` to refresh the Dock icon cache
+- **Update CfT** — re-run `install-cft.sh` when you want a newer Chrome version

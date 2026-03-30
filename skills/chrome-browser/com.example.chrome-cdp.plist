@@ -5,11 +5,16 @@
     <key>Label</key>
     <string>com.example.chrome-cdp</string>
 
-    <!-- All Chrome flags are managed inside the app bundle wrapper script.
-         Create the bundle first: scripts/create-app-bundle.sh -->
+    <!-- Install CfT first: scripts/install-cft.sh -->
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/USERNAME/.local/Applications/Chrome-CDP.app/Contents/MacOS/chrome-cdp</string>
+        <string>/Users/USERNAME/.local/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing</string>
+        <string>--remote-debugging-port=9222</string>
+        <string>--user-data-dir=/Users/USERNAME/.cache/chrome-cdp-profile</string>
+        <string>--no-default-browser-check</string>
+        <string>--no-first-run</string>
+        <string>--disable-features=Translate</string>
+        <string>--disable-breakpad</string>
     </array>
 
     <!-- Start Chrome with CDP on login -->
