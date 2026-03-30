@@ -58,6 +58,7 @@ ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 | launchd KeepAlive on crash only | Restart on crash, but intentional quit stays quit |
 | `--no-first-run --no-default-browser-check` | Zero-friction automated sessions |
 | `--disable-features=Translate --disable-breakpad` | No translation popups, no crash reports |
+| `--disable-infobars` | Suppresses CfT's "only for automated testing" notice bar |
 | User-scope MCP (`-s user`) | Available across all projects |
 
 ## Troubleshooting
