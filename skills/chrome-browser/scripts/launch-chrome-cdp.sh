@@ -19,6 +19,7 @@ CHROME_FLAGS=(
   --no-first-run
   --disable-features=Translate
   --disable-breakpad
+  --disable-infobars
 )
 
 if curl -s "${CDP_URL}/json/version" >/dev/null 2>&1; then
