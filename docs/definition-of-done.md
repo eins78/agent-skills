@@ -34,8 +34,5 @@ Checklist that must pass before any skill PR is merged.
   - Patch (`x.y.Z`): wording, bug fixes
   - Minor (`x.Y.0`): new sections, new patterns
   - Major (`X.0.0`): structural changes, removed sections
-- [ ] **Plugin version bumped** in all 4 files to match or exceed skill bump:
-  - `package.json`
-  - `.claude-plugin/plugin.json`
-  - `.claude-plugin/marketplace.json` (under `plugins[0].version`)
-  - `.cursor-plugin/plugin.json`
+- [ ] **Changeset added** — `pnpm changeset` run and changeset file describes the change with correct bump type
+- [ ] **Plugin version synced** — verified via `pnpm run version` (do NOT edit version fields manually)

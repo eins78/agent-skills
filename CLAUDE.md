@@ -90,11 +90,25 @@ Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
 - **Minor** (`x.Y.0`): new sections, new patterns, expanded coverage
 - **Major** (`X.0.0`): structural reorganization, removed sections, breaking workflow changes
 
-**When any skill version is bumped, bump the plugin version** in all 4 metadata files (`package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`):
+**When any skill version is bumped, add a changeset:**
 
-- Skill patch → plugin patch (at minimum)
-- Skill minor → plugin minor (at minimum)
-- Skill major → plugin major
+```bash
+pnpm changeset   # creates a timestamped file in .changeset/ — edit bump type and description
+```
+
+The changeset describes what changed and at what semver level:
+- Skill patch → plugin `patch` changeset (at minimum)
+- Skill minor → plugin `minor` changeset (at minimum)
+- Skill major → plugin `major` changeset
+
+**Do NOT manually edit version numbers** in `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, or `.cursor-plugin/plugin.json`. These are managed by `pnpm run version` which syncs all 4 files automatically.
+
+## Releasing
+
+```bash
+pnpm run version   # consumes changesets, bumps package.json, writes CHANGELOG.md, syncs metadata files
+pnpm run release   # commits, tags, reminds to push
+```
 
 ## Commit Conventions
 

@@ -122,6 +122,25 @@ Claude loads both skills when context matches. No formal import system — just 
 - [Anthropic Skills Repository](https://github.com/anthropics/skills) — Official example skills
 - [skill-creator](https://github.com/anthropics/skills/tree/main/skills/skill-creator) — Scaffolding tool for new skills
 
+## Development
+
+### Adding a changeset
+
+When making changes, add a changeset to describe your change:
+
+```bash
+pnpm changeset
+```
+
+Edit the created file to set the bump type (`patch`, `minor`, or `major`) and describe the change.
+
+### Releasing
+
+```bash
+pnpm run version   # bumps version, writes changelog, syncs all metadata files
+pnpm run release   # commits and tags — then push with: git push --follow-tags
+```
+
 ## License
 
 MIT
