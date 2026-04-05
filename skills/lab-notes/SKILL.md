@@ -1,11 +1,12 @@
 ---
 name: lab-notes
 description: >-
-  Use when starting experiments, checking experiment status, logging
-  observations, or wrapping up trials. Triggers: start an experiment,
-  new trial, begin experiment, what experiments are running, check
-  experiment status, wrap up the experiment, log observation,
-  experiment verdict, /lab-notes.
+  Use when starting experiments, planning features with hypothesis-first
+  approach, checking experiment status, logging observations, or wrapping
+  up trials. Triggers: start an experiment, new trial, begin experiment,
+  what experiments are running, check experiment status, wrap up the
+  experiment, log observation, experiment verdict, plan a feature,
+  explore an idea, /lab-notes.
 license: MIT
 metadata:
   author: eins78
@@ -15,14 +16,14 @@ metadata:
 
 # Lab Notes
 
-Structured experiment management with append-only running logs, optional hypotheses, and formal verdicts. Two modes: **Rigorous** (full scientific method) and **Lite** (exploratory, structure grows organically).
+Structured experiment management with append-only running logs, optional hypotheses, and formal verdicts. Two modes: **Rigorous** (full scientific method) and **Freeform** (exploratory, structure grows organically). Works for any hypothesis-first exploration — technical experiments, feature planning, product ideas, infrastructure changes.
 
 ## Workflow: FRAME -> SETUP -> RUN -> ANALYZE -> VERDICT
 
 ```
 FRAME  ->  SETUP  ->  RUN  ->  ANALYZE  ->  VERDICT
   |                    |                       |
-  |  (lite: skip to)   |   (lite: skip to)     |
+  |  (freeform: skip to)   |   (freeform: skip to)     |
   +--------------------+                       |
                                                v
                                     GRADUATE / ARCHIVE / ITERATE / PIVOT
@@ -35,11 +36,11 @@ Ask at experiment start: **"Is this a structured experiment or are you just tryi
 | Answer | Mode | Behavior |
 |--------|------|----------|
 | "Structured" / "rigorous" / "I have a hypothesis" | **Rigorous** | All REQUIRED sections enforced via phase gates |
-| "Just trying" / "exploring" / vague / casual | **Lite** | Title + motivation required; everything else optional, asked but skippable |
+| "Just trying" / "exploring" / vague / casual | **Freeform** | Title + motivation required; everything else optional, asked but skippable |
 
-Set `mode: rigorous` or `mode: lite` in LOG frontmatter. Mode can be upgraded (lite -> rigorous) at any time.
+Set `mode: rigorous` or `mode: freeform` in LOG frontmatter. Mode can be upgraded (freeform -> rigorous) at any time.
 
-In Lite mode, still ASK for hypothesis, success criteria, and fail condition — but accept "skip", casual one-liners, or "I'll figure that out later." A casual hypothesis is fine: "I bet we can do X with Y and it'd be really cool."
+In Freeform mode, still ASK for hypothesis, success criteria, and fail condition — but accept "skip", casual one-liners, or "I'll figure that out later." A casual hypothesis is fine: "I bet we can do X with Y and it'd be really cool."
 
 ## Dispatcher: `/lab-notes`
 
@@ -55,7 +56,7 @@ Analyzes current state and suggests next action:
 
 | Experiment | Phase | Mode | Started | Timebox | Status |
 |------------|-------|------|---------|---------|--------|
-| local-llm  | RUN   | lite | 2026-03-11 | open-ended | 3 log entries |
+| local-llm  | RUN   | freeform | 2026-03-11 | open-ended | 3 log entries |
 | ev-charging | FRAME | rigorous | 2026-03-12 | 2026-04-01 | OVERDUE |
 ```
 
@@ -83,11 +84,11 @@ The skill does NOT auto-close experiments. It informs. The human decides.
 
 ### `/lab-notes new`
 
-1. Ask mode question (rigorous or lite?)
+1. Ask mode question (rigorous or freeform?)
 2. Create `experiments/YYYY-MM-DD-slug/LOG-slug.md` from `${CLAUDE_SKILL_DIR}/templates/log.md`
 3. Fill frontmatter: phase, mode, started, slug
 4. In **Rigorous** mode: prompt for hypothesis, success criteria, fail condition, motivation, time-box, pre-committed decisions
-5. In **Lite** mode: prompt for motivation (required), then ask for hypothesis (accept skip), ask about time-box (accept "open-ended")
+5. In **Freeform** mode: prompt for motivation (required), then ask for hypothesis (accept skip), ask about time-box (accept "open-ended")
 6. Commit: `D: Start lab-notes <slug> — <title>`
 
 ### `/lab-notes log`
@@ -108,7 +109,7 @@ If multiple experiments are active, ask which one (or detect from current direct
 
 ## Phase Gates
 
-Phase gates are **requirements in Rigorous mode** and **suggestions in Lite mode**.
+Phase gates are **requirements in Rigorous mode** and **suggestions in Freeform mode**.
 
 ### Rigorous Mode Gates
 
@@ -121,14 +122,18 @@ Phase gates are **requirements in Rigorous mode** and **suggestions in Lite mode
 
 Blocked transitions produce a clear message: "Cannot advance to SETUP — hypothesis is empty. Write your hypothesis first."
 
-### Lite Mode Gates
+### Freeform Mode Gates
 
 | Gate | Required Before Advancing |
 |------|--------------------------|
 | FRAME -> RUN | Motivation non-empty (can skip SETUP entirely) |
 | RUN -> VERDICT | >=1 dated entry in Running Log (can skip ANALYZE) |
 
-Lite mode allows jumping: FRAME -> RUN -> VERDICT. The skill suggests intermediate steps but does not block.
+Freeform mode allows jumping: FRAME -> RUN -> VERDICT. The skill suggests intermediate steps but does not block.
+
+## Reference
+
+For lab notebook conventions (do's and don'ts, electronic record-keeping), consult `${CLAUDE_SKILL_DIR}/references/nci-lab-records-guide.md` — the NCI's official guide (public domain).
 
 ## Context Loss Prevention
 
@@ -181,11 +186,11 @@ Commit conventions:
 | Mistake | Fix |
 |---------|-----|
 | Rewriting LOG entries | Always append. Cross out with ~~strikethrough~~ if correcting. |
-| Skipping motivation in Lite mode | Motivation is required even in Lite — it's the minimum "why" |
+| Skipping motivation in Freeform mode | Motivation is required even in Freeform — it's the minimum "why" |
 | Forcing deadlines on exploratory work | Time-box is optional. Ask, don't require. |
-| Starting Rigorous when Lite fits | Ask the mode question. Most hobby experiments are Lite. |
+| Starting Rigorous when Freeform fits | Ask the mode question. Most hobby experiments are Freeform. |
 | Forgetting to log during execution | `/lab-notes log` should be called frequently during RUN phase |
-| Drawing verdict without evidence | Findings/observations must support the verdict — even in Lite mode |
+| Drawing verdict without evidence | Findings/observations must support the verdict — even in Freeform mode |
 
 ## Migration for Existing Experiments
 

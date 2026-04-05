@@ -1,6 +1,6 @@
 # lab-notes
 
-Structured experiment management with append-only running logs, two modes (Rigorous + Lite), and formal verdicts.
+Structured experiment management with append-only running logs, two modes (Rigorous + Freeform), and formal verdicts.
 
 ## Structure
 
@@ -25,18 +25,16 @@ Extracted from 7 real experiments in the home-workspace repo (Feb-Apr 2026), for
 
 ## Reference Guides
 
-These guides informed the design but are not embedded in the skill (keep skill self-contained, link here):
-
-- [NCI Guide for Keeping Laboratory Records](https://techtransfer.cancer.gov/investigators/inventions/guide-lab-records) — Official NIH requirements for lab notebook entries, corrections, witnessing, and retention
-- [Rice University Lab Notebook Guide](https://www.ruf.rice.edu/~bioslabs/tools/notebook/notebook.html) — Most practical hypothesis-procedure-observations-conclusions structure guide
+- **NCI Guide for Lab Records** — embedded at `references/nci-lab-records-guide.md` (US government work, public domain). Official NIH requirements for lab notebook entries, corrections, witnessing, and retention.
+- [Rice University Lab Notebook Guide](https://www.ruf.rice.edu/~bioslabs/tools/notebook/notebook.html) — Most practical hypothesis-procedure-observations-conclusions structure guide (copyrighted, linked only)
 
 ## Testing
 
 - [ ] `/lab-notes new test-smoke: Verify the lab-notes skill works end-to-end` — verify directory + LOG creation
-- [ ] Phase gate test: `/lab-notes run test-smoke` should be blocked in Rigorous (no environment) but allowed in Lite
+- [ ] Phase gate test: `/lab-notes run test-smoke` should be blocked in Rigorous (no environment) but allowed in Freeform
 - [ ] Dispatcher test: `/lab-notes` with no args lists active experiments
 - [ ] Log append test: `/lab-notes log test observation` appends correctly
-- [ ] Mode upgrade test: switch from Lite to Rigorous mid-experiment
+- [ ] Mode upgrade test: switch from Freeform to Rigorous mid-experiment
 
 ## Known Gaps
 

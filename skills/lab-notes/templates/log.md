@@ -1,6 +1,6 @@
 ---
 phase: FRAME
-mode: rigorous
+mode: rigorous | freeform
 started: YYYY-MM-DD
 timebox: YYYY-MM-DD | open-ended
 slug: <slug>
@@ -18,13 +18,13 @@ confidence: null
 
 ## Hypothesis
 <!-- RIGOROUS: REQUIRED in FRAME. Falsifiable: "X will/can Y under conditions Z" -->
-<!-- LITE: OPTIONAL. Can be casual: "I bet we can do X with Y and it'd be really cool" -->
-<!-- Can be added or refined later in Lite mode -->
+<!-- FREEFORM: OPTIONAL. Can be casual: "I bet we can do X with Y and it'd be really cool" -->
+<!-- Can be added or refined later in Freeform mode -->
 
 
 ## Success Criteria
 <!-- RIGOROUS: REQUIRED in FRAME. Specific and measurable. -->
-<!-- LITE: OPTIONAL. Add when you know what "good" looks like. -->
+<!-- FREEFORM: OPTIONAL. Add when you know what "good" looks like. -->
 
 - [ ] MUST: ...
 - [ ] SHOULD: ...
@@ -32,7 +32,7 @@ confidence: null
 
 ## Fail Condition
 <!-- RIGOROUS: REQUIRED in FRAME. What single observation would DISPROVE this? -->
-<!-- LITE: OPTIONAL. -->
+<!-- FREEFORM: OPTIONAL. -->
 <!-- Be specific: one metric, one threshold, one observable behavior. -->
 
 
@@ -49,12 +49,12 @@ confidence: null
 <!-- OPTIONAL but recommended. Write BEFORE running the experiment. -->
 <!-- Prevents post-hoc rationalization. -->
 
-**If confirmed:** <!-- What will you do? Graduate to project? Change infrastructure? -->
-**If refuted:** <!-- What will you do? Try alternative? Archive and move on? -->
+**If confirmed:** <!-- What will you do? Graduate to project? Build the feature? Ship the product? Change infrastructure? -->
+**If refuted:** <!-- What will you do? Try alternative? Pivot to different approach? Shelve the idea? Archive and move on? -->
 
 
 ## Environment
-<!-- RIGOROUS: REQUIRED in SETUP. LITE: OPTIONAL. -->
+<!-- RIGOROUS: REQUIRED in SETUP. FREEFORM: OPTIONAL. -->
 <!-- Hardware, software versions, relevant config. -->
 <!-- Purpose: someone (including future-you) can reproduce this. -->
 
@@ -85,7 +85,7 @@ confidence: null
 
 
 ## Findings
-<!-- RIGOROUS: REQUIRED in ANALYZE. LITE: Recommended. -->
+<!-- RIGOROUS: REQUIRED in ANALYZE. FREEFORM: Recommended. -->
 <!-- Structured results. Tables for quantitative data. Quote specifics, not vibes. -->
 
 
