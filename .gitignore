@@ -11,3 +11,6 @@ Thumbs.db
 
 # Dependencies
 node_modules/
+
+# Claude Code local settings (machine-specific)
+.claude/
