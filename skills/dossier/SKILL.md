@@ -23,7 +23,7 @@ Structured research producing actionable reports with ranked recommendations, ci
 
 - **Type:** comparison, evaluation, or investigation?
 - **Requirements:** R1-Rn with weights (Critical/High/Medium) — for comparisons
-- **Selectivity:** "5-8 options, not a laundry list"
+- **Selectivity:** 5-8 options, not a laundry list
 - **Sources:** consult `${CLAUDE_SKILL_DIR}/references/sources-by-domain.md`
 - **Output folder:** Check existing `research/` directories first — if one matches the current topic, add to it rather than creating a new folder. Ask the user when unsure. Only create `research/YYYY-MM-DD-slug/` for genuinely new topics.
 
@@ -75,7 +75,7 @@ research/YYYY-MM-DD-slug/
 
 Location: workspace `research/` for standalone; `projects/{name}/research/` for project-specific.
 
-**Follow-up research on the same topic goes in the same folder** — check existing `research/` dirs before creating new ones. Multiple dossiers per folder is expected.
+Multiple dossiers per folder is expected.
 
 ## Common Mistakes
 
@@ -85,10 +85,9 @@ Location: workspace `research/` for standalone; `projects/{name}/research/` for 
 | Generic recommendations | Tailor to THIS user's context and infrastructure |
 | Bare product names without URLs | Hyperlink every entity on first mention |
 | Facts without sources | Cite key claims inline — "could someone verify?" |
-| Auto-closing session after delivery | Stay available — dossier ≠ session end |
+| Ending or re-starting session after delivery | Stay open — auto-compact handles context |
 | Creating new folder for follow-up research | Check existing `research/` dirs — same topic = same folder |
 | Generic `ballot.md` filename | Use `DOSSIER-Title-BALLOT.md` to sort with the dossier |
-| Spawning new session for follow-up | Reuse the existing session — auto-compact handles context |
 | Same source categories every time | Adapt to domain (see sources-by-domain.md) |
 
 ## Related Skills

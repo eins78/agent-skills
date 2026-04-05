@@ -25,7 +25,7 @@ Extracted from validated research artifacts across multiple domains:
 
 ```
 dossier/
-├── SKILL.md                  # Main skill (~517 words)
+├── SKILL.md                  # Main skill
 ├── README.md                 # This file
 ├── references/
 │   └── sources-by-domain.md  # Domain → source mapping (13 domains)
@@ -45,7 +45,7 @@ To verify the skill works:
 1. **Trigger test:** Say "research the best X" or "compare A vs B" — the skill should load
 2. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Concepts, Management Summary, Evaluations, Sources)
 3. **Citation test:** Verify every product/project is hyperlinked and key facts have inline citations
-4. **Ballot test:** Ask for a comparison requiring a decision — verify `ballot.md` is created alongside
+4. **Ballot test:** Ask for a comparison requiring a decision — verify `DOSSIER-Title-BALLOT.md` is created alongside
 5. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open
 
 ## Known Gaps

@@ -59,8 +59,6 @@
 
 ### 1. [{Option Name}]({url}) ★ RECOMMENDED
 
-<!-- Hyperlink the option name. Mark top pick with ★ RECOMMENDED -->
-
 | Attribute | Detail |
 |-----------|--------|
 | **What** | {1-sentence description} |
