@@ -1,13 +1,13 @@
 {
-  "name": "@eins78/skills",
+  "name": "@eins78/agent-skills",
   "version": "2.0.0",
   "description": "Personal Agent Skills collection",
   "author": "Max Albrecht",
   "license": "MIT",
-  "homepage": "https://github.com/eins78/skills#readme",
+  "homepage": "https://github.com/eins78/agent-skills#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/eins78/skills.git"
+    "url": "https://github.com/eins78/agent-skills.git"
   },
   "scripts": {
     "test": "skills add . --list",

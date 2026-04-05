@@ -4,7 +4,7 @@ description: Use when sending commands to tmux panes, reading pane output, creat
 license: MIT
 metadata:
   author: eins78
-  repo: https://github.com/eins78/skills
+  repo: https://github.com/eins78/agent-skills
   version: "1.0.0"
 ---
 
@@ -404,7 +404,7 @@ The ralph-sprint system proves this coordination model at scale:
 
 If you encounter a tmux pattern that fails, a missing recipe, or incorrect guidance in this skill, don't just work around it — fix the skill:
 
-1. **Create a PR** from a fresh worktree of `eins78/skills` on a new branch, fixing the issue directly
-2. **Or file an issue** on `eins78/skills` with: what failed, the actual tmux behavior, and the suggested fix
+1. **Create a PR** from a fresh worktree of `eins78/agent-skills` on a new branch, fixing the issue directly
+2. **Or file an issue** on `eins78/agent-skills` with: what failed, the actual tmux behavior, and the suggested fix
 
 Never silently work around a skill gap. The fix benefits all future sessions.

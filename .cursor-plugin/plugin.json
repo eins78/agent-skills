@@ -7,8 +7,8 @@
     "name": "Max Albrecht",
     "email": "1@178.is"
   },
-  "homepage": "https://github.com/eins78/skills",
-  "repository": "https://github.com/eins78/skills",
+  "homepage": "https://github.com/eins78/agent-skills",
+  "repository": "https://github.com/eins78/agent-skills",
   "license": "MIT",
   "keywords": ["skills", "plot", "planning", "typescript", "chrome", "session-management"],
   "skills": "./skills/"

@@ -1,4 +1,4 @@
-# eins78/skills
+# eins78/agent-skills
 
 Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compatible AI coding agents.
 
@@ -23,7 +23,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 Register the marketplace and install:
 
 ```
-/plugin marketplace add eins78/skills
+/plugin marketplace add eins78/agent-skills
 /plugin install eins78-skills@eins78-marketplace
 ```
 
@@ -32,17 +32,17 @@ Skills auto-update when you run `/plugin update`.
 ### Via skills CLI
 
 ```bash
-pnpx skills add https://github.com/eins78/skills.git --global --agent claude-code --all --yes
+pnpx skills add https://github.com/eins78/agent-skills.git --global --agent claude-code --all --yes
 ```
 
 ### Manual (single skill)
 
 ```bash
 # Symlink a single skill
-ln -s ~/CODE/skills/skills/typescript-strict-patterns ~/.claude/skills/typescript-strict-patterns
+ln -s ~/CODE/agent-skills/skills/typescript-strict-patterns ~/.claude/skills/typescript-strict-patterns
 
 # Or copy it
-cp -r ~/CODE/skills/skills/typescript-strict-patterns ~/.claude/skills/
+cp -r ~/CODE/agent-skills/skills/typescript-strict-patterns ~/.claude/skills/
 ```
 
 Skills are picked up automatically by Claude Code based on their `globs` frontmatter.

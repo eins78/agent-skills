@@ -10,7 +10,7 @@ globs: []
 license: MIT
 metadata:
   author: eins78
-  repo: https://github.com/eins78/skills
+  repo: https://github.com/eins78/agent-skills
   version: "0.0.3"
 compatibility: Claude Code, Cursor
 ---
