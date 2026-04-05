@@ -4,10 +4,23 @@ set -euo pipefail
 # Ensure Chrome is running with CDP (Chrome DevTools Protocol) on port 9222.
 # Idempotent — safe to call repeatedly.
 # Uses a dedicated user-data-dir so CDP can bind even if Chrome was already open.
+# Prefers Chrome for Testing (distinct icon, no auto-update), falls back to regular Chrome.
 
 PORT=9222
 CDP_URL="http://127.0.0.1:${PORT}"
 USER_DATA_DIR="$HOME/.cache/chrome-cdp-profile"
+CFT_BIN="$HOME/.local/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+CHROME_FLAGS=(
+  --remote-debugging-port="${PORT}"
+  --user-data-dir="${USER_DATA_DIR}"
+  --no-default-browser-check
+  --no-first-run
+  --disable-features=Translate
+  --disable-breakpad
+  --disable-infobars
+)
 
 if curl -s "${CDP_URL}/json/version" >/dev/null 2>&1; then
   echo "Chrome CDP already available on :${PORT}"
@@ -15,12 +28,15 @@ if curl -s "${CDP_URL}/json/version" >/dev/null 2>&1; then
   exit 0
 fi
 
-echo "Launching Chrome with --remote-debugging-port=${PORT}..."
 mkdir -p "${USER_DATA_DIR}"
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
-  --remote-debugging-port="${PORT}" \
-  --user-data-dir="${USER_DATA_DIR}" \
-  &>/dev/null &
+
+if [[ -x "${CFT_BIN}" ]]; then
+  echo "Launching Chrome for Testing with --remote-debugging-port=${PORT}..."
+  "${CFT_BIN}" "${CHROME_FLAGS[@]}" &>/dev/null &
+else
+  echo "Launching Chrome with --remote-debugging-port=${PORT}..."
+  "${CHROME_BIN}" "${CHROME_FLAGS[@]}" &>/dev/null &
+fi
 disown
 
 # Wait for CDP to become available
