@@ -13,6 +13,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [bye](skills/bye/) | Session wrap-up — reconstructs history, creates sessionlog, commits, summarizes next steps |
 | [chrome-browser](skills/chrome-browser/) | Dedicated Chrome with CDP for Playwright MCP — persistent sessions, launchd-managed, Cloudflare tips |
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
+| [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |
 | [tracer-bullets](skills/tracer-bullets/) | Thin vertical slice before widening — reduce uncertainty by building end-to-end first |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
 | [typescript-strict-patterns](skills/typescript-strict-patterns/) | TypeScript patterns — tsconfig, ESLint strict, Zod, discriminated unions, branded types |
