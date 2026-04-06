@@ -110,6 +110,13 @@ pnpm run version   # consumes changesets, bumps package.json, writes CHANGELOG.m
 pnpm run release   # commits, tags, reminds to push
 ```
 
+## Skill Name Stylization
+
+When referencing skill names in prose (changelogs, PR descriptions, commit messages, documentation):
+- Use backticks: `lab-notes`, `dossier`, `bye`
+- Do NOT prefix with slash: `lab-notes` not `/lab-notes`
+- The slash prefix is for invocation in chat (`/lab-notes`), not for naming in docs
+
 ## Commit Conventions
 
 Follow the existing commit style: `<skill-name>: <description>` for skill changes, plain descriptions for repo-level changes.
