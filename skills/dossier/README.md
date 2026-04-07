@@ -36,7 +36,7 @@ dossier/
 ## Dependencies
 
 **Required:** WebSearch, WebFetch (built into Claude Code)
-**Optional:** Telegram MCP (for delivery), last30days skill (for social signal), commit-notation skill (for commit messages)
+**Optional:** last30days skill (for social signal), commit-notation skill (for commit messages)
 
 ## Testing
 
@@ -52,7 +52,6 @@ To verify the skill works:
 
 - No automated quality check for citation completeness
 - Source reference file covers 13 domains — will grow with usage
-- No integration test for Telegram delivery (depends on MCP availability)
 - Template comments (REQUIRED/OPTIONAL markers) need to be stripped from final output
 
 ## Future Improvements
