@@ -10,13 +10,14 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 |-------|-------------|
 | [ai-review](skills/ai-review/) | Get AI code review from a second model (Gemini/OpenAI) mid-session via CLI |
 | [apple-mail](skills/apple-mail/) | Read email via Apple Mail.app and AppleScript (read-only) |
+| [apple-notes](skills/apple-notes/) | Read Apple Notes via AppleScript (read-only) |
 | [bye](skills/bye/) | Session wrap-up — reconstructs history, creates sessionlog, commits, summarizes next steps |
 | [chrome-browser](skills/chrome-browser/) | Dedicated Chrome with CDP for Playwright MCP — persistent sessions, launchd-managed, Cloudflare tips |
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
 | [lab-notes](skills/lab-notes/) | Experiment management — hypothesis, append-only running log, verdict. Rigorous + Lite modes. |
 | [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |
-| [tracer-bullets](skills/tracer-bullets/) | Thin vertical slice before widening — reduce uncertainty by building end-to-end first |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
+| [tracer-bullets](skills/tracer-bullets/) | Thin vertical slice before widening — reduce uncertainty by building end-to-end first |
 | [typescript-strict-patterns](skills/typescript-strict-patterns/) | TypeScript patterns — tsconfig, ESLint strict, Zod, discriminated unions, branded types |
 
 ## Installation
@@ -76,7 +77,7 @@ compatibility: claude-code, cursor
 license: MIT
 metadata:
   source: https://github.com/your-org/your-repo
-  version: "1.0"
+  version: "1.0.0"
 ---
 
 # My Skill Name
