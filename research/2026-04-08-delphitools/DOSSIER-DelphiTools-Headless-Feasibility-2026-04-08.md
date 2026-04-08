@@ -232,7 +232,7 @@ All recipes tested on Node.js v24.14.1, macOS Darwin 24.6.0 (Mac Mini M4 Pro).
 | [svgo](https://github.com/svg/svgo) | 4.0.1 | ESM | `optimize(svg, opts)` | SVG string |
 | [qrcode](https://www.npmjs.com/package/qrcode) | 1.5.4 | CJS | `QRCode.toString()` | Text/data URL |
 | [pdf-lib](https://pdf-lib.js.org/) | 1.17.1 | ESM | `PDFDocument.create()` | PDF buffer |
-| [pdfjs-dist](https://mozilla.github.io/pdf.js/) | 5.6 | ESM | `getDocument()` | Extracted text |
+| [pdfjs-dist](https://mozilla.github.io/pdf.js/) | 5.6 | ESM | `getDocument()` via `legacy/build/pdf.mjs` | Extracted text |
 | [bwip-js](https://github.com/metafloor/bwip-js) | 4.9.0 | CJS | `toBuffer(opts, cb)`, `toSVG(opts)` | PNG/SVG |
 | [mathjs](https://mathjs.org/) | 15.2.0 | CJS | `evaluate(expr)` | Number |
 | [nerdamer](https://nerdamer.com/) | 1.1.13 | CJS | `nerdamer(expr).expand()` | Expression |
@@ -278,6 +278,31 @@ The [BRIA RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4) background removal m
 ### bwip-js API Note
 
 The API uses `toBuffer(opts, callback)` (callback-based), not `toBufferSync()`. Also supports `toSVG(opts)` for vector output without native dependencies.
+
+### pdfjs-dist Requires Legacy Build
+
+The default `build/pdf.mjs` fails in Node.js with `ReferenceError: DOMMatrix is not defined`. Must import from `pdfjs-dist/legacy/build/pdf.mjs` instead. The package itself prints a warning recommending this.
+
+### qr-code-styling Requires jsdom + canvas
+
+`qr-code-styling` calls `window.document`, `window.Image`, and `window.XMLSerializer` at construction time. Requires both `jsdom` (for DOM globals) and `canvas` (for image rendering) as polyfills. Not just `canvas` alone.
+
+### Tool Count Correction
+
+The source code registry (`lib/tools.ts`) lists exactly **46 tools**, not 47. The QR Generator appears in both "Greatest Hits" and "Other Tools" on the homepage, creating the appearance of 47.
+
+### Unused Packages
+
+5 packages in `package.json` are installed but never imported in any source file: `function-plot`, `@xyflow/react`, `react-markdown`, `remark-gfm`, `qrcode` (plain — only `qr-code-styling` is used).
+
+### Background Removal: @imgly vs @huggingface
+
+| Approach | Install Size | Model Download | Runtime | Processing (100x100) |
+|----------|-------------|---------------|---------|---------------------|
+| `@imgly/background-removal-node` | 289MB (models bundled) | None needed | onnxruntime-node native | 721ms |
+| `@huggingface/transformers` | 14MB + 210MB ort | ~88MB from HF Hub | onnxruntime-node native | Requires model cache |
+
+`@imgly` is recommended for the skill: models are pre-bundled (no cold start), fully offline, and the input MUST be a `Blob` with explicit MIME type.
 
 ### Runtime Compatibility
 
