@@ -57,6 +57,18 @@ If SKILL.md contains ` ```dot ` blocks:
 
 Requires: `brew install graphviz`
 
+## Gates Over Rules
+
+**For important agent behaviors, always implement gates, not rules.** ([Reference](https://blog.fsck.com/2026/04/07/rules-and-gates/))
+
+- A **rule** is a guideline the agent can rationalize around. Rules live in CLAUDE.md or skill instructions and depend on the agent choosing to follow them.
+- A **gate** is a hard stop with objective verification — enforced via hooks (PreToolUse/PostToolUse) where the agent cannot proceed without meeting a concrete, checkable condition.
+- **The test:** Can you answer "Did I complete this?" without actually doing the work? If yes, it's a rule. If no, it's a gate.
+
+When writing skills that include critical workflows (session teardown, credential handling, destructive operations), always design enforcement as gates via hooks — not just instructions the agent should follow. Even when the user casually says "add a rule for X," evaluate whether it should be a gate and implement accordingly.
+
+**Skill authors:** If your skill includes a "MUST" or "NEVER" instruction, ask: is this enforced by a hook, or just written in prose? If prose-only, it's a rule and will eventually be violated. Convert critical MUSTs to gates.
+
 ## Key Principles
 
 1. **Be concise** — Only add what Claude doesn't already know
