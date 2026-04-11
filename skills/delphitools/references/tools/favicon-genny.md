@@ -27,7 +27,7 @@ Generates a complete set of favicon files at standard sizes (16×16, 32×32, 48�
 3. The tool automatically resizes the source image to 16×16, 32×32, 48×48, and 64×64 px using Canvas
 4. Previews of each size are displayed on screen
 5. Click the "Download" button next to any individual size to save that PNG
-6. Click "Download All" to save all sizes plus the combined ICO file as a single package
+6. Click "Download All" to save all sizes plus the combined ICO file as a ZIP archive
 
 ### Output
 

@@ -6,7 +6,7 @@
 
 ## What It Does
 
-Converts images between 10 formats — PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO, and ICNS — with optional resizing and per-format quality controls. Supports multi-file batch conversion with ZIP download.
+Converts images between 9 formats — PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO, and ICNS — with optional resizing and per-format quality controls. Supports multi-file batch conversion with ZIP download.
 
 ## When to Use
 
