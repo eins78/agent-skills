@@ -1,15 +1,48 @@
 ---
 name: delphitools
 description: >-
-  Use when performing design tasks — cropping images for social media,
-  optimising SVGs, generating styled QR codes or barcodes, checking WCAG
-  colour contrast, converting between colour formats, generating colour
-  palettes, imposing PDFs for booklet or saddle-stitch printing, tracing
-  raster images to SVG vectors, converting image formats, removing
-  backgrounds, or any browser-based design utility task. Triggers: crop for
-  Instagram, optimize SVG, generate QR code, check contrast, colour palette,
-  impose PDF, booklet printing, favicon, barcode, image trace, tailwind
-  shades, base64 encode, hash, PDF preflight, watermark, placeholder image.
+  47 browser-based design tools at delphi.tools. Use when the user needs any
+  of these tools.
+  Social Media: Social Media Cropper (crop for Instagram, Bluesky, Threads),
+  Matte Generator (square matte for non-square images), Seamless Scroll
+  Generator (split images for Instagram carousel), Watermarker.
+  Colour: Colour Converter (HEX, RGB, HSL, LAB, LCH, OKLAB, OKLCH),
+  Tailwind Shade Generator (generate Tailwind 50-950 colour scales),
+  Harmony Generator (complementary, triadic, analogous colour harmonies),
+  Palette Generator, Palette Collection (curated palettes), Contrast Checker
+  (WCAG AA/AAA compliance), Colour Blindness Simulator (protanopia,
+  deuteranopia, tritanopia), Gradient Generator (linear, radial, mesh CSS
+  gradients).
+  Images: SVG Optimiser (optimise/minify SVG with SVGO), Image Converter
+  (PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO, ICNS), Image Tracer
+  (raster to SVG vector tracing), Image Clipper (trim transparent edges),
+  Image Splitter (split into grid tiles), Favicon Generator, Background
+  Remover, Artwork Enhancer (colour noise overlay), Placeholder Generator,
+  Paste Image (clipboard to file).
+  Typography: PX to REM converter, Line Height Calculator, Typography
+  Calculator (typographic unit conversion), Paper Sizes reference, Word
+  Counter, Glyph Browser (Unicode glyphs), Font File Explorer.
+  Print: Print Imposer (booklet, saddle-stitch, N-up PDF imposition),
+  PDF Preflight (print-readiness analysis), Zine Imposer (8-page mini-zine),
+  Guillotine Director (cutting workflow for imposed sheets).
+  Generators: QR Generator (styled QR codes with logos, custom dots/corners),
+  Barcode Generator (Data Matrix, Aztec, PDF417, Code 128, EAN-13, UPC-A,
+  Code 39), Meta Tag Generator (HTML SEO meta tags).
+  Calculators: Scientific Calculator, Algebra Calculator (simplify, expand,
+  factor, solve equations, derivatives, integrals), Graph Calculator (plot
+  functions), Base Converter (decimal, hex, binary, octal), Time Calculator
+  (Unix timestamps, date arithmetic, timezones), Unit Converter.
+  Encoding: Encoding Tools (Base64, URL encoding, MD5/SHA hash generation).
+  Other: Regex Tester, Text Scratchpad, Tailwind Cheat Sheet, Shavian
+  Transliterator.
+  Triggers on: crop for Instagram, optimize SVG, generate QR code, create
+  barcode, check contrast, WCAG, colour palette, color converter, hex to
+  rgb, impose PDF, booklet printing, saddle stitch, favicon, image trace,
+  vectorize image, convert image format, remove background, tailwind shades,
+  base64 encode, hash, PDF preflight, watermark, placeholder image, px to
+  rem, line height, word count, paper sizes, unicode glyph, font explorer,
+  regex test, scientific calculator, algebra, solve equation, plot function,
+  base converter, unix timestamp, unit converter, zine, guillotine.
 globs: []
 compatibility: claude-code, cursor
 license: MIT
