@@ -14,7 +14,7 @@ Traces raster images (PNG, JPG, WebP, GIF) to scalable SVG vectors using imagetr
 - Turning a scanned illustration or pixel-art icon into a vector graphic
 - Preparing a raster image for further editing in a vector tool like Figma or Inkscape
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -42,7 +42,7 @@ A traced SVG file rendered as a live preview in the browser. The "Download SVG" 
 - **Line threshold:** slider controlling the minimum path length retained (higher = fewer small paths)
 - **Fill strategy:** controls whether shapes are filled, stroked, or both
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 Uses `imagetracerjs` 1.2.6 (CommonJS). Use `imagedataToSVG` with raw RGBA pixel data — do NOT use `imageToSVG`, which requires a browser `Image` API.
 
@@ -69,4 +69,4 @@ A ready-made wrapper script is available at `${CLAUDE_SKILL_DIR}/scripts/trace-i
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -14,7 +14,7 @@ Analyses a PDF file for print-readiness issues and produces a structured preflig
 - You want to verify that bleed, trim boxes, fonts, colour profiles, and image resolution are correct.
 - You need a page-by-page view of preflight issues with visual overlays.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -40,10 +40,10 @@ Analyses a PDF file for print-readiness issues and produces a structured preflig
 
 - Page navigation controls step through the document page by page.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 pdfjs-dist is available in Node.js via the legacy build: `import('pdfjs-dist/legacy/build/pdf.mjs')`. Use this for headless page analysis. For basic PDF metadata extraction only (page dimensions, box values, document properties), pdf-lib also works in Node.js. Full preflight rendering with visual overlays requires Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

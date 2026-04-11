@@ -14,7 +14,7 @@ Splits an image into a uniform grid of tiles, allowing each tile to be downloade
 - Dividing a large image into equal sections for use in a mosaic or grid layout
 - Preparing images for social media carousel posts that span multiple frames
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -41,7 +41,7 @@ A set of image tiles, each representing one cell of the grid. Tiles are numbered
 
 No quality or format options — output tiles are in the same format as the input image.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — the tool uses a custom Canvas slicing implementation.
 
@@ -65,4 +65,4 @@ for (let r = 0; r < rows; r++) {
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

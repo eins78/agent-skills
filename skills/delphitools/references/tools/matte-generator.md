@@ -13,7 +13,7 @@ Places a non-square image onto a square (or 4:5) matte background, filling the s
 - A photo is landscape or portrait and must be posted to a platform that requires square crops without cropping the subject.
 - You want a polished coloured or blurred border instead of white letterboxing.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -52,10 +52,10 @@ A single PNG file — the original image centred on the matte background at the 
 | Padding | 0–50% | ~5% |
 | Colour | Any hex/RGB | Auto (dominant colour) |
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — use Browser Mode. For custom automation, implement Canvas compositing: draw the matte background onto an `OffscreenCanvas` at the target size, then draw the scaled source image centred on top.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

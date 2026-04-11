@@ -14,7 +14,7 @@ Lets you browse and search the full Unicode character set by name, codepoint, or
 - You want to search by a descriptive name such as "right arrow" or "snowflake".
 - You need to copy a special character to paste into text.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -39,10 +39,10 @@ Lets you browse and search the full Unicode character set by name, codepoint, or
 - Category filter dropdown restricts the grid to a Unicode category.
 - Search field filters by name or codepoint in real time.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — rendering and clipboard access require a browser environment. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

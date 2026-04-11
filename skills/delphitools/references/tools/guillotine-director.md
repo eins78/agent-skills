@@ -14,7 +14,7 @@ Guides an operator through a step-by-step guillotine cutting workflow for impose
 - You are training a new operator on the correct cutting sequence for this imposition.
 - You want a checklist to ensure no cutting step is skipped or done out of order.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -41,10 +41,10 @@ Guides an operator through a step-by-step guillotine cutting workflow for impose
 
 - No configurable options. The preset (2x A4 landscape on SRA3 portrait, 3mm bleed) is fixed.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — interactive checklist with diagrams; no programmatic API. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

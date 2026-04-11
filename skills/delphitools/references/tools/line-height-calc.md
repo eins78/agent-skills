@@ -14,7 +14,7 @@ Calculates the recommended line height for a given font size, applying typograph
 - You are setting up a type scale and want consistent, readable line spacing across all sizes.
 - You want to verify that a proposed line height falls within accepted typographic guidelines.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -35,10 +35,10 @@ The recommended line height value (typically a unitless ratio or pixel value), d
 
 None — the tool applies standard typographic ratios automatically based on the entered font size.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

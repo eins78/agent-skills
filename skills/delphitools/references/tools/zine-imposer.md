@@ -13,7 +13,7 @@ Creates an 8-page mini-zine imposition layout from an image or PDF, arranging pa
 - You have a set of images or a PDF and want to produce a fold-and-cut mini-zine without manual page reordering.
 - You are running a zine-making workshop and need to generate print-ready sheets quickly.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -37,7 +37,7 @@ An imposed PDF file. Print double-sided, fold in half lengthwise, then fold in h
 
 No configurable settings beyond the source file upload — the tool applies the standard 8-page mini-zine layout automatically.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 Use **pdf-lib** in Node.js to build a custom imposition. A base script is available at `${CLAUDE_SKILL_DIR}/scripts/create-pdf.mjs` as a starting point.
 
@@ -64,4 +64,4 @@ Refer to `${CLAUDE_SKILL_DIR}/scripts/create-pdf.mjs` for the complete working i
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

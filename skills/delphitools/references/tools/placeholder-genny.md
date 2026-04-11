@@ -14,7 +14,7 @@ Generates placeholder images for mockups and wireframes at a specified size and 
 - You want a placeholder with a custom background and text colour instead of a generic grey block.
 - You need an SVG data URI to use directly as a `src` or `background-image` value in code.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -49,10 +49,10 @@ Generates placeholder images for mockups and wireframes at a specified size and 
 - Text colour picker: set the label text colour.
 - Custom text input: override the default dimension label.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — uses custom Canvas rendering for PNG generation. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

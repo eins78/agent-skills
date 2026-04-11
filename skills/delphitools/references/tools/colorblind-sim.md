@@ -14,7 +14,7 @@ Simulates how an image appears to users with four types of colour blindness — 
 - You need to verify that colour is not the only way information is conveyed in an image.
 - You are running accessibility checks before publishing visual content.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -41,10 +41,10 @@ Simulates how an image appears to users with four types of colour blindness — 
 
 - No configurable options. All four simulation types are always shown.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — uses custom Brettel LMS matrix pixel manipulation via the browser Canvas API. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

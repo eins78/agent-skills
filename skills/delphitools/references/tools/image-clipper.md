@@ -14,7 +14,7 @@ Trims transparent edges from PNG images, cropping the canvas to the smallest bou
 - Tightening up assets exported from design tools like Figma that include extra whitespace
 - Preparing PNGs for use in places where the file's actual dimensions must match the visible content
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -36,7 +36,7 @@ A trimmed PNG file with all fully-transparent edge rows and columns removed. The
 
 No configurable settings. The tool always trims all fully-transparent edges using pixel-level Canvas scanning.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — the tool uses a custom Canvas pixel-scanning implementation that has no direct Node.js equivalent.
 
@@ -51,4 +51,4 @@ await sharp('input.png').trim().toFile('output-trimmed.png');
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

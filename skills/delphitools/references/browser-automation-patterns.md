@@ -1,6 +1,6 @@
 # Browser Automation Patterns for DelphiTools
 
-Reusable Playwright MCP patterns for interacting with DelphiTools at https://delphi.tools.
+Reusable Playwright MCP patterns for Browser Automation Mode (the primary mode) when interacting with DelphiTools at https://delphi.tools.
 
 ## Navigate to a Tool
 

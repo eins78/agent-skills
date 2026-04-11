@@ -14,7 +14,7 @@ Generates a complete Tailwind CSS shade scale (50 through 950) from a single bas
 - You are setting up a `tailwind.config.js` with a custom colour and need all shades pre-generated.
 - You want to compare how a colour looks across the full light-to-dark spectrum before committing to a palette.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -36,10 +36,10 @@ A shade grid with one swatch per step (50–950), each labelled with its step nu
 
 - The base colour can be updated at any time by editing the hex colour input field; the grid regenerates immediately.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

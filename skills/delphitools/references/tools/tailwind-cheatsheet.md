@@ -14,7 +14,7 @@ Provides a static quick-reference for Tailwind CSS utility class names, organise
 - You want to browse all available classes in a category (e.g. all spacing utilities).
 - You need to quickly copy a class name without opening the full Tailwind docs.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -38,10 +38,10 @@ Provides a static quick-reference for Tailwind CSS utility class names, organise
 
 - Category sidebar provides quick navigation to one of 10 sections: Layout, Flexbox, Grid, Spacing, Sizing, Typography, Backgrounds, Borders, Effects, Transitions.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — static reference page with no programmatic interface. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

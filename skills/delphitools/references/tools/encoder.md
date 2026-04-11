@@ -14,7 +14,7 @@ Encodes and decodes text using Base64 and URL encoding, and computes MD5, SHA-1,
 - You need to URL-encode a query string or decode a percent-encoded URL.
 - You need to generate a hash of a string for verification, caching, or comparison purposes.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -52,7 +52,7 @@ Each tab has its own text area:
 
 - Encode/decode toggle (Base64 and URL Encoding tabs) — switches the conversion direction.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 For Base64: use Node.js built-ins.
 
@@ -84,4 +84,4 @@ Wrapper script: `${CLAUDE_SKILL_DIR}/scripts/encode.mjs`
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

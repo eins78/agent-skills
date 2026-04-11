@@ -14,7 +14,7 @@ Generates colour palettes using 20+ strategies spanning random, colour theory, m
 - You have one or two colours you want to keep and need the tool to fill in the rest of the palette.
 - You want a palette that evokes a specific era (70s, 80s, Y2K) or mood (thermos, curfew, telegraph).
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -48,10 +48,10 @@ Generates colour palettes using 20+ strategies spanning random, colour theory, m
 - Strategy selector: 20+ named strategies across five categories.
 - Lock icons: lock individual colours to preserve them across regenerations.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A for the full interactive generator. The palette generation algorithms are in `lib/palette-strategies.ts` (764 lines, pure TypeScript) and can be imported directly into a Node.js project if the source is available.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

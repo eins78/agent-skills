@@ -14,7 +14,7 @@ Generates colour harmony sets from a base colour, covering relationship types su
 - You are exploring which colour relationships (complementary vs. triadic, etc.) best suit a design.
 - You need the hex codes for all colours in a harmony set to use in a design tool or code.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -37,10 +37,10 @@ A set of colour swatches — the number varies by harmony type (2 for complement
 
 - Harmony type selector controls which colour relationship is used to derive the output colours.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

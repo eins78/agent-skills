@@ -14,7 +14,7 @@ Crops images to the correct aspect ratio for Instagram, Bluesky, and Threads, wi
 - Cropping a landscape image to a square or portrait ratio without losing the subject
 - Batch-preparing assets for a social media campaign across multiple platforms
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -43,7 +43,7 @@ A cropped PNG file at the exact pixel dimensions required for the selected platf
 
 No quality or format options — output is always PNG.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — the crop repositioning uses a custom Canvas drag UI that has no direct scripting equivalent in this tool.
 
@@ -67,4 +67,4 @@ Adjust `left` and `top` to control which region is cropped, matching the drag-to
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

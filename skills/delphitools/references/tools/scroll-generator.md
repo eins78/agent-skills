@@ -13,7 +13,7 @@ Splits a wide image into a series of equal-width panel tiles that, when posted a
 - You have a wide or panoramic image and want to post it as an Instagram carousel where swiping reveals a continuous scene.
 - You need individual square or portrait tiles exported at consistent sizes for a multi-post layout.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -50,10 +50,10 @@ Splits a wide image into a series of equal-width panel tiles that, when posted a
 | Fill Mode | Blur / Solid Colour | Blur |
 | Fill Colour | Any hex/RGB (Solid Colour only) | White |
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — use Browser Mode. For custom automation, implement Canvas slicing: compute panel width from `imageWidth / panelCount`, draw each slice onto a separate canvas at the target aspect ratio, and export each as PNG.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

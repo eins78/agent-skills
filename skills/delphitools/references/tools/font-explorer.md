@@ -14,7 +14,7 @@ Explores the contents of a font file. Upload a font to see its metadata table an
 - You want to preview how a font renders at different sizes before using it in a project.
 - You need to verify font metadata (e.g. license) before embedding a font in a publication.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -42,10 +42,10 @@ Explores the contents of a font file. Upload a font to see its metadata table an
 - Preview text input: change the text rendered in the preview.
 - Size slider: adjust the preview font size.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — requires the browser FontFace API for font loading and rendering. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

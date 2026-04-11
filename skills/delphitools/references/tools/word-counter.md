@@ -14,7 +14,7 @@ Counts words, characters, sentences, paragraphs, and lines in a block of text, a
 - You want to estimate how long a piece will take to read or present aloud.
 - You need a quick count of lines or paragraphs in a text block.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -43,10 +43,10 @@ Live statistics displayed in the panel:
 
 - No configurable options. All statistics are always shown simultaneously.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — trivial string manipulation using standard split/regex operations. Implement directly in Node.js if needed rather than automating the browser. Use Browser Mode for interactive use.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

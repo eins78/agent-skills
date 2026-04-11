@@ -14,7 +14,7 @@ Optimises and minifies SVG files using SVGO, removing unnecessary metadata, comm
 - Cleaning up SVG exports from Figma, Illustrator, or Inkscape that contain bloated metadata
 - After using Image Tracer, to further compress the traced SVG output
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -42,7 +42,7 @@ An optimised SVG file with unnecessary metadata, comments, and redundant attribu
 
 No manual configuration required. Optimisation always runs with `multipass: true` and the `preset-default` SVGO plugin set. There are no user-configurable settings in the browser UI.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 Uses `svgo` 4.x (ESM). Import from `'svgo'` — do NOT use `'svgo/browser'`.
 
@@ -62,4 +62,4 @@ A ready-made wrapper script is available at `${CLAUDE_SKILL_DIR}/scripts/optimiz
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

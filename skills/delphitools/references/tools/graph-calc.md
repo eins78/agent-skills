@@ -14,7 +14,7 @@ Plots one or more mathematical functions as an interactive SVG graph in the brow
 - Comparing two or more functions on the same axes
 - Exporting a clean SVG graph for use in a document or presentation
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -41,7 +41,7 @@ An interactive SVG graph rendered via the mafs library. The graph is pannable an
 - **Pan and zoom:** interact directly with the graph canvas to explore different regions
 - **Export SVG:** button above the graph area downloads the current view as an SVG file
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 ### Underlying Library
 
@@ -63,4 +63,4 @@ N/A
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

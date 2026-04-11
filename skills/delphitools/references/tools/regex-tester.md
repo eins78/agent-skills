@@ -14,7 +14,7 @@ Tests a regular expression against a test string and highlights all matches inli
 - You want to verify that a pattern matches the expected substrings before embedding it in code.
 - You are checking edge cases by quickly editing either the pattern or the test string.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -39,10 +39,10 @@ Inline match highlighting within the test string field — matched substrings ar
 
 - **Flags** — `g` (find all matches), `i` (case-insensitive), `m` (multiline anchor behaviour). Combine as needed.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

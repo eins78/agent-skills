@@ -14,7 +14,7 @@ Converts a number between decimal, hexadecimal, binary, and octal, displaying al
 - You are reading a binary or octal value (e.g. file permissions) and need the decimal equivalent.
 - You are working with large integers (beyond 32-bit) that require BigInt-safe conversion.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -37,10 +37,10 @@ A results panel with four rows — Decimal, Hexadecimal, Binary, Octal — each 
 
 - Base selector — set to match the base of your input value; switch it to re-interpret the same digits in a different base.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

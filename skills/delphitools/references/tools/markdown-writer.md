@@ -15,7 +15,7 @@ A text manipulation utility with one-click operations: extract lists, deduplicat
 - You want to sort lines alphabetically or extract only list items from a block of text.
 - You need to clean up leading/trailing whitespace from a multi-line text block.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -44,10 +44,10 @@ A text manipulation utility with one-click operations: extract lists, deduplicat
 
 - Transformations are cumulative: you can apply multiple operations in sequence (e.g. trim whitespace, then deduplicate, then sort).
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — trivial string manipulation that can be done with standard Node.js string methods. Use Browser Mode for the interactive workflow.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

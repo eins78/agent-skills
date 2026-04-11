@@ -14,7 +14,7 @@ Creates CSS gradients in three modes: Linear (colour stops with position sliders
 - You want to design a mesh gradient with multiple colour control points.
 - You need to export a gradient as a PNG image for use in a raster context.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -55,10 +55,10 @@ Creates CSS gradients in three modes: Linear (colour stops with position sliders
 - Grid size (Mesh mode only): 2x2 or 3x3.
 - Global colour notation setting affects the format of the copied CSS string.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — uses custom Canvas rendering and @dnd-kit drag interactions that require a browser DOM. Use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -14,7 +14,7 @@ Generates HTML meta tags for SEO and social sharing (Open Graph and Twitter Card
 - Verifying how a page title and description will appear in Google search results or social link previews
 - Quickly copying correct Open Graph and Twitter Card markup to paste into an HTML template
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -52,7 +52,7 @@ Generates HTML meta tags for SEO and social sharing (Open Graph and Twitter Card
 - **Type** dropdown: controls `og:type` value
 - **Twitter card type** dropdown: controls `twitter:card` value; "Summary with Large Image" displays a full-width image above the card text
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 ### Underlying Library
 
@@ -105,4 +105,4 @@ N/A
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

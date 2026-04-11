@@ -13,7 +13,7 @@ Composites a watermark image onto a base image with configurable position, opaci
 - You want to add a logo, signature, or copyright mark to a photo before posting or sharing.
 - You need repeatable watermark placement across multiple images using the same settings.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -56,10 +56,10 @@ A single PNG file — the base image with the watermark composited at the config
 | Scale | % of base image width | 20% |
 | Padding | px / % from edge | ~10px |
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — use Browser Mode. For custom automation, implement Canvas compositing: load both images, set `ctx.globalAlpha` for opacity, set `ctx.globalCompositeOperation` for blend mode, compute position from the 9-point grid, and draw the scaled watermark onto the base canvas.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

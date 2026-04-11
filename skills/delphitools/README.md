@@ -2,15 +2,21 @@
 
 ## Purpose
 
-Tracks the [DelphiTools](https://delphi.tools) browser-based design tool library (47 tools). Guides users — primarily designers — through using each tool in the browser via Playwright MCP. Provides advanced-mode wrapper scripts for developers who want programmatic access via Node.js.
+Tracks the [DelphiTools](https://delphi.tools) browser-based design tool library (47 tools). Primary mode: Browser Automation via Playwright MCP. Secondary: Guided Browser Use (step-by-step for users without automation). CLI Mode for developers who explicitly want programmatic access via Node.js.
 
 **Tier:** Published (beta) — available in the [eins78/agent-skills](https://github.com/eins78/agent-skills) plugin
 
 ## Design Decisions
 
-### Browser-first, not headless-first
+### Browser-first, always
 
-The previous research iteration tried to recreate tools headlessly via npm libraries. That was wrong. The tools are open-source and run in the browser — the skill's job is to **guide users through the existing tools**, not rebuild them. Advanced mode (Node.js wrapper scripts) is available for developers but is not the default.
+The skill has three modes in priority order:
+
+1. **Browser Automation (Primary)** — Playwright MCP controls the browser directly. Works for ALL 47 tools. The default when browser automation is available.
+2. **Guided Browser Use** — step-by-step instructions for users without browser automation (possibly on phone/tablet). Works for all 47 tools.
+3. **CLI Mode (Advanced)** — Node.js wrapper scripts for developers who explicitly request programmatic access. Only 8 of 47 tools.
+
+The previous research iteration tried to recreate tools headlessly via npm libraries. That was wrong. The tools are open-source and run in the browser — the skill's job is to **guide users through the existing tools**, not rebuild them.
 
 ### Smaller model compatibility
 
@@ -51,26 +57,35 @@ The GitHub Action (`.github/workflows/delphitools-bundle.yml`) builds daily and 
 
 ### Wrapper script inventory
 
-| Script | Approach | Matches Component? |
-|--------|----------|-------------------|
-| `impose-pdf.mjs` | **Imports from bundle** `lib/imposition.js` | Yes — same layout engine |
-| `optimize-svg.mjs` | Calls svgo with identical plugin config | Yes — same plugins, multipass |
-| `algebra.mjs` | Calls nerdamer with `.text("fractions")` output | Yes — same API pattern |
-| `generate-barcode.mjs` | Calls bwip-js with color/scale/padding options | Yes — same option mapping |
-| `generate-qr.mjs` | Calls qr-code-styling with corner/logo/transparency options | Yes — matches styling options |
-| `trace-image.mjs` | Calls imagetracerjs with preset support | Yes — same preset system |
-| `create-pdf.mjs` | Calls pdf-lib for PDF creation | Yes — same library |
-| `encode.mjs` | Node.js built-in `crypto` module | Equivalent — same hash output, better for Node |
+#### Scripts that use the bundle
 
-### Why most wrappers call npm libraries directly (not the bundle)
+Only one script imports from the pre-built bundle, because only one tool has a standalone computation module in `lib/`:
 
-The bundle only contains DelphiTools' **custom computation modules** from `lib/`. Most tools (SVG optimiser, QR generator, barcode generator, etc.) are React components that call npm libraries directly — there is no intermediate lib/ module to extract. Creating new lib/ modules would mean writing new code in the upstream repo, which contradicts the "use, don't reimplement" principle.
+| Script | Bundle module | Notes |
+|--------|--------------|-------|
+| `impose-pdf.mjs` | `lib/imposition.js` | The only tool with a pure-computation lib/ module |
 
-The impose-pdf wrapper is the exception because `lib/imposition.ts` is a genuine standalone computation module with no React/DOM dependencies.
+#### Scripts that call npm libraries directly
 
-### Tools with no wrapper script (browser-only)
+These scripts call the same npm library the DelphiTools React component uses. There is no bundle module to import — the components call these libraries inline with no intermediate abstraction.
 
-These 39 tools have no CLI wrapper because their core logic is custom Canvas/DOM code with no extractable library or bundle module:
+| Script | npm library | Why not bundle? |
+|--------|------------|----------------|
+| `optimize-svg.mjs` | `svgo` 4.x | Component imports svgo directly, no lib/ module |
+| `algebra.mjs` | `nerdamer` 1.x | Component imports nerdamer directly, no lib/ module |
+| `generate-barcode.mjs` | `bwip-js` 4.x | Component imports bwip-js directly, no lib/ module |
+| `generate-qr.mjs` | `qr-code-styling` 1.x | Component imports qr-code-styling directly, no lib/ module |
+| `trace-image.mjs` | `imagetracerjs` 1.x | Component imports imagetracerjs directly, no lib/ module |
+| `create-pdf.mjs` | `pdf-lib` 1.x | Component imports pdf-lib directly, no lib/ module |
+| `encode.mjs` | Node.js `crypto` builtin | Component uses `crypto-js` in browser; Node builtin is equivalent and better for CLI |
+
+#### Why most wrappers can't use the bundle
+
+The bundle only contains DelphiTools' **custom computation modules** from `lib/` (imposition, palette-strategies, palette-collection, colour-notation, paper-sizes, math-constants). Most tools are React components that call npm libraries directly — there is no intermediate lib/ module to extract. Creating new lib/ modules would mean writing new code in the upstream repo, which contradicts the "use, don't reimplement" principle.
+
+#### Browser-only tools (39 of 47 — no wrapper)
+
+These tools have no CLI wrapper because their core logic is custom Canvas/DOM code, with no extractable npm library call or bundle module. Use Browser Automation Mode or Guided Browser Mode instead.
 
 social-cropper, matte-generator, scroll-generator, watermarker, colour-converter, tailwind-shades, harmony-genny, palette-genny, palette-collection, contrast-checker, colorblind-sim, gradient-genny, favicon-genny, placeholder-genny, image-splitter, image-converter (partial — gifenc/utif work but full conversion needs Canvas), artwork-enhancer, background-remover, paste-image, image-clipper, px-to-rem, line-height-calc, typo-calc, paper-sizes, word-counter, glyph-browser, font-explorer, pdf-preflight (analysis requires pdfjs-dist rendering), guillotine-director, zine-imposer, markdown-writer, tailwind-cheatsheet, meta-tag-genny, regex-tester, sci-calc (trivial via mathjs inline), graph-calc, base-converter, time-calc, unit-converter, shavian-transliterator
 
@@ -85,7 +100,7 @@ delphitools/
 │   │   ├── social-cropper.md
 │   │   └── ...
 │   ├── browser-automation-patterns.md    # Reusable Playwright MCP patterns
-│   ├── advanced-mode.md                  # Git clone, build, wrapper scripts
+│   ├── advanced-mode.md                  # CLI Mode: git clone, build, wrapper scripts
 │   └── version-tracking.md              # Tracked version + download URLs
 ├── scripts/                              # 10 CLI wrapper scripts
 │   ├── build-local.sh
@@ -97,9 +112,9 @@ delphitools/
 
 ## Dependencies
 
-- Playwright MCP (for browser mode — optional but recommended)
-- Node.js 20+ (for advanced mode scripts)
-- No other dependencies for browser mode
+- Playwright MCP (for Browser Automation Mode — optional but strongly recommended)
+- Node.js 20+ (for CLI Mode scripts)
+- No other dependencies for Browser Automation or Guided Browser modes
 
 ## Testing
 
@@ -110,8 +125,8 @@ delphitools/
 | Category | Count | What it tests |
 |----------|-------|---------------|
 | Tool identification | 23 | Can the agent pick the right tool for a user request? |
-| Browser mode | 4 | Are browser-mode instructions correct and specific? |
-| Advanced mode | 5 | Are CLI/Node.js instructions copy-pasteable and functional? |
+| Browser automation | 4 | Are browser automation instructions correct and specific? |
+| CLI mode | 5 | Are CLI/Node.js instructions copy-pasteable and functional? |
 | Edge cases (wrong tool) | 3 | Does the agent correctly refuse when no tool fits? |
 | Edge cases (ambiguous) | 3 | Does the agent ask for clarification when multiple tools could apply? |
 | Edge cases (domain) | 6 | Does the agent catch domain-specific gotchas (license, page count, logo size)? |
@@ -188,7 +203,7 @@ If a new tool appears: it will be in `lib/tools.ts` (with id, name, description,
    - <Concrete scenario 2>
    - <Concrete scenario 3>
 
-   ## Browser Mode (Default)
+   ## Browser Mode
 
    ### Inputs
 
@@ -210,11 +225,11 @@ If a new tool appears: it will be in `lib/tools.ts` (with id, name, description,
 
    <List any configurable settings, or "None" if fixed>
 
-   ## Advanced Mode (Node.js/CLI)
+   ## CLI Mode (Node.js)
 
    <If an npm library works in Node.js, show a minimal code snippet.
     If a wrapper script exists, reference it.
-    If browser-only: "N/A — custom implementation, use Browser Mode.">
+    If browser-only: "N/A — custom implementation, use Browser Automation or Guided Browser Mode.">
 
    ---
 
@@ -328,7 +343,7 @@ Evals are in `skills/delphitools/evals/evals.json`. When adding new tools:
    }
    ```
 
-3. **Add an advanced-mode eval** if the tool has a wrapper script.
+3. **Add a CLI-mode eval** if the tool has a wrapper script.
 
 4. **Add edge-case-domain evals** if the tool has gotchas (e.g., EAN-13 requires exactly 12-13 digits, QR error correction H needed for logos, WCAG ratio thresholds).
 

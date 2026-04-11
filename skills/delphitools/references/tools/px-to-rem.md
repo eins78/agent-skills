@@ -14,7 +14,7 @@ Converts pixel values to REM (and REM back to pixels), using a configurable base
 - You are working with a non-standard root font size and need accurate PX↔REM conversions.
 - You want a quick reference table covering the 8px–48px range for your project's base font size.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -41,10 +41,10 @@ Converts pixel values to REM (and REM back to pixels), using a configurable base
 - **Base font size field** — change from the default 16px to match your project's `html { font-size }`.
 - **Direction toggle** — switch conversion direction between PX → REM and REM → PX.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -14,7 +14,7 @@ Provides a reference table of standard paper sizes across A, B, C, and ANSI seri
 - You have a PDF and want to confirm what paper size its pages are.
 - You need to generate a blank PDF at a specific standard size using pdf-lib.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -42,10 +42,10 @@ Provides a reference table of standard paper sizes across A, B, C, and ANSI seri
 - Series tabs filter the table to A, B, C, or ANSI series.
 - Search field filters rows by name across all series.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — pdf-lib is available in Node.js if you only need to generate blank PDFs programmatically, but the reference table and PDF dimension detection require Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

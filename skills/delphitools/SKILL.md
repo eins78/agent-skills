@@ -78,21 +78,25 @@ This skill is a third-party wrapper. If a reference file has incorrect steps, a 
 ```dot
 digraph mode {
   "User needs a design tool" [shape=doublecircle];
-  "Has Playwright MCP?" [shape=diamond];
-  "Browser Mode" [shape=box];
-  "Text Instructions" [shape=box];
   "User asks for CLI/Node.js?" [shape=diamond];
-  "Advanced Mode" [shape=box];
+  "CLI Mode (Advanced)" [shape=box];
+  "Has Playwright MCP?" [shape=diamond];
+  "Browser Automation" [shape=box, style=bold];
+  "Guided Browser Use" [shape=box];
 
   "User needs a design tool" -> "User asks for CLI/Node.js?";
-  "User asks for CLI/Node.js?" -> "Advanced Mode" [label="yes"];
+  "User asks for CLI/Node.js?" -> "CLI Mode (Advanced)" [label="yes"];
   "User asks for CLI/Node.js?" -> "Has Playwright MCP?" [label="no"];
-  "Has Playwright MCP?" -> "Browser Mode" [label="yes"];
-  "Has Playwright MCP?" -> "Text Instructions" [label="no"];
+  "Has Playwright MCP?" -> "Browser Automation" [label="yes — PRIMARY"];
+  "Has Playwright MCP?" -> "Guided Browser Use" [label="no"];
 }
 ```
 
-**Default:** Browser Mode. Use Advanced Mode only when the user explicitly requests programmatic/CLI access.
+**Three modes, in priority order:**
+
+1. **Browser Automation (Primary)** — control the browser via Playwright MCP. The DEFAULT when browser automation is available. Works for ALL 47 tools.
+2. **Guided Browser Use** — when browser automation is NOT available, guide the user step-by-step through the tool in their own browser. The user may be on a different device (laptop, phone, tablet). Instructions must be clear enough for someone following along on their screen.
+3. **CLI Mode (Advanced)** — for developers who explicitly request programmatic/Node.js access. Only 8 of 47 tools have CLI wrappers.
 
 ## Quick Reference
 
@@ -185,9 +189,9 @@ Find the right tool, then read its reference file for detailed step-by-step inst
 |------|-------------|-----------|
 | Shavian Transliterator | Transliterate English to Shavian alphabet | `${CLAUDE_SKILL_DIR}/references/tools/shavian-transliterator.md` |
 
-## Browser Mode (Default)
+## Browser Automation (Primary Mode)
 
-To guide a user through any tool:
+The default for all 47 tools when Playwright MCP is available. The agent controls the browser directly.
 
 1. **Find the tool** in the Quick Reference table above
 2. **Read the tool's reference file** for exact step-by-step instructions
@@ -197,24 +201,40 @@ To guide a user through any tool:
 
 For reusable browser automation patterns (file upload, text input, colour pickers, sliders, downloads), see `${CLAUDE_SKILL_DIR}/references/browser-automation-patterns.md`.
 
-## Advanced Mode (Node.js/CLI)
+## Guided Browser Use (Secondary Mode)
 
-For developers who want programmatic access — not the default. Use only when explicitly requested.
+When browser automation is NOT available — guide the user step-by-step through the tool in their own browser. The user may be on any device (laptop, phone, tablet).
+
+1. **Find the tool** in the Quick Reference table above
+2. **Read the tool's reference file** for the step-by-step instructions
+3. **Give the user the URL:** `https://delphi.tools/tools/{tool-id}`
+4. **Walk them through each step** from the reference file using plain language:
+   - Name exact UI elements: "Click the button labelled 'Download PNG'"
+   - Describe positions: "The colour picker is in the left panel"
+   - Describe expected results: "You should see a stats card showing bytes saved"
+5. **Ask for confirmation** at each step — the user needs to tell you what they see
+
+Keep instructions concise and visual. Assume the user is looking at their screen, not reading a wall of text. Use numbered steps, not paragraphs.
+
+## CLI Mode (Advanced)
+
+For developers who explicitly request programmatic/Node.js access. Only 8 of 47 tools have CLI wrappers — the rest are browser-only.
 
 1. **Download the source** — see `${CLAUDE_SKILL_DIR}/references/advanced-mode.md` for git clone + build instructions
 2. **Or download a pre-built bundle** from GitHub Releases
 3. **Use wrapper scripts** in `${CLAUDE_SKILL_DIR}/scripts/` for specific tools
 
-Each tool's reference file has an "Advanced Mode" section with the underlying npm library and a copy-pasteable Node.js recipe.
+Each tool's reference file has a "CLI Mode" section with the underlying npm library and a copy-pasteable Node.js recipe.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
 | Writing custom code when a DelphiTools tool exists | Check Quick Reference first — 47 tools cover most design tasks |
-| Suggesting "visit delphi.tools" without guiding the user | Read the tool's reference file and guide step-by-step via Playwright MCP |
+| Jumping to CLI Mode when browser automation is available | Browser Automation is the primary mode — it works for ALL 47 tools. CLI only covers 8. |
+| Suggesting "visit delphi.tools" without step-by-step guidance | In Guided Browser Mode, walk the user through each step from the reference file |
 | Guessing at tool options or UI layout | Read the per-tool reference file — it lists exact UI elements and options |
-| Using `svgo/browser` import in Node.js | In advanced mode, use `import { optimize } from 'svgo'` (not `svgo/browser`) |
+| Using `svgo/browser` import in Node.js | In CLI mode, use `import { optimize } from 'svgo'` (not `svgo/browser`) |
 | Sending user to the wrong tool | Each tool has a unique URL: `https://delphi.tools/tools/{tool-id}` |
 
 ## Version

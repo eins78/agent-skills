@@ -13,7 +13,7 @@ Rearranges and lays out PDF pages for professional print impositions — booklet
 - You need to print a PDF as a folded booklet (saddle-stitch) and want pages automatically reordered for double-sided printing.
 - You want to place multiple PDF pages per printed sheet (2-up, 4-up, 6-up, etc.) to save paper or prepare print-ready files.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -69,7 +69,7 @@ Rearranges and lays out PDF pages for professional print impositions — booklet
 | Creep | 0–10 mm | 0 mm |
 | Crop Marks | On / Off | Off |
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 The imposition geometry is implemented in `lib/imposition.ts` (690 lines, pure TypeScript, no React) within the DelphiTools source. PDF manipulation uses **pdf-lib 1.17.1** (ESM) and **pdfjs-dist**.
 
@@ -89,4 +89,4 @@ Use the wrapper script for production use; the manual approach requires replicat
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -1,6 +1,6 @@
-# DelphiTools Advanced Mode
+# DelphiTools CLI Mode (Advanced)
 
-For developers who want programmatic access to DelphiTools' underlying libraries.
+For developers who explicitly request programmatic access to DelphiTools' underlying libraries. This is NOT the default mode — use Browser Automation or Guided Browser Use for most tasks.
 
 ## Option 1: Download Pre-Built Bundle
 
@@ -49,7 +49,7 @@ Wrapper scripts in this skill call the underlying npm libraries without needing 
 | `${CLAUDE_SKILL_DIR}/scripts/impose-pdf.mjs` | Impose PDFs for booklet printing | pdf-lib + imposition logic |
 | `${CLAUDE_SKILL_DIR}/scripts/trace-image.mjs` | Trace raster images to SVG | imagetracerjs |
 | `${CLAUDE_SKILL_DIR}/scripts/algebra.mjs` | Symbolic algebra (simplify, solve, etc.) | nerdamer |
-| `${CLAUDE_SKILL_DIR}/scripts/encode.mjs` | Base64, URL encoding, hashing | crypto-js + Node.js built-ins |
+| `${CLAUDE_SKILL_DIR}/scripts/encode.mjs` | Base64, URL encoding, hashing | Node.js `crypto` builtin |
 
 Run any script with `--help` to see usage:
 
@@ -57,7 +57,7 @@ Run any script with `--help` to see usage:
 node ${CLAUDE_SKILL_DIR}/scripts/optimize-svg.mjs --help
 ```
 
-**Note:** Scripts install their dependencies on first run if missing. First run may take a few seconds for npm install.
+**Note:** Scripts require manual dependency installation. Run the `npm install` command shown in `--help` output.
 
 ## Key API Differences from Browser
 

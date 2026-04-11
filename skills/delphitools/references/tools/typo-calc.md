@@ -14,7 +14,7 @@ Converts a value between traditional typographic units — agates, ciceros, pica
 - You have a measurement in millimetres or inches and need the typographic unit equivalents.
 - You need to reconcile dimensions across screen (pt/px) and print (mm/inches/picas) workflows.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -37,10 +37,10 @@ A results panel with one row per unit (agates, ciceros, picas, pt, inches, mm), 
 
 - Source unit selector — change the input unit at any time; the results panel recalculates immediately.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — custom implementation, use Browser Mode.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

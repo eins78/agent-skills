@@ -13,7 +13,7 @@ Applies a configurable colour noise overlay to an image, adding a film-grain or 
 - You have flat digital artwork or a smooth photo and want to add grain or texture without switching to a full image editor.
 - You are preparing artwork for print or social media and want a subtle noise overlay to reduce banding or add visual warmth.
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -44,10 +44,10 @@ A single PNG file — the original image with the noise overlay applied at the c
 | Intensity | 0–100% | ~20% |
 | Scale | Low (fine) to High (coarse) | Medium |
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 N/A — use Browser Mode. For custom automation, implement Canvas noise generation: create an `OffscreenCanvas` the same size as the source image, fill it with randomised RGBA pixel values at the desired intensity and scale, then composite it over the source image using `ctx.globalCompositeOperation = 'overlay'` or `'soft-light'`.
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

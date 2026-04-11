@@ -14,7 +14,7 @@ Generates barcodes in a wide range of 1D and 2D formats from a data string, with
 - Producing a 2D barcode (Data Matrix, Aztec, PDF417) for document or logistics use
 - Creating a batch of barcodes from a list and downloading them as a single ZIP archive
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -46,7 +46,7 @@ Generates barcodes in a wide range of 1D and 2D formats from a data string, with
 - **Scale:** pixel multiplier per module (higher = larger image)
 - **Height:** bar height for 1D symbologies
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 ### Underlying Library
 
@@ -110,4 +110,4 @@ console.log('Saved barcode.svg');
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.

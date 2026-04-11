@@ -14,7 +14,7 @@ Generates styled QR codes from URLs, contact cards, or arbitrary text, with exte
 - Building a vCard QR code from structured contact fields without writing vCard syntax manually
 - Generating multiple QR codes at once from a list (batch mode) and downloading them as a ZIP
 
-## Browser Mode (Default)
+## Browser Mode
 
 ### Inputs
 
@@ -58,7 +58,7 @@ Generates styled QR codes from URLs, contact cards, or arbitrary text, with exte
 
 See Inputs section above. Error correction levels: L (7%), M (15%), Q (25%), H (30%) — use H when a logo covers part of the code.
 
-## Advanced Mode (Node.js/CLI)
+## CLI Mode (Node.js)
 
 ### Underlying Library
 
@@ -108,4 +108,4 @@ qrCode.getRawData('png').then((buffer) => {
 
 ---
 
-**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/CLI), what went wrong, expected vs actual. Ask the user for approval before filing.
