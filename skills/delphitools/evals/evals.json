@@ -1,0 +1,35 @@
+{
+  "skill_name": "delphitools",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Generate a QR code for https://example.com with rounded dots and my company logo embedded in the center. I need it as both PNG and SVG.",
+      "expected_output": "Agent should suggest DelphiTools QR Generator at https://delphi.tools/tools/qr-genny, guide through dot style selection (Rounded), logo upload, and PNG/SVG download.",
+      "should_trigger": true
+    },
+    {
+      "id": 2,
+      "prompt": "I have a 12-page PDF and need to set it up as a saddle-stitched booklet for printing on A4 paper, landscape, 2-up.",
+      "expected_output": "Agent should suggest DelphiTools Print Imposer at https://delphi.tools/tools/imposer, guide through PDF upload, layout selection (2-up Saddle Stitch), paper size (A4), orientation (Landscape).",
+      "should_trigger": true
+    },
+    {
+      "id": 3,
+      "prompt": "Optimize this SVG file to reduce its size.",
+      "expected_output": "Agent should suggest DelphiTools SVG Optimiser at https://delphi.tools/tools/svg-optimiser, offer paste-SVG or file upload, show optimization stats.",
+      "should_trigger": true
+    },
+    {
+      "id": 4,
+      "prompt": "Check if the contrast between #3b82f6 on white background meets WCAG AA.",
+      "expected_output": "Agent should suggest DelphiTools Contrast Checker at https://delphi.tools/tools/contrast-checker, guide through entering both colours, show ratio and pass/fail grades.",
+      "should_trigger": true
+    },
+    {
+      "id": 5,
+      "prompt": "I need to crop this photo for Instagram and Bluesky posts.",
+      "expected_output": "Agent should suggest DelphiTools Social Media Cropper at https://delphi.tools/tools/social-cropper, guide through platform selection and crop.",
+      "should_trigger": true
+    }
+  ]
+}

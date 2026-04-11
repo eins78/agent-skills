@@ -2,46 +2,78 @@
 
 ## Purpose
 
-Teaches agents to use DelphiTools' 47 browser-based design utilities — primarily via their underlying Node.js libraries (svgo, pdf-lib, qrcode, bwip-js, etc.) for headless execution, with Playwright MCP browser automation as a fallback for tools that require the browser.
+Tracks the [DelphiTools](https://delphi.tools) browser-based design tool library (47 tools). Guides users — primarily designers — through using each tool in the browser via Playwright MCP. Provides advanced-mode wrapper scripts for developers who want programmatic access via Node.js.
 
 **Tier:** Published (beta) — available in the [eins78/agent-skills](https://github.com/eins78/agent-skills) plugin
 
 ## Design Decisions
 
-<!-- TODO: Fill in after research -->
+### Browser-first, not headless-first
+
+The previous research iteration tried to recreate tools headlessly via npm libraries. That was wrong. The tools are open-source and run in the browser — the skill's job is to **guide users through the existing tools**, not rebuild them. Advanced mode (Node.js wrapper scripts) is available for developers but is not the default.
+
+### Smaller model compatibility
+
+All skill content is written so that Sonnet/Haiku-class models can follow the instructions. Every reference file uses explicit URLs, concrete UI element names, numbered steps, and copy-pasteable commands. No implicit context between files.
+
+### Per-tool reference files
+
+One file per tool (47 files) in `references/tools/`. This keeps each file short (40-80 lines), focused, and independently loadable. An agent only reads the reference file for the specific tool being used.
+
+### Version tracking via commit hash
+
+DelphiTools has no git tags or releases. The skill tracks the latest verified commit hash. A GitHub Action builds pre-built bundles daily.
 
 ## File Structure
 
 ```
 delphitools/
-├── SKILL.md                     # Core skill (recipes, patterns, when-to-use)
-├── README.md                    # This file
-└── references/
-    ├── tool-catalog.md          # All 47 tools with headless feasibility
-    ├── node-recipes.md          # Extended Node.js recipes
-    └── browser-automation.md    # Playwright MCP patterns for browser-only tools
+├── SKILL.md                              # Core skill (~176 lines)
+├── README.md                             # This file
+├── references/
+│   ├── tools/                            # 47 per-tool reference files
+│   │   ├── social-cropper.md
+│   │   └── ...
+│   ├── browser-automation-patterns.md    # Reusable Playwright MCP patterns
+│   ├── advanced-mode.md                  # Git clone, build, wrapper scripts
+│   └── version-tracking.md              # Tracked version + download URLs
+├── scripts/                              # 10 CLI wrapper scripts
+│   ├── build-local.sh
+│   ├── optimize-svg.mjs
+│   └── ...
+└── evals/
+    └── evals.json                        # Test scenarios
 ```
 
 ## Dependencies
 
-- Node.js (for headless recipes)
-- Per-recipe npm packages (installed on demand)
-- Playwright MCP (for browser-only tools, optional)
+- Playwright MCP (for browser mode — optional but recommended)
+- Node.js 20+ (for advanced mode scripts)
+- No other dependencies for browser mode
 
 ## Testing
 
-<!-- TODO: Fill in after skill is written -->
+1. **Trigger test:** Ask "optimise this SVG" — skill should load and guide to browser tool
+2. **Retrieval test:** Ask "generate a styled QR code" — should reference qr-genny tool
+3. **Browser test:** Walk through SVG Optimiser via Playwright MCP
+4. **Advanced mode test:** Run `optimize-svg.mjs` script
+5. **Anti-pattern test:** Ask "write code to generate a QR code" — should suggest the tool instead
 
 ## Provenance
 
-- Tool inventory from https://github.com/1612elphi/delphitools source code
-- Node.js recipes validated against actual library execution
-- Browser automation patterns tested via Playwright MCP
+- Tool inventory from [1612elphi/delphitools](https://github.com/1612elphi/delphitools) source code and live site
+- Browser automation patterns tested via Playwright MCP on Chrome for Testing
+- Wrapper scripts validated with real input/output in Node.js v24
+- Research documented in `research/2026-04-08-delphitools/`
 
 ## Known Gaps
 
-<!-- TODO: Fill in after research -->
+- No coverage of the iOS TestFlight app (beta, not yet public)
+- Wrapper scripts cover 10 of 47 tools — the rest are browser-only or pure math
+- No automated detection of new tools added to DelphiTools (manual update needed)
 
 ## Future Improvements
 
-<!-- TODO: Fill in after research -->
+- Auto-detect tool additions via the GitHub Action
+- Add wrapper scripts for more tools as they gain library support
+- Add screenshot-based reference files for visual guidance
