@@ -24,6 +24,39 @@ One file per tool (47 files) in `references/tools/`. This keeps each file short 
 
 DelphiTools has no git tags or releases. The skill tracks the latest verified commit hash. A GitHub Action builds pre-built bundles daily.
 
+### Wrapper script architecture
+
+Wrapper scripts are **thin CLI shims**, not reimplementations. They follow this hierarchy:
+
+1. **Import from the bundle** — if the tool's logic exists in the bundle's `lib/` directory (compiled JS from DelphiTools' pure computation modules), import it directly
+2. **Call the same npm library** — if the tool wraps a third-party npm library (svgo, bwip-js, etc.), call that library's API
+3. **Never reimplement** — if neither option works, the tool is browser-only and has no wrapper script
+
+The GitHub Action bundle includes:
+- `lib/` — Pre-compiled ES modules (imposition, palette, colour, paper sizes)
+- `lib-src/` — Raw TypeScript source of the same modules
+- `package.json` — Dependency reference
+- Static site files (serve with any HTTP server)
+
+### Wrapper script inventory
+
+| Script | Approach | Source |
+|--------|----------|--------|
+| `optimize-svg.mjs` | Calls svgo npm library | Same lib as DelphiTools |
+| `generate-barcode.mjs` | Calls bwip-js npm library | Same lib as DelphiTools |
+| `generate-qr.mjs` | Calls qr-code-styling + jsdom/canvas polyfill | Same lib + browser shims |
+| `create-pdf.mjs` | Calls pdf-lib npm library | Same lib as DelphiTools |
+| `impose-pdf.mjs` | **Imports from bundle** `lib/imposition.js` | DelphiTools source |
+| `trace-image.mjs` | Calls imagetracerjs + sharp | Same lib + Node decoder |
+| `algebra.mjs` | Calls nerdamer npm library | Same lib as DelphiTools |
+| `encode.mjs` | Uses Node.js built-in `crypto` module | Better than crypto-js for Node |
+
+### Tools with no wrapper script (browser-only)
+
+These 39 tools have no CLI wrapper because their core logic is custom Canvas/DOM code with no extractable library or bundle module:
+
+social-cropper, matte-generator, scroll-generator, watermarker, colour-converter, tailwind-shades, harmony-genny, palette-genny, palette-collection, contrast-checker, colorblind-sim, gradient-genny, favicon-genny, placeholder-genny, image-splitter, image-converter (partial — gifenc/utif work but full conversion needs Canvas), artwork-enhancer, background-remover, paste-image, image-clipper, px-to-rem, line-height-calc, typo-calc, paper-sizes, word-counter, glyph-browser, font-explorer, pdf-preflight (analysis requires pdfjs-dist rendering), guillotine-director, zine-imposer, markdown-writer, tailwind-cheatsheet, meta-tag-genny, regex-tester, sci-calc (trivial via mathjs inline), graph-calc, base-converter, time-calc, unit-converter, shavian-transliterator
+
 ## File Structure
 
 ```

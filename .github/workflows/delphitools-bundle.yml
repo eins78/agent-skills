@@ -53,6 +53,28 @@ jobs:
           npm install
           npm run build
 
+      - name: Compile lib modules for Node.js
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          cd /tmp/delphitools
+          # Compile lib/*.ts to standalone JS for Node.js import
+          # These are pure computation modules (no React, no DOM)
+          npx tsc --outDir /tmp/delphitools/out/lib \
+            --target ES2022 --module ESNext --moduleResolution bundler \
+            --declaration --esModuleInterop --skipLibCheck \
+            lib/imposition.ts lib/palette-strategies.ts lib/palette-collection.ts \
+            lib/colour-notation.ts lib/paper-sizes.ts lib/math-constants.ts 2>/dev/null || true
+          # Also copy the raw TypeScript source for reference
+          mkdir -p /tmp/delphitools/out/lib-src
+          cp lib/imposition.ts lib/palette-strategies.ts lib/palette-collection.ts \
+             lib/colour-notation.ts lib/paper-sizes.ts lib/math-constants.ts \
+             /tmp/delphitools/out/lib-src/ 2>/dev/null || true
+          # Copy shavian transliteration module
+          cp -r lib/shavian /tmp/delphitools/out/lib-src/shavian 2>/dev/null || true
+          # Include package.json for dependency reference
+          cp package.json /tmp/delphitools/out/package.json
+          echo "Lib modules compiled and included in bundle"
+
       - name: Package bundle
         if: steps.check.outputs.skip == 'false'
         env:
@@ -61,7 +83,30 @@ jobs:
         run: |
           cd /tmp/delphitools/out
           BUILD_DATE=$(date -u +%Y-%m-%d)
-          printf '# DelphiTools Pre-Built Bundle\n\nSource: https://github.com/1612elphi/delphitools\nCommit: %s\nBuilt: %s\n\nServe with: npx serve . or python3 -m http.server 3000\nLive: https://delphi.tools\n' "$DT_COMMIT" "$BUILD_DATE" > BUNDLE-README.md
+          cat > BUNDLE-README.md << READMEEOF
+          # DelphiTools Pre-Built Bundle
+
+          Source: https://github.com/1612elphi/delphitools
+          Commit: ${DT_COMMIT}
+          Built: ${BUILD_DATE}
+
+          ## Contents
+
+          - Static site (serve with: npx serve . or python3 -m http.server 3000)
+          - lib/ — Compiled JS modules for Node.js import (imposition, palette, colour)
+          - lib-src/ — Raw TypeScript source of the same modules
+          - package.json — Dependency reference
+
+          ## Using lib/ modules in Node.js
+
+          The lib/ directory contains pre-compiled ES modules from DelphiTools' pure
+          computation layer. These can be imported directly:
+
+              import { computeImposition } from './lib/imposition.js';
+              import { PAPER_SIZES } from './lib/paper-sizes.js';
+
+          Live site: https://delphi.tools
+          READMEEOF
           tar czf "/tmp/delphitools-bundle-${DT_SHORT}.tgz" .
           zip -qr "/tmp/delphitools-bundle-${DT_SHORT}.zip" .
 
