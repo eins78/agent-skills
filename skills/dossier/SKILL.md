@@ -10,7 +10,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.0.0-beta.1"
+  version: "1.0.0-beta.2"
 ---
 
 # Dossier
@@ -60,7 +60,6 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 ### 5. DELIVER
 
 - Commit dossier folder (`D:` intention per commit-notation)
-- Telegram: summary + file attachment (+ ballot if created)
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers
 
 ## Output Convention
