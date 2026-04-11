@@ -3,3 +3,9 @@
 ---
 
 dossier: remove Telegram-specific delivery instruction (delivery is orchestrator's responsibility)
+
+<!--
+bumps:
+  skills:
+    dossier: patch
+-->
