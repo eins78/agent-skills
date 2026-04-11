@@ -81,3 +81,7 @@ CryptoJS.SHA512('hello').toString()
 ```
 
 Wrapper script: `${CLAUDE_SKILL_DIR}/scripts/encode.mjs`
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

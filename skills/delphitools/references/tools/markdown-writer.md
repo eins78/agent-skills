@@ -47,3 +47,7 @@ A text manipulation utility with one-click operations: extract lists, deduplicat
 ## Advanced Mode (Node.js/CLI)
 
 N/A — trivial string manipulation that can be done with standard Node.js string methods. Use Browser Mode for the interactive workflow.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

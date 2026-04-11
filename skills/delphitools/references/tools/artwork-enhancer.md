@@ -47,3 +47,7 @@ A single PNG file — the original image with the noise overlay applied at the c
 ## Advanced Mode (Node.js/CLI)
 
 N/A — use Browser Mode. For custom automation, implement Canvas noise generation: create an `OffscreenCanvas` the same size as the source image, fill it with randomised RGBA pixel values at the desired intensity and scale, then composite it over the source image using `ctx.globalCompositeOperation = 'overlay'` or `'soft-light'`.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

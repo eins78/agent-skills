@@ -53,3 +53,7 @@ Splits a wide image into a series of equal-width panel tiles that, when posted a
 ## Advanced Mode (Node.js/CLI)
 
 N/A — use Browser Mode. For custom automation, implement Canvas slicing: compute panel width from `imageWidth / panelCount`, draw each slice onto a separate canvas at the target aspect ratio, and export each as PNG.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

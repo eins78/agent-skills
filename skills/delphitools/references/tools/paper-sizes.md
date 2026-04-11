@@ -45,3 +45,7 @@ Provides a reference table of standard paper sizes across A, B, C, and ANSI seri
 ## Advanced Mode (Node.js/CLI)
 
 N/A — pdf-lib is available in Node.js if you only need to generate blank PDFs programmatically, but the reference table and PDF dimension detection require Browser Mode.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -60,3 +60,7 @@ N/A
 - mafs has no standalone server-side rendering path; do not attempt to use it with `jsdom` — the output will be incomplete.
 - For programmatic SVG graph generation outside the browser, consider `function-plot` (npm) or `chart.js` with the `canvas` package as alternatives.
 - The exported SVG preserves the current viewport (pan/zoom position), so pan to the region of interest before exporting.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

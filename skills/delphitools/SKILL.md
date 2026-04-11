@@ -23,6 +23,23 @@ metadata:
 
 47 browser-based design tools at [delphi.tools](https://delphi.tools). Open-source, no logins, no tracking — all processing happens locally in the browser. This skill tracks the tool library and guides users through each tool.
 
+## Bug Reports — CRITICAL
+
+**All bug reports go to [eins78/agent-skills](https://github.com/eins78/agent-skills/issues). NEVER file issues on the upstream [1612elphi/delphitools](https://github.com/1612elphi/delphitools) repo.**
+
+This skill is a third-party wrapper. If a reference file has incorrect steps, a script fails, or a tool description is wrong, that is a problem with THIS skill, not with DelphiTools itself.
+
+**Before filing:** Ask the user for explicit approval. Do not file issues automatically.
+
+**When reporting, include:**
+1. Tool name (e.g. `svg-optimiser`)
+2. Mode: Browser Mode or Advanced Mode
+3. What went wrong (exact error message or incorrect instruction)
+4. Expected vs actual behavior
+5. Steps to reproduce
+
+**File at:** `https://github.com/eins78/agent-skills/issues/new`
+
 ## Mode Selection
 
 ```dot
@@ -173,4 +190,4 @@ This skill tracks [1612elphi/delphitools](https://github.com/1612elphi/delphitoo
 
 ## Self-Improvement
 
-If a tool is missing, a reference file has incorrect steps, or the site UI has changed, open an issue or PR at https://github.com/eins78/agent-skills.
+If a tool is missing, a reference file has incorrect steps, or the site UI has changed — file an issue at https://github.com/eins78/agent-skills/issues (with user approval). **Never file issues on the upstream DelphiTools repo** — see the Bug Reports section above.

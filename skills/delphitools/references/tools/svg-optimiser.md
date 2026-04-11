@@ -59,3 +59,7 @@ writeFileSync('output.svg', result.data);
 ```
 
 A ready-made wrapper script is available at `${CLAUDE_SKILL_DIR}/scripts/optimize-svg.mjs`.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

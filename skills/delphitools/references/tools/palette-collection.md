@@ -42,3 +42,7 @@ Displays a curated library of colour palettes organised into 10 themed categorie
 ## Advanced Mode (Node.js/CLI)
 
 N/A — browse-only tool with no programmatic API. Use Browser Mode.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

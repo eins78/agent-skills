@@ -59,3 +59,7 @@ A single PNG file — the base image with the watermark composited at the config
 ## Advanced Mode (Node.js/CLI)
 
 N/A — use Browser Mode. For custom automation, implement Canvas compositing: load both images, set `ctx.globalAlpha` for opacity, set `ctx.globalCompositeOperation` for blend mode, compute position from the 9-point grid, and draw the scaled watermark onto the base canvas.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

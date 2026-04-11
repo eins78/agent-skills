@@ -64,3 +64,7 @@ await sharp('input.jpg')
 ```
 
 Adjust `left` and `top` to control which region is cropped, matching the drag-to-reposition behaviour in Browser Mode.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

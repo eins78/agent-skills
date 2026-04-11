@@ -45,3 +45,7 @@ Transliterates English text into the Shavian alphabet — Bernard Shaw's phonemi
 ## Advanced Mode (Node.js/CLI)
 
 The transliteration logic is in `lib/shavian/` (pure TypeScript) and can be extracted for use in a Node.js project. However, rendering the gloss view requires the Noto Sans Shavian font, which is a browser-loaded web font. Use Browser Mode for the full interactive experience.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

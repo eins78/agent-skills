@@ -107,3 +107,7 @@ console.log('Saved barcode.svg');
 - `toBuffer` is async (callback-based); `toSVG` is synchronous.
 - For batch generation, loop over an array of strings, call `toBuffer` for each, and collect the PNG buffers before writing or zipping.
 - The `height` option is in millimetres for most 1D symbologies; `scale` multiplies the entire image. For print at 300 dpi, use `scale: 10` and `height: 15`.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -65,3 +65,7 @@ writeFileSync('output.png', Buffer.from(arrayBuffer));
 ```
 
 **Note:** This is a heavy dependency (289 MB). Prefer Browser Mode for one-off use. Check `@imgly/background-removal-node` licence terms — the same CC BY-NC-ND 4.0 restriction applies to the bundled model.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

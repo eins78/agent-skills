@@ -90,3 +90,7 @@ console.log(integral); // => "x^3/3"
 - nerdamer returns strings in its own notation, not LaTeX; call `.toTeX()` instead of `.toString()` to get LaTeX output.
 - Numerical approximations: wrap result with `nerdamer.convertToLaTeX(...)` or call `.evaluate()` to get a decimal.
 - nerdamer does not support implicit multiplication (write `2*x`, not `2x`).
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

@@ -61,3 +61,7 @@ writeFileSync('zine-imposed.pdf', await outDoc.save());
 ```
 
 Refer to `${CLAUDE_SKILL_DIR}/scripts/create-pdf.mjs` for the complete working implementation, or use `lib/imposition.ts` from the DelphiTools source for verified layout geometry.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

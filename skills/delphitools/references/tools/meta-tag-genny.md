@@ -102,3 +102,7 @@ N/A
 - The `og:image` URL must be absolute (include `https://`); relative paths are not valid for social crawlers.
 - Twitter Card tags are also read by LinkedIn, Slack, and other platforms that fall back from Open Graph.
 - Recommended image dimensions for `og:image` / `twitter:image`: 1200×630 px, under 5 MB.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.

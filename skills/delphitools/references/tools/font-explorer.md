@@ -45,3 +45,7 @@ Explores the contents of a font file. Upload a font to see its metadata table an
 ## Advanced Mode (Node.js/CLI)
 
 N/A — requires the browser FontFace API for font loading and rendering. Use Browser Mode.
+
+---
+
+**Found an issue with this reference?** Report it at [eins78/agent-skills](https://github.com/eins78/agent-skills/issues) (not the upstream DelphiTools repo). Include: tool name, mode (Browser/Advanced), what went wrong, expected vs actual. Ask the user for approval before filing.
