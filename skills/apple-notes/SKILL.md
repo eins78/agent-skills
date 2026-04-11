@@ -1,6 +1,11 @@
 ---
 name: apple-notes
 description: Read Apple Notes via AppleScript. Use when asked to check, search, or read notes. READ ONLY — no creating or modifying notes.
+license: MIT
+metadata:
+  author: eins78
+  repo: https://github.com/eins78/agent-skills
+  version: "1.0.0"
 ---
 
 # Apple Notes (Read Only)

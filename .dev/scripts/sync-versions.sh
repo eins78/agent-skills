@@ -17,7 +17,10 @@ sync_file() {
 }
 
 sync_file "$REPO_ROOT/.claude-plugin/plugin.json"      '.version = $v'
-sync_file "$REPO_ROOT/.claude-plugin/marketplace.json"  '.plugins[0].version = $v'
 sync_file "$REPO_ROOT/.cursor-plugin/plugin.json"       '.version = $v'
 
-echo "Done. All metadata files now at version $VERSION"
+echo "Done. Plugin metadata files now at version $VERSION"
+
+# Regenerate marketplace.json with per-skill entries (owns the entire .plugins array)
+echo ""
+bash "$(dirname "$0")/generate-skill-manifests.sh"
