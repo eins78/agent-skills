@@ -1,34 +1,452 @@
 {
   "skill_name": "delphitools",
+  "description": "Comprehensive eval suite for the delphitools skill. Run whenever the skill is updated. Covers: tool identification, browser-mode instructions, advanced-mode instructions, edge cases, bug report routing, and domain knowledge.",
   "evals": [
     {
       "id": 1,
+      "category": "tool-identification",
       "prompt": "Generate a QR code for https://example.com with rounded dots and my company logo embedded in the center. I need it as both PNG and SVG.",
-      "expected_output": "Agent should suggest DelphiTools QR Generator at https://delphi.tools/tools/qr-genny, guide through dot style selection (Rounded), logo upload, and PNG/SVG download.",
+      "expected_tool": "qr-genny",
+      "expected_output": "Agent should suggest DelphiTools QR Generator at https://delphi.tools/tools/qr-genny, guide through dot style selection (Rounded/Bouba), logo upload with size slider, error correction H (for logo), and PNG/SVG download.",
       "should_trigger": true
     },
     {
       "id": 2,
+      "category": "tool-identification",
       "prompt": "I have a 12-page PDF and need to set it up as a saddle-stitched booklet for printing on A4 paper, landscape, 2-up.",
-      "expected_output": "Agent should suggest DelphiTools Print Imposer at https://delphi.tools/tools/imposer, guide through PDF upload, layout selection (2-up Saddle Stitch), paper size (A4), orientation (Landscape).",
+      "expected_tool": "imposer",
+      "expected_output": "Agent should suggest DelphiTools Print Imposer at https://delphi.tools/tools/imposer, guide through PDF upload, layout (2-up Saddle Stitch), paper (A4), orientation (Landscape), and mention creep compensation.",
       "should_trigger": true
     },
     {
       "id": 3,
+      "category": "tool-identification",
       "prompt": "Optimize this SVG file to reduce its size.",
+      "expected_tool": "svg-optimiser",
       "expected_output": "Agent should suggest DelphiTools SVG Optimiser at https://delphi.tools/tools/svg-optimiser, offer paste-SVG or file upload, show optimization stats.",
       "should_trigger": true
     },
     {
       "id": 4,
+      "category": "tool-identification",
       "prompt": "Check if the contrast between #3b82f6 on white background meets WCAG AA.",
-      "expected_output": "Agent should suggest DelphiTools Contrast Checker at https://delphi.tools/tools/contrast-checker, guide through entering both colours, show ratio and pass/fail grades.",
+      "expected_tool": "contrast-checker",
+      "expected_output": "Agent should suggest Contrast Checker at https://delphi.tools/tools/contrast-checker, enter both colours, report WCAG ratio and AA/AAA pass/fail grades. Should mention the ratio is ~3.68:1 which fails AA for normal text but passes AA for large text.",
       "should_trigger": true
     },
     {
       "id": 5,
+      "category": "tool-identification",
       "prompt": "I need to crop this photo for Instagram and Bluesky posts.",
-      "expected_output": "Agent should suggest DelphiTools Social Media Cropper at https://delphi.tools/tools/social-cropper, guide through platform selection and crop.",
+      "expected_tool": "social-cropper",
+      "expected_output": "Agent should suggest Social Media Cropper at https://delphi.tools/tools/social-cropper, guide through platform selection and aspect ratio choice.",
+      "should_trigger": true
+    },
+    {
+      "id": 6,
+      "category": "tool-identification",
+      "prompt": "What's #3b82f6 in HSL?",
+      "expected_tool": "colour-converter",
+      "expected_output": "Agent should use Colour Converter at https://delphi.tools/tools/colour-converter. Should provide the HSL value (approximately hsl(217, 91%, 60%)) and mention the tool shows all 8 formats simultaneously.",
+      "should_trigger": true
+    },
+    {
+      "id": 7,
+      "category": "tool-identification",
+      "prompt": "I need a Tailwind colour scale for our brand colour #10b981.",
+      "expected_tool": "tailwind-shades",
+      "expected_output": "Agent should suggest Tailwind Shade Generator at https://delphi.tools/tools/tailwind-shades. Enter the hex value and generate a 50-950 scale. May note that generated shades approximate but don't exactly match Tailwind's hand-tuned official palette.",
+      "should_trigger": true
+    },
+    {
+      "id": 8,
+      "category": "tool-identification",
+      "prompt": "Convert this PNG logo to ICO for a website favicon.",
+      "expected_tool": "favicon-genny",
+      "expected_output": "Agent should suggest Favicon Generator at https://delphi.tools/tools/favicon-genny. Upload the PNG, get multi-size favicons (16/32/48/64px) plus a combined favicon.ico.",
+      "should_trigger": true
+    },
+    {
+      "id": 9,
+      "category": "tool-identification",
+      "prompt": "I need to make a barcode for this product. The EAN number is 4006381333931.",
+      "expected_tool": "code-genny",
+      "expected_output": "Agent should suggest Barcode Generator at https://delphi.tools/tools/code-genny. Select EAN-13 format, enter the 12 data digits (400638133393 — the 13th digit is the check digit computed automatically).",
+      "should_trigger": true
+    },
+    {
+      "id": 10,
+      "category": "tool-identification",
+      "prompt": "Trace this bitmap logo to SVG so I can scale it without pixelation.",
+      "expected_tool": "image-tracer",
+      "expected_output": "Agent should suggest Image Tracer at https://delphi.tools/tools/image-tracer. Upload the image, use a preset (e.g. 'flat' for logos with solid colours), adjust number of colours. Should warn that vectorization works well for logos/icons but poorly for photographs.",
+      "should_trigger": true
+    },
+    {
+      "id": 11,
+      "category": "tool-identification",
+      "prompt": "I need to split this panoramic photo into 5 slides for an Instagram carousel that scrolls seamlessly.",
+      "expected_tool": "scroll-generator",
+      "expected_output": "Agent should suggest Seamless Scroll Generator at https://delphi.tools/tools/scroll-generator. Upload image, choose aspect ratio (4:5 portrait for Instagram), select fill mode.",
+      "should_trigger": true
+    },
+    {
+      "id": 12,
+      "category": "tool-identification",
+      "prompt": "I need to remove the background from this product photo for our e-commerce site.",
+      "expected_tool": "background-remover",
+      "expected_output": "Agent should suggest Background Remover at https://delphi.tools/tools/background-remover. Upload image, wait for ML processing. Should mention: Beta status, ~180MB first-time model download, and CC BY-NC-ND 4.0 license restriction (non-commercial only).",
+      "should_trigger": true
+    },
+    {
+      "id": 13,
+      "category": "tool-identification",
+      "prompt": "How do I check if my design is accessible for colour-blind users?",
+      "expected_tool": "colorblind-sim",
+      "expected_output": "Agent should suggest Colour Blindness Simulator at https://delphi.tools/tools/colorblind-sim. Upload the design image, view simulations for protanopia, deuteranopia, tritanopia, and achromatopsia. Should mention ~8% of men have some colour vision deficiency.",
+      "should_trigger": true
+    },
+    {
+      "id": 14,
+      "category": "tool-identification",
+      "prompt": "What's the simplification of (x+1)^3 - x^3?",
+      "expected_tool": "algebra-calc",
+      "expected_output": "Agent should suggest Algebra Calculator at https://delphi.tools/tools/algebra-calc, use the Simplify tab, enter the expression. Result should be 1+3*x+3*x^2 (or equivalent).",
+      "should_trigger": true
+    },
+    {
+      "id": 15,
+      "category": "tool-identification",
+      "prompt": "Encode 'Hello World' in Base64 and also give me the SHA-256 hash.",
+      "expected_tool": "encoder",
+      "expected_output": "Agent should suggest Encoding Tools at https://delphi.tools/tools/encoder. Use Base64 tab for encoding (result: SGVsbG8gV29ybGQ=) and Hash tab for SHA-256 (result: a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e).",
+      "should_trigger": true
+    },
+    {
+      "id": 16,
+      "category": "tool-identification",
+      "prompt": "I need to convert 24px to rem for my CSS.",
+      "expected_tool": "px-to-rem",
+      "expected_output": "Agent should suggest PX to REM at https://delphi.tools/tools/px-to-rem. With default 16px base, 24px = 1.5rem.",
+      "should_trigger": true
+    },
+    {
+      "id": 17,
+      "category": "tool-identification",
+      "prompt": "I'm printing imposed A4 sheets and need a cutting guide for the guillotine.",
+      "expected_tool": "guillotine-director",
+      "expected_output": "Agent should suggest Guillotine Director at https://delphi.tools/tools/guillotine-director. Fixed preset: 2x A4 landscape on SRA3 portrait with 3mm bleed. Click Start Cutting for 4-step guided workflow.",
+      "should_trigger": true
+    },
+    {
+      "id": 18,
+      "category": "tool-identification",
+      "prompt": "I need to check if this PDF is print-ready. Is the resolution high enough? Are fonts embedded?",
+      "expected_tool": "pdf-preflight",
+      "expected_output": "Agent should suggest PDF Preflight at https://delphi.tools/tools/pdf-preflight. Upload PDF, get report across 6 categories: document, geometry, fonts, colour, images, transparency.",
+      "should_trigger": true
+    },
+    {
+      "id": 19,
+      "category": "tool-identification",
+      "prompt": "I want to make a mini zine from this single sheet of paper.",
+      "expected_tool": "zine-imposer",
+      "expected_output": "Agent should suggest Zine Imposer at https://delphi.tools/tools/zine-imposer. Upload content, get 8-page imposed layout for the fold-and-cut zine technique.",
+      "should_trigger": true
+    },
+    {
+      "id": 20,
+      "category": "tool-identification",
+      "prompt": "I need the Open Graph meta tags for my landing page.",
+      "expected_tool": "meta-tag-genny",
+      "expected_output": "Agent should suggest Meta Tag Generator at https://delphi.tools/tools/meta-tag-genny. Fill in title, description, URL, image URL, and copy the generated HTML meta tags.",
+      "should_trigger": true
+    },
+    {
+      "id": 21,
+      "category": "tool-identification",
+      "prompt": "What's 0xFF in binary?",
+      "expected_tool": "base-converter",
+      "expected_output": "Agent should suggest Base Converter at https://delphi.tools/tools/base-converter. Enter FF in hex mode, result: 11111111 in binary (255 in decimal).",
+      "should_trigger": true
+    },
+    {
+      "id": 22,
+      "category": "tool-identification",
+      "prompt": "I need to trim the transparent edges from these PNG sprites to reduce their canvas size.",
+      "expected_tool": "image-clipper",
+      "expected_output": "Agent should suggest Image Clipper at https://delphi.tools/tools/image-clipper. Upload PNG, tool auto-trims transparent edges. Should note: only works on PNGs with actual alpha transparency, not white backgrounds.",
+      "should_trigger": true
+    },
+    {
+      "id": 23,
+      "category": "tool-identification",
+      "prompt": "I need a placeholder image that says '800x600' for my wireframe mockup.",
+      "expected_tool": "placeholder-genny",
+      "expected_output": "Agent should suggest Placeholder Generator at https://delphi.tools/tools/placeholder-genny. Set width 800, height 600, optionally set custom text.",
+      "should_trigger": true
+    },
+    {
+      "id": 24,
+      "category": "browser-mode",
+      "prompt": "Walk me through optimizing this SVG using the web tool. I want to paste the SVG code directly.",
+      "expected_tool": "svg-optimiser",
+      "expected_output": "Agent should: 1) Navigate to https://delphi.tools/tools/svg-optimiser, 2) Instruct to paste SVG into the textarea labelled 'Paste your SVG code here...', 3) Point out the stats card showing original/optimised size and percent reduction, 4) Offer the 'Download Optimized SVG' button or 'Copy SVG Code' button.",
+      "should_trigger": true,
+      "mode": "browser"
+    },
+    {
+      "id": 25,
+      "category": "browser-mode",
+      "prompt": "I need to generate a QR code with Braille-style dots, indigo colour scheme, and error correction set to H.",
+      "expected_tool": "qr-genny",
+      "expected_output": "Agent should navigate to https://delphi.tools/tools/qr-genny, guide through: 1) Enter URL/text in content field, 2) Click 'Indigo' quick style, 3) In Shapes section select 'Braille' dot style, 4) In Basics section set Error Correction to 'H', 5) Preview and download as PNG or SVG.",
+      "should_trigger": true,
+      "mode": "browser"
+    },
+    {
+      "id": 26,
+      "category": "browser-mode",
+      "prompt": "Help me set up this 20-page document as a booklet. I want saddle-stitch, A4 landscape, with crop marks and 5mm margins.",
+      "expected_tool": "imposer",
+      "expected_output": "Agent should navigate to https://delphi.tools/tools/imposer, guide through: 1) Upload PDF, 2) Select '2-up Saddle Stitch' layout, 3) Set Paper to A4, 4) Set Orientation to Landscape, 5) Enable crop marks toggle, 6) Set Margins slider to 5mm. Should note that 20 pages will be padded to 24 (next multiple of 4).",
+      "should_trigger": true,
+      "mode": "browser"
+    },
+    {
+      "id": 27,
+      "category": "browser-mode",
+      "prompt": "I uploaded a design to the colour blindness simulator but I'm only seeing one simulation type. How do I see all of them?",
+      "expected_tool": "colorblind-sim",
+      "expected_output": "Agent should explain the tool shows multiple simulation types (protanopia, deuteranopia, tritanopia, achromatopsia) and guide through viewing each one. Should reference the tool at https://delphi.tools/tools/colorblind-sim.",
+      "should_trigger": true,
+      "mode": "browser"
+    },
+    {
+      "id": 28,
+      "category": "advanced-mode",
+      "prompt": "I want to optimize SVGs in a build script, not through the browser. How do I do it programmatically?",
+      "expected_tool": "svg-optimiser",
+      "expected_output": "Agent should offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/optimize-svg.mjs input.svg -o output.svg. Should mention it requires 'npm install svgo@4' and that the Node.js import is 'svgo' (NOT 'svgo/browser').",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 29,
+      "category": "advanced-mode",
+      "prompt": "I need to generate barcodes from a CSV list in a Node.js script. What library should I use?",
+      "expected_tool": "code-genny",
+      "expected_output": "Agent should recommend bwip-js (the library behind DelphiTools Barcode Generator) and offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/generate-barcode.mjs. Should mention bwip-js.toBuffer() for PNG and bwip-js.toSVG() for vector output.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 30,
+      "category": "advanced-mode",
+      "prompt": "Can I impose PDFs for booklet printing from the command line?",
+      "expected_tool": "imposer",
+      "expected_output": "Agent should offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/impose-pdf.mjs input.pdf -o booklet.pdf. Should mention it requires 'npm install pdf-lib' and supports --paper and --orientation flags.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 31,
+      "category": "advanced-mode",
+      "prompt": "Solve x^2 - 5x + 6 = 0 using the command line.",
+      "expected_tool": "algebra-calc",
+      "expected_output": "Agent should offer: node ${CLAUDE_SKILL_DIR}/scripts/algebra.mjs solve 'x^2 - 5*x + 6 = 0'. Result should be 2,3. Should mention it requires 'npm install nerdamer'.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 32,
+      "category": "advanced-mode",
+      "prompt": "I need to trace this PNG to SVG in a build pipeline, not manually.",
+      "expected_tool": "image-tracer",
+      "expected_output": "Agent should offer: node ${CLAUDE_SKILL_DIR}/scripts/trace-image.mjs input.png -o output.svg. Should mention it requires 'npm install imagetracerjs sharp' and supports --colors and --blur flags.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 33,
+      "category": "edge-case-wrong-tool",
+      "prompt": "I need to convert a DOCX file to PDF.",
+      "expected_output": "Agent should NOT suggest any DelphiTools tool — DelphiTools has no document format converter. Should suggest pandoc or another appropriate tool instead. Should not force-fit a DelphiTools tool.",
+      "should_trigger": false
+    },
+    {
+      "id": 34,
+      "category": "edge-case-wrong-tool",
+      "prompt": "Can you edit this photo to make me look thinner?",
+      "expected_output": "Agent should NOT suggest any DelphiTools tool — these are design utilities, not photo retouching tools. Background Remover is the closest but is not a general photo editor.",
+      "should_trigger": false
+    },
+    {
+      "id": 35,
+      "category": "edge-case-wrong-tool",
+      "prompt": "I need to create a PowerPoint presentation.",
+      "expected_output": "Agent should NOT suggest DelphiTools. There is no presentation tool. Should suggest appropriate tools (pptx libraries, Google Slides, etc.).",
+      "should_trigger": false
+    },
+    {
+      "id": 36,
+      "category": "edge-case-ambiguous",
+      "prompt": "I need to convert this image.",
+      "expected_output": "Agent should ask for clarification: convert to what format? If format conversion, suggest Image Converter. If raster-to-vector, suggest Image Tracer. Should not guess.",
+      "should_trigger": true
+    },
+    {
+      "id": 37,
+      "category": "edge-case-ambiguous",
+      "prompt": "I need a colour palette.",
+      "expected_output": "Agent should ask: generate a new palette (palette-genny) or browse curated ones (palette-collection)? May also ask about the context (mood, era, colour theory basis).",
+      "should_trigger": true
+    },
+    {
+      "id": 38,
+      "category": "edge-case-ambiguous",
+      "prompt": "How do I impose my document?",
+      "expected_output": "Agent should clarify: is this a PDF for booklet/saddle-stitch printing (imposer) or an 8-page zine (zine-imposer)? Should ask about the binding method and page count.",
+      "should_trigger": true
+    },
+    {
+      "id": 39,
+      "category": "edge-case-domain",
+      "prompt": "I need to remove the background from product photos for our online store. We sell about 500 items.",
+      "expected_tool": "background-remover",
+      "expected_output": "Agent should suggest Background Remover but MUST warn about the CC BY-NC-ND 4.0 license — commercial use is restricted. For a commercial store with 500 items, the BRIA model license may not permit this. Should suggest alternatives for commercial use (e.g. remove.bg, Photoshop).",
+      "should_trigger": true
+    },
+    {
+      "id": 40,
+      "category": "edge-case-domain",
+      "prompt": "I want to trace this photograph of a sunset to SVG.",
+      "expected_tool": "image-tracer",
+      "expected_output": "Agent should suggest Image Tracer but WARN that vectorizing photographs produces poor results — the tool works best on logos, icons, and illustrations with solid colours and clean edges. Photographs have continuous tones that vectorize into noisy, abstract shapes. Should recommend using fewer colours if they proceed.",
+      "should_trigger": true
+    },
+    {
+      "id": 41,
+      "category": "edge-case-domain",
+      "prompt": "Generate a QR code for this URL but I also want to add a large logo that covers about half the code.",
+      "expected_tool": "qr-genny",
+      "expected_output": "Agent should warn that a logo covering 50% of the QR code will make it unreadable even with H-level error correction (which only corrects ~30%). Should recommend keeping the logo to max 20-25% of the QR area with H error correction. Always test with a scanner.",
+      "should_trigger": true
+    },
+    {
+      "id": 42,
+      "category": "edge-case-domain",
+      "prompt": "I have an 11-page PDF that needs to be set up as a saddle-stitched booklet.",
+      "expected_tool": "imposer",
+      "expected_output": "Agent should mention that saddle-stitch requires page count divisible by 4. An 11-page document will be padded to 12 pages (1 blank page added). Should guide through the imposer with blank page handling enabled.",
+      "should_trigger": true
+    },
+    {
+      "id": 43,
+      "category": "edge-case-domain",
+      "prompt": "I'm using a 10px base font size in my project. What's 24px in rem?",
+      "expected_tool": "px-to-rem",
+      "expected_output": "Agent should suggest PX to REM tool and instruct to change the base font size field from the default 16px to 10px. Then 24px = 2.4rem. Should note that 10px base is a common convention for easier math.",
+      "should_trigger": true
+    },
+    {
+      "id": 44,
+      "category": "edge-case-domain",
+      "prompt": "I need to check if my logo works in grayscale and for colour-blind users.",
+      "expected_tool": "colorblind-sim",
+      "expected_output": "Agent should suggest Colour Blindness Simulator for colour blindness testing (protanopia, deuteranopia, tritanopia). For grayscale specifically, mention the achromatopsia simulation (total colour blindness). May also suggest checking contrast with the Contrast Checker tool.",
+      "should_trigger": true
+    },
+    {
+      "id": 45,
+      "category": "bug-report-routing",
+      "prompt": "The SVG Optimiser reference says to click 'Download Optimized SVG' but the button actually says 'Download SVG'. Can you report this bug?",
+      "expected_output": "Agent MUST: 1) Ask user for explicit approval before filing, 2) File the issue at https://github.com/eins78/agent-skills/issues (NEVER at 1612elphi/delphitools), 3) Include: tool name (svg-optimiser), mode (Browser), what's wrong (button label mismatch), expected vs actual.",
+      "should_trigger": true
+    },
+    {
+      "id": 46,
+      "category": "bug-report-routing",
+      "prompt": "The optimize-svg.mjs script crashes with 'Cannot find module svgo'. Where should I report this?",
+      "expected_output": "Agent should explain: 1) This is a wrapper script issue, not a DelphiTools issue, 2) The fix is likely 'npm install svgo@4', 3) If the error persists after installing, file at https://github.com/eins78/agent-skills/issues (NEVER upstream). Should include: tool (svg-optimiser), mode (Advanced), error message, steps to reproduce.",
+      "should_trigger": true
+    },
+    {
+      "id": 47,
+      "category": "bug-report-routing",
+      "prompt": "The colour converter on delphi.tools shows wrong values for OKLCH. Is this a bug in their tool?",
+      "expected_output": "Agent should distinguish: if the issue is with the reference FILE in this skill (wrong description of what the tool does), report to eins78/agent-skills. If the issue is with the actual delphi.tools WEBSITE, that's an upstream bug and the user can report it themselves at 1612elphi/delphitools. The agent must NEVER file upstream issues itself.",
+      "should_trigger": true
+    },
+    {
+      "id": 48,
+      "category": "designer-casual",
+      "prompt": "hey can u make my logo look good on instagram? its not square and it gets cropped weird",
+      "expected_tool": "matte-generator",
+      "expected_output": "Agent should suggest Matte Generator at https://delphi.tools/tools/matte-generator to place the non-square logo on a square (1:1) matte background. Should explain the colour/blur/gradient matte options. May also mention Social Media Cropper for other post types.",
+      "should_trigger": true
+    },
+    {
+      "id": 49,
+      "category": "designer-casual",
+      "prompt": "what colours go well with this teal? #0d9488",
+      "expected_tool": "harmony-genny",
+      "expected_output": "Agent should suggest Harmony Generator at https://delphi.tools/tools/harmony-genny. Enter #0d9488, try complementary (warm coral/salmon), triadic, or split-complementary harmonies. May also suggest Palette Generator for more creative options.",
+      "should_trigger": true
+    },
+    {
+      "id": 50,
+      "category": "designer-casual",
+      "prompt": "i need to add a watermark to 50 photos before sending to a client",
+      "expected_tool": "watermarker",
+      "expected_output": "Agent should suggest Watermarker at https://delphi.tools/tools/watermarker, but note it processes one image at a time. For 50 photos, may suggest using the tool for the first one to get the settings right, then recommend a batch solution (e.g. ImageMagick composite command for the remaining 49).",
+      "should_trigger": true
+    },
+    {
+      "id": 51,
+      "category": "developer-specific",
+      "prompt": "I need to generate Data Matrix barcodes for asset labels in my warehouse inventory system. Can I do this from Node.js?",
+      "expected_tool": "code-genny",
+      "expected_output": "Agent should suggest the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/generate-barcode.mjs 'ASSET-001' --format datamatrix -o label.png. Should note Data Matrix is more space-efficient than QR for short alphanumeric data, ideal for small labels.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 52,
+      "category": "developer-specific",
+      "prompt": "I want to self-host the DelphiTools suite on our internal network for our design team.",
+      "expected_output": "Agent should reference the advanced-mode.md guide: git clone https://github.com/1612elphi/delphitools.git, bun install, bun run build, then serve the out/ directory. Should mention ~700MB for node_modules and that no runtime server is needed — it's all static files.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 53,
+      "category": "developer-specific",
+      "prompt": "How do I integrate SVGO optimization into my CI/CD pipeline?",
+      "expected_tool": "svg-optimiser",
+      "expected_output": "Agent should suggest using svgo directly (npm install svgo@4) rather than the wrapper script for CI. Show the Node.js API: import { optimize } from 'svgo'; optimize(svg, { multipass: true, plugins: ['preset-default'] }). Emphasize: use 'svgo' not 'svgo/browser' in Node.js.",
+      "should_trigger": true,
+      "mode": "advanced"
+    },
+    {
+      "id": 54,
+      "category": "multi-tool-workflow",
+      "prompt": "I'm designing a brand identity. I need a colour palette, then I want to check that all colour combinations meet WCAG AA, and finally generate a Tailwind scale for each colour.",
+      "expected_output": "Agent should suggest a 3-tool workflow: 1) Palette Generator (palette-genny) to generate the base palette, 2) Contrast Checker (contrast-checker) to verify each foreground/background pair meets WCAG AA (ratio >= 4.5:1 for normal text), 3) Tailwind Shade Generator (tailwind-shades) for each palette colour. Should reference all three tools by URL.",
+      "should_trigger": true
+    },
+    {
+      "id": 55,
+      "category": "multi-tool-workflow",
+      "prompt": "I have a hand-drawn logo scan. I need to trace it to SVG, optimize the SVG, and then generate favicons from it.",
+      "expected_output": "Agent should suggest: 1) Image Tracer (image-tracer) to vectorize the scan, 2) SVG Optimiser (svg-optimiser) to clean up and minify the SVG (the Image Tracer has a 'Send to SVG Optimiser' button that chains directly), 3) Then convert the optimized SVG to PNG and use Favicon Generator (favicon-genny). All three tools at their specific URLs.",
+      "should_trigger": true
+    },
+    {
+      "id": 56,
+      "category": "multi-tool-workflow",
+      "prompt": "I'm preparing a print-ready zine. I need to check my PDF is print-ready, then impose it as an 8-page zine, and get cutting instructions.",
+      "expected_output": "Agent should suggest: 1) PDF Preflight (pdf-preflight) to check print-readiness, 2) Zine Imposer (zine-imposer) to create the 8-page layout, 3) Guillotine Director (guillotine-director) for the cutting guide. Note the guillotine tool uses a fixed SRA3 preset — may not match the zine's output.",
       "should_trigger": true
     }
   ]

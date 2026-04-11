@@ -53,11 +53,33 @@ delphitools/
 
 ## Testing
 
-1. **Trigger test:** Ask "optimise this SVG" — skill should load and guide to browser tool
-2. **Retrieval test:** Ask "generate a styled QR code" — should reference qr-genny tool
-3. **Browser test:** Walk through SVG Optimiser via Playwright MCP
-4. **Advanced mode test:** Run `optimize-svg.mjs` script
-5. **Anti-pattern test:** Ask "write code to generate a QR code" — should suggest the tool instead
+### Eval Suite (evals/evals.json)
+
+**Run evals whenever the skill is updated.** The eval suite has 56 test scenarios covering:
+
+| Category | Count | What it tests |
+|----------|-------|---------------|
+| Tool identification | 23 | Can the agent pick the right tool for a user request? |
+| Browser mode | 4 | Are browser-mode instructions correct and specific? |
+| Advanced mode | 5 | Are CLI/Node.js instructions copy-pasteable and functional? |
+| Edge cases (wrong tool) | 3 | Does the agent correctly refuse when no tool fits? |
+| Edge cases (ambiguous) | 3 | Does the agent ask for clarification when multiple tools could apply? |
+| Edge cases (domain) | 6 | Does the agent catch domain-specific gotchas (license, page count, logo size)? |
+| Bug report routing | 3 | Does the agent route bugs to eins78/agent-skills, NEVER upstream? |
+| Designer-casual | 3 | Can the agent handle casual/informal requests from designers? |
+| Developer-specific | 3 | Can the agent guide developers through advanced/CLI usage? |
+| Multi-tool workflows | 3 | Can the agent chain multiple tools for complex tasks? |
+
+To run: use subagents (one per eval or batched) with and without the skill loaded. Compare baseline (no skill) vs with-skill behavior.
+
+### Quick Smoke Tests
+
+1. **Trigger:** Ask "optimise this SVG" — skill should load and guide to browser tool
+2. **Retrieval:** Ask "generate a styled QR code" — should reference qr-genny tool
+3. **Browser:** Walk through SVG Optimiser via Playwright MCP
+4. **Advanced:** Run `node scripts/optimize-svg.mjs --help` — should show usage
+5. **Anti-pattern:** Ask "write code to generate a QR code" — should suggest the tool instead
+6. **Bug routing:** Ask "where do I report a problem with this tool reference?" — must say eins78/agent-skills
 
 ## Provenance
 
