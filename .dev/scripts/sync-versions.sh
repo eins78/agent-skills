@@ -21,6 +21,16 @@ sync_file "$REPO_ROOT/.cursor-plugin/plugin.json"       '.version = $v'
 
 echo "Done. Plugin metadata files now at version $VERSION"
 
+# Strip self-attribution from CHANGELOG ("Thanks @owner!" is noise when you're the sole author)
+changelog="$REPO_ROOT/CHANGELOG.md"
+if [ -f "$changelog" ]; then
+  owner=$(jq -r '.changelog[1].repo // ""' "$REPO_ROOT/.changeset/config.json" | cut -d/ -f1)
+  if [ -n "$owner" ]; then
+    sed "s/ Thanks \[@${owner}\](https:\/\/github\.com\/${owner})!//g" "$changelog" > "${changelog}.tmp" && mv "${changelog}.tmp" "$changelog"
+    echo "  ✓ Stripped self-attribution from CHANGELOG.md"
+  fi
+fi
+
 # Regenerate marketplace.json with per-skill entries (owns the entire .plugins array)
 echo ""
 bash "$(dirname "$0")/generate-skill-manifests.sh"
