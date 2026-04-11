@@ -39,3 +39,10 @@ jobs:
           title: "chore: release"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assign release PR
+        if: steps.changesets.outputs.pullRequestNumber
+        env:
+          PR_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr edit "$PR_NUMBER" --add-assignee eins78
