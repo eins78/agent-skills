@@ -496,6 +496,100 @@ Write `scripts/` wrapper scripts for the tools with extractable library logic:
 
 ---
 
+## Per-Tool Input/Output Details
+
+This section documents the exact UI elements and interaction patterns for each tool, sourced from reading every component file. This is the basis for the per-tool reference files and browser automation recipes.
+
+### Social Media Tools
+
+**Social Media Cropper** — File upload (drag/click, any image); platform picker (Instagram/Bluesky/Threads); aspect ratio per platform; drag-to-reposition crop window. Output: PNG download.
+
+**Matte Generator** — File upload; matte type (colour/blur/gradient); colour picker; output size (px); aspect ratio (1:1 or 4:5); padding slider. Auto-detects dominant colour. Output: PNG on matte background.
+
+**Seamless Scroll Generator** — File upload; aspect ratio (portrait 4:5 or square 1:1); fill mode (blur or solid); colour picker. Output: multiple PNG tiles (batch ZIP via jszip).
+
+**Watermarker** — Two file uploads (base + watermark); position grid (9 positions + random); opacity slider (0-100); blend mode (normal/multiply/screen/overlay); scale slider; padding slider. Output: watermarked PNG.
+
+### Colour Tools
+
+**Colour Converter** — Format selector dropdown (HEX, RGB, Decimal RGB, HSL, LAB, LCH, OKLAB, OKLCH); text input auto-converts between formats. All 8 formats displayed simultaneously with copy buttons. Respects new global colour notation preference.
+
+**Contrast Checker** — Two hex inputs (foreground + background); swap button; "Suggest accessible colour" wand button. Output: WCAG 2.1 ratio, pass/fail badges for AA Normal, AA Large, AAA Normal, AAA Large.
+
+**Tailwind Shade Generator** — Base colour hex input; generates 50-950 Tailwind scale using HSL lightness curve. URL state via search params. Copy individual shade or full config.
+
+**Harmony Generator** — Base colour input; harmony type selector (complementary, triadic, split-complementary, etc.); colour wheel rotations. Copy individual colours.
+
+**Palette Generator** — Strategy selector (20+ strategies: random, colour theory, mood, era, nature); regenerate button; click to lock individual colours. Uses `lib/palette-strategies.ts` (764 lines of algorithms). Canvas for PNG export.
+
+**Gradient Generator** — Three modes: Linear (colour stops, sortable via dnd-kit, angle control), Corners (4 corner pickers), Mesh (2x2 or 3x3 grid, draggable). Live CSS preview. Copy CSS (respects global notation). Download PNG via Canvas. Uses colour notation hook.
+
+**Colour Blindness Simulator** — File upload. Simulates protanopia, deuteranopia, tritanopia, achromatopsia, etc. using Brettel LMS matrix pixel manipulation via Canvas. Side-by-side comparison.
+
+### Image Tools
+
+**SVG Optimiser** — File upload OR paste SVG code into textarea. Also accepts input via sessionStorage (from Image Tracer "Send to SVG Optimiser" button). Output: optimised SVG in textarea, live preview, stats card (original/optimised size, percent reduction). Uses svgo browser bundle.
+
+**Image Converter** — Multi-file upload; target format selector (10 formats); resize options (original/custom/percentage); lock aspect ratio; per-format quality/options (JPEG quality, WebP lossless, GIF colour count, ICO/ICNS multi-size). Output: per-file download + batch ZIP. Uses gifenc, utif, Canvas toBlob.
+
+**Image Tracer** — File upload (PNG/JPG/WebP/GIF); preset system (flat, artistic, technical); sliders for colours, blur, line threshold, fill strategy. Output: live SVG preview, download SVG, "Send to SVG Optimiser" button (writes to sessionStorage and navigates). Uses imagetracerjs.
+
+**Background Remover** — File upload. Side-by-side before/after with checkerboard transparency preview. About 180MB model download on first use (cached). Uses HuggingFace Transformers with BRIA RMBG-1.4 via WebGPU (WASM fallback). Beta.
+
+**Image Clipper** (NEW) — PNG file upload. Scans alpha channel pixel-by-pixel to find bounding box of non-transparent pixels. Shows original vs clipped dimensions and trim amounts. Download trimmed PNG. Pure Canvas, no external library.
+
+**Paste Image** — Ctrl/Cmd+V paste from clipboard only (no file picker). Optional crop with 8 resize handles + move. Download PNG. Community contribution by himanshubalani.
+
+### Print Tools
+
+**PDF Preflight** — PDF upload. Structured report: issues categorised as error/warning/info across 6 categories (document, geometry, fonts, colour, images, transparency). Page-by-page navigation. Uses pdfjs-dist + pdf-lib.
+
+**Print Imposer** — PDF upload; paper size combobox (large searchable list); layout selector (booklet, saddle-stitch, N-up, gang-run: 2/4/6/8/9-up); duplex options; blank page stepper; margins/gutters sliders. Canvas preview per sheet with page numbers. Output: imposed PDF. Uses lib/imposition.ts engine + pdf-lib + pdfjs-dist.
+
+**Zine Imposer** — Image or PDF upload. Fixed 8-page mini-zine layout. Uses pdf-lib.
+
+**Guillotine Director** — No file input. Guided wizard for fixed preset: 2x A4 landscape on SRA3 portrait with 3mm bleed. 4-step instructions with diagrams. User checks off steps. Pure React state machine.
+
+### Calculator/Encoder Tools
+
+**Scientific Calculator** — Button grid (standard + scientific: sin/cos/tan, log/ln, sqrt, powers, factorial, mod); DEG/RAD toggle; constants picker; keyboard input. History log. Uses mathjs.
+
+**Algebra Calculator** — 6 tabs: Simplify, Expand, Factor, Solve, d/dx, integral. Expression input with syntax reference. Example expressions. LaTeX-rendered output via katex. Uses nerdamer (+ Algebra/Calculus/Solve modules). CDN link injected for KaTeX CSS.
+
+**Encoding Tools** — 3 tabs: Base64 (encode/decode toggle), URL Encoding (encode/decode toggle), Hashing (MD5, SHA-1, SHA-256, SHA-512 simultaneously). Uses btoa/atob, encodeURIComponent, crypto-js.
+
+**QR Generator** — 3 modes: Single (URL/Email/Phone/WiFi/SMS/Geo), vCard Builder, Batch. Extensive styling: dot type (6 options), corner square type (3), corner dot type (2), colours, transparent background, error correction (L/M/Q/H), padding, logo upload with size/margin. Quick styles (Classic, Rounded, Dots, Classy, Indigo, Rose, Teal). Output: PNG/SVG/Copy + batch ZIP. Uses qr-code-styling + jszip.
+
+**Barcode Generator** — Format selector (Code 128, EAN-13, UPC-A, Data Matrix, Aztec, PDF417, QR Code, and more); data input; scale and height sliders. Output: barcode preview, download PNG/SVG, batch ZIP. Uses bwip-js + jszip.
+
+### Reference/Utility Tools
+
+**Paper Sizes** — Reference table of standard paper sizes (A, B, C, ANSI, etc.). Optional PDF upload to read dimensions. PDF generation for any size. Uses pdf-lib.
+
+**Glyph Browser** — Search/browse Unicode characters by name, codepoint, or category. Click to copy. No external library.
+
+**Font File Explorer** — Font file upload (.ttf, .otf, .woff, .woff2). Metadata table + live text preview at adjustable size. Uses FontFace browser API.
+
+**Tailwind Cheat Sheet** — Static reference of Tailwind CSS classes. Search + copy.
+
+**Text Scratchpad** — Textarea with manipulation tools (extract lists, dedupe, sort).
+
+**Shavian Transliterator** — English text input (preloaded example). Gloss view showing word-by-word transliteration in Noto Sans Shavian font. Heuristic words highlighted in red. Click Shavian letters to cycle alternatives. Copy text or download .txt. Uses lib/shavian/ modules.
+
+---
+
+## New Since Previous Research (2026-04-08)
+
+| Change | Detail |
+|--------|--------|
+| **Image Clipper** added | New tool — trims transparent PNG edges. Pure Canvas, no library. |
+| **Global colour notation** | New `lib/colour-notation.ts` + `hooks/use-colour-notation.ts` — 9 format options, used by gradient-genny. |
+| **iOS app** | TestFlight beta announced via hero card on homepage. |
+| **Component registry removed** | `components/tools/index.tsx` deleted; routing now uses flat map in page.tsx directly. |
+| **307 stars** (was 296) | Growing steadily. |
+
+---
+
 ## Sources
 
 ### Primary
