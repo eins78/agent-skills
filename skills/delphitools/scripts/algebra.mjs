@@ -55,25 +55,26 @@ try {
   process.exit(1);
 }
 
+// Use .text("fractions") for exact output, matching DelphiTools' component behaviour.
 let result;
 switch (operation) {
   case 'simplify':
-    result = nerdamer(expression).expand().toString();
+    result = nerdamer(expression).text('fractions');
     break;
   case 'expand':
-    result = nerdamer.expand(expression).toString();
+    result = nerdamer(`expand(${expression})`).text('fractions');
     break;
   case 'factor':
-    result = nerdamer.factor(expression).toString();
+    result = nerdamer(`factor(${expression})`).text('fractions');
     break;
   case 'solve':
-    result = nerdamer.solveEquations(expression).toString();
+    result = nerdamer.solve(expression, variable).toString();
     break;
   case 'diff':
-    result = nerdamer.diff(expression, variable).toString();
+    result = nerdamer(`diff(${expression}, ${variable})`).text('fractions');
     break;
   case 'integrate':
-    result = nerdamer.integrate(expression, variable).toString();
+    result = nerdamer(`integrate(${expression}, ${variable})`).text('fractions');
     break;
   default:
     console.error(`Error: Unknown operation "${operation}". Use --help.`);

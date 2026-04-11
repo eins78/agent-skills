@@ -29,27 +29,44 @@ DelphiTools has no git tags or releases. The skill tracks the latest verified co
 Wrapper scripts are **thin CLI shims**, not reimplementations. They follow this hierarchy:
 
 1. **Import from the bundle** — if the tool's logic exists in the bundle's `lib/` directory (compiled JS from DelphiTools' pure computation modules), import it directly
-2. **Call the same npm library** — if the tool wraps a third-party npm library (svgo, bwip-js, etc.), call that library's API
-3. **Never reimplement** — if neither option works, the tool is browser-only and has no wrapper script
+2. **Call the same npm library** — if the tool wraps a third-party npm library (svgo, bwip-js, etc.), call that library's API with matching options/config from the DelphiTools component
+3. **Use Node.js builtins** — if the browser library has a better Node.js equivalent (e.g. Node `crypto` vs `crypto-js`)
+4. **Never reimplement** — if neither option works, the tool is browser-only and has no wrapper script
 
-The GitHub Action bundle includes:
-- `lib/` — Pre-compiled ES modules (imposition, palette, colour, paper sizes)
-- `lib-src/` — Raw TypeScript source of the same modules
-- `package.json` — Dependency reference
+**Key principle:** Wrappers must match the behaviour of the corresponding DelphiTools component. API call patterns, option names, and output formats should align with the source React component. When the component uses `.text("fractions")`, the wrapper uses `.text("fractions")`. When the component applies specific plugin configs, the wrapper applies the same config.
+
+#### Bundle contents
+
+The GitHub Action (`.github/workflows/delphitools-bundle.yml`) builds daily and includes:
+
+- `lib/` — Pre-compiled ES modules: imposition, palette-strategies, palette-collection, colour-notation, paper-sizes, math-constants
+- `lib-src/` — Raw TypeScript source of the same modules + shavian transliteration
+- `package.json` — Dependency reference (npm library versions)
 - Static site files (serve with any HTTP server)
+
+**Not in the bundle** (and why):
+- `lib/tools.ts` — imports `lucide-react` (React/DOM dependency), only useful for UI rendering
+- `lib/utils.ts` — CSS class merging (`cn()`), pure UI utility
+- `lib/colour-names.ts` — imports `color-name-list` npm package; no wrapper needs it
 
 ### Wrapper script inventory
 
-| Script | Approach | Source |
-|--------|----------|--------|
-| `optimize-svg.mjs` | Calls svgo npm library | Same lib as DelphiTools |
-| `generate-barcode.mjs` | Calls bwip-js npm library | Same lib as DelphiTools |
-| `generate-qr.mjs` | Calls qr-code-styling + jsdom/canvas polyfill | Same lib + browser shims |
-| `create-pdf.mjs` | Calls pdf-lib npm library | Same lib as DelphiTools |
-| `impose-pdf.mjs` | **Imports from bundle** `lib/imposition.js` | DelphiTools source |
-| `trace-image.mjs` | Calls imagetracerjs + sharp | Same lib + Node decoder |
-| `algebra.mjs` | Calls nerdamer npm library | Same lib as DelphiTools |
-| `encode.mjs` | Uses Node.js built-in `crypto` module | Better than crypto-js for Node |
+| Script | Approach | Matches Component? |
+|--------|----------|-------------------|
+| `impose-pdf.mjs` | **Imports from bundle** `lib/imposition.js` | Yes — same layout engine |
+| `optimize-svg.mjs` | Calls svgo with identical plugin config | Yes — same plugins, multipass |
+| `algebra.mjs` | Calls nerdamer with `.text("fractions")` output | Yes — same API pattern |
+| `generate-barcode.mjs` | Calls bwip-js with color/scale/padding options | Yes — same option mapping |
+| `generate-qr.mjs` | Calls qr-code-styling with corner/logo/transparency options | Yes — matches styling options |
+| `trace-image.mjs` | Calls imagetracerjs with preset support | Yes — same preset system |
+| `create-pdf.mjs` | Calls pdf-lib for PDF creation | Yes — same library |
+| `encode.mjs` | Node.js built-in `crypto` module | Equivalent — same hash output, better for Node |
+
+### Why most wrappers call npm libraries directly (not the bundle)
+
+The bundle only contains DelphiTools' **custom computation modules** from `lib/`. Most tools (SVG optimiser, QR generator, barcode generator, etc.) are React components that call npm libraries directly — there is no intermediate lib/ module to extract. Creating new lib/ modules would mean writing new code in the upstream repo, which contradicts the "use, don't reimplement" principle.
+
+The impose-pdf wrapper is the exception because `lib/imposition.ts` is a genuine standalone computation module with no React/DOM dependencies.
 
 ### Tools with no wrapper script (browser-only)
 
