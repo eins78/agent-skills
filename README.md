@@ -160,7 +160,7 @@ Releases are automated via GitHub Actions. When a PR with changesets merges to `
 **Manual release (fallback):**
 
 ```bash
-pnpm run version   # bumps skill + plugin versions, writes changelog, syncs metadata
+GITHUB_TOKEN=$(gh auth token) pnpm run version   # bumps skill + plugin versions, writes changelog, syncs metadata
 pnpm run release   # runs version, commits, tags — then push with: git push --follow-tags
 ```
 

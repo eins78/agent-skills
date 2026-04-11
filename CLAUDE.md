@@ -137,7 +137,7 @@ Releases are automated via the `changesets/action` GitHub Action:
 ### Manual (fallback)
 
 ```bash
-pnpm run version   # bumps skill versions, consumes changesets, syncs all metadata
+GITHUB_TOKEN=$(gh auth token) pnpm run version   # bumps skill versions, consumes changesets, syncs all metadata
 pnpm run release   # runs version, commits, tags — then push with: git push --follow-tags
 ```
 
