@@ -24,17 +24,13 @@ Guides an operator through a step-by-step guillotine cutting workflow for impose
 ### Step-by-Step
 
 1. Navigate to https://delphi.tools/tools/guillotine-director
-2. The fixed preset is displayed: 2x A4 landscape imposed on SRA3 portrait with 3mm bleed.
-3. Review the four cutting steps shown in sequence. Each step includes a diagram illustrating the cut position and direction.
-4. Perform the physical cut described in Step 1: **Trim first margin** — cut along the first outer edge.
-5. Check the checkbox for Step 1 to mark it complete.
-6. Perform the cut described in Step 2: **Trim second margin** — cut along the opposite outer edge.
-7. Check the checkbox for Step 2.
-8. Perform the cut described in Step 3: **Separate products** — cut along the centre line to split the two A4 pages apart.
-9. Check the checkbox for Step 3.
-10. Perform the cut described in Step 4: **Trim bleed** — cut the 3mm bleed from the remaining edges of each product.
-11. Check the checkbox for Step 4.
-12. All steps checked — the workflow is complete.
+2. The preset card shows: Sheet 320x450mm, Product 297x210mm, Bleed 3mm, Layout 1x2, Margins 8.5mm (W) / 9mm (H).
+3. Click the "Start Cutting" button.
+4. **Step 1 of 4 — "Trim the first margin"**: Align the long edge (450mm) with the fence. Measure from fence to the crop mark closest to you. Expected distance ~311.5mm. Enter your measurement in the mm field and click "Next Step".
+5. **Step 2 of 4 — "Trim the second margin"**: Rotate the sheet. Align the long edge with the fence again. Measure and cut the opposite margin. Click "Next Step".
+6. **Step 3 of 4 — "Separate the products"**: Cut along the centre line to split the two A4 pages apart. Click "Next Step".
+7. **Step 4 of 4 — "Trim the bleed"**: Trim the 3mm bleed from the remaining edges of each product. Click "Next Step" to complete.
+8. The progress bar at the bottom shows all 4 steps: each has a numbered circle that fills as you complete it.
 
 ### Output
 

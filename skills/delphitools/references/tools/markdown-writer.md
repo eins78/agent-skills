@@ -1,12 +1,13 @@
-# Markdown Writer
+# Text Scratchpad
 
 **Category:** Other Tools
 **URL:** https://delphi.tools/tools/markdown-writer
 **Status:** stable
+**Note:** The tool is named "Text Scratchpad" in the UI. The URL path `markdown-writer` is a legacy ID.
 
 ## What It Does
 
-A text editor with built-in text manipulation utilities: extract lists, deduplicate lines, sort lines, and trim whitespace. Paste or type text in, apply a transformation, and copy the result.
+A text manipulation utility with one-click operations: extract lists, deduplicate lines, sort lines, and trim whitespace. Paste or type text, apply a transformation, and copy the result.
 
 ## When to Use
 

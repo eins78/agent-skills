@@ -19,21 +19,21 @@ Tests a regular expression against a test string and highlights all matches inli
 ### Inputs
 
 - **Pattern field** — enter the regular expression (without delimiters; flags are set separately).
-- **Flags input or toggle** — set regex flags such as `g` (global), `i` (case-insensitive), `m` (multiline).
+- **Flags text field** — type regex flags directly (e.g. `gi` for global + case-insensitive). This is a text input, not a toggle.
 - **Test string field** — enter or paste the text to match the pattern against.
 
 ### Step-by-Step
 
 1. Navigate to https://delphi.tools/tools/regex-tester
 2. Click the pattern field and type your regular expression (e.g. `\b\w{4}\b`).
-3. Set any needed flags using the flags input (e.g. type `gi` for global, case-insensitive).
+3. Type flags into the flags text field (e.g. `gi` for global + case-insensitive).
 4. Click the test string field and type or paste the text you want to test against.
 5. All matches are highlighted inline in the test string field as you type.
 6. If there are no matches, no highlighting appears; check your pattern or flags.
 
 ### Output
 
-Inline match highlighting within the test string field — matched substrings are visually distinguished. A match count summary is shown below or beside the fields.
+Inline match highlighting within the test string field — matched substrings are visually distinguished. A match count is shown below the test string field.
 
 ### Options
 
