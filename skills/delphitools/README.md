@@ -83,7 +83,7 @@ These scripts call the same npm library the DelphiTools React component uses. Th
 
 The bundle only contains DelphiTools' **custom computation modules** from `lib/` (imposition, palette-strategies, palette-collection, colour-notation, paper-sizes, math-constants). Most tools are React components that call npm libraries directly — there is no intermediate lib/ module to extract. Creating new lib/ modules would mean writing new code in the upstream repo, which contradicts the "use, don't reimplement" principle.
 
-#### Browser-only tools (39 of 47 — no wrapper)
+#### Browser-only tools (40 of 47 — no wrapper)
 
 These tools have no CLI wrapper because their core logic is custom Canvas/DOM code, with no extractable npm library call or bundle module. Use Browser Automation Mode or Guided Browser Mode instead.
 
@@ -102,7 +102,7 @@ delphitools/
 │   ├── browser-automation-patterns.md    # Reusable Playwright MCP patterns
 │   ├── advanced-mode.md                  # CLI Mode: git clone, build, wrapper scripts
 │   └── version-tracking.md              # Tracked version + download URLs
-├── scripts/                              # 10 CLI wrapper scripts
+├── scripts/                              # 7 tool wrappers + 1 utility + 2 shell scripts
 │   ├── build-local.sh
 │   ├── optimize-svg.mjs
 │   └── ...
@@ -125,8 +125,8 @@ delphitools/
 | Category | Count | What it tests |
 |----------|-------|---------------|
 | Tool identification | 23 | Can the agent pick the right tool for a user request? |
-| Browser automation | 4 | Are browser automation instructions correct and specific? |
-| CLI mode | 5 | Are CLI/Node.js instructions copy-pasteable and functional? |
+| browser-mode | 4 | Are browser automation instructions correct and specific? |
+| cli-mode | 5 | Are CLI/Node.js instructions copy-pasteable and functional? |
 | Edge cases (wrong tool) | 3 | Does the agent correctly refuse when no tool fits? |
 | Edge cases (ambiguous) | 3 | Does the agent ask for clarification when multiple tools could apply? |
 | Edge cases (domain) | 6 | Does the agent catch domain-specific gotchas (license, page count, logo size)? |
@@ -360,7 +360,7 @@ cd /path/to/agent-skills
 pnpm changeset
 ```
 
-This creates a file in `.changeset/`. Edit it:
+This creates a file in `.changeset/`. Edit it to include both the changeset frontmatter and a `<!-- bumps: -->` HTML comment block (parsed by `bump-skill-versions.sh`):
 
 ```markdown
 ---
@@ -369,7 +369,11 @@ This creates a file in `.changeset/`. Edit it:
 
 delphitools: add 3 new tools (gradient-picker, noise-generator, pdf-merger)
 
-Skills: delphitools (minor)
+<!--
+bumps:
+  skills:
+    delphitools: minor
+-->
 ```
 
 **Bump levels:**
@@ -377,7 +381,7 @@ Skills: delphitools (minor)
 - **Minor:** Add new tool references, add wrapper scripts, expand evals
 - **Major:** Restructure the skill, remove tools, change the reference file format
 
-The `Skills:` footer is required — it tells the release script which skill version to bump.
+The `<!-- bumps: -->` block is required — it tells `bump-skill-versions.sh` which skill version to increment.
 
 ### Testing checklist before pushing
 
@@ -434,7 +438,7 @@ ls .changeset/*.md 2>/dev/null | head -5
 ## Known Gaps
 
 - No coverage of the iOS TestFlight app (beta, not yet public)
-- Wrapper scripts cover 10 of 47 tools — the rest are browser-only or pure math
+- CLI wrapper scripts cover 7 of 47 tools — the rest are browser-only (plus 1 utility script and 2 shell scripts)
 - No automated detection of new tools added to DelphiTools (manual update needed)
 
 ## Future Improvements

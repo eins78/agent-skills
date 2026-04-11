@@ -11,7 +11,7 @@ description: >-
   Harmony Generator (complementary, triadic, analogous colour harmonies),
   Palette Generator, Palette Collection (curated palettes), Contrast Checker
   (WCAG AA/AAA compliance), Colour Blindness Simulator (protanopia,
-  deuteranopia, tritanopia), Gradient Generator (linear, radial, mesh CSS
+  deuteranopia, tritanopia), Gradient Generator (linear, corner, mesh CSS
   gradients).
   Images: SVG Optimiser (optimise/minify SVG with SVGO), Image Converter
   (PNG, JPEG, WebP, AVIF, GIF, BMP, TIFF, ICO, ICNS), Image Tracer
@@ -20,11 +20,12 @@ description: >-
   Remover, Artwork Enhancer (colour noise overlay), Placeholder Generator,
   Paste Image (clipboard to file).
   Typography: PX to REM converter, Line Height Calculator, Typography
-  Calculator (typographic unit conversion), Paper Sizes reference, Word
-  Counter, Glyph Browser (Unicode glyphs), Font File Explorer.
+  Calculator (typographic unit conversion), Word Counter, Glyph Browser
+  (Unicode glyphs), Font File Explorer.
   Print: Print Imposer (booklet, saddle-stitch, N-up PDF imposition),
   PDF Preflight (print-readiness analysis), Zine Imposer (8-page mini-zine),
-  Guillotine Director (cutting workflow for imposed sheets).
+  Guillotine Director (cutting workflow for imposed sheets), Paper Sizes
+  reference.
   Generators: QR Generator (styled QR codes with logos, custom dots/corners),
   Barcode Generator (Data Matrix, Aztec, PDF417, Code 128, EAN-13, UPC-A,
   Code 39), Meta Tag Generator (HTML SEO meta tags).
@@ -66,7 +67,7 @@ This skill is a third-party wrapper. If a reference file has incorrect steps, a 
 
 **When reporting, include:**
 1. Tool name (e.g. `svg-optimiser`)
-2. Mode: Browser Mode or Advanced Mode
+2. Mode: Browser Automation, Guided Browser, or CLI Mode
 3. What went wrong (exact error message or incorrect instruction)
 4. Expected vs actual behavior
 5. Steps to reproduce
@@ -96,7 +97,7 @@ digraph mode {
 
 1. **Browser Automation (Primary)** — control the browser via Playwright MCP. The DEFAULT when browser automation is available. Works for ALL 47 tools.
 2. **Guided Browser Use** — when browser automation is NOT available, guide the user step-by-step through the tool in their own browser. The user may be on a different device (laptop, phone, tablet). Instructions must be clear enough for someone following along on their screen.
-3. **CLI Mode (Advanced)** — for developers who explicitly request programmatic/Node.js access. Only 8 of 47 tools have CLI wrappers.
+3. **CLI Mode (Advanced)** — for developers who explicitly request programmatic/Node.js access. Only 7 of 47 tools have CLI wrappers.
 
 ## Quick Reference
 
@@ -146,7 +147,6 @@ Find the right tool, then read its reference file for detailed step-by-step inst
 | PX to REM | Convert pixels to rem units | `${CLAUDE_SKILL_DIR}/references/tools/px-to-rem.md` |
 | Line Height Calculator | Calculate optimal line heights | `${CLAUDE_SKILL_DIR}/references/tools/line-height-calc.md` |
 | Typography Calculator | Convert between typographic units | `${CLAUDE_SKILL_DIR}/references/tools/typo-calc.md` |
-| Paper Sizes | Reference for paper dimensions | `${CLAUDE_SKILL_DIR}/references/tools/paper-sizes.md` |
 | Word Counter | Count words, characters, reading time | `${CLAUDE_SKILL_DIR}/references/tools/word-counter.md` |
 | Glyph Browser | Browse Unicode glyphs | `${CLAUDE_SKILL_DIR}/references/tools/glyph-browser.md` |
 | Font File Explorer | Explore font file contents | `${CLAUDE_SKILL_DIR}/references/tools/font-explorer.md` |
@@ -159,6 +159,7 @@ Find the right tool, then read its reference file for detailed step-by-step inst
 | PDF Preflight | Analyse PDFs for print-readiness | `${CLAUDE_SKILL_DIR}/references/tools/pdf-preflight.md` |
 | Zine Imposer | Create 8-page mini-zine layouts | `${CLAUDE_SKILL_DIR}/references/tools/zine-imposer.md` |
 | Guillotine Director | Guided cutting workflow for imposed sheets | `${CLAUDE_SKILL_DIR}/references/tools/guillotine-director.md` |
+| Paper Sizes | Reference for paper dimensions | `${CLAUDE_SKILL_DIR}/references/tools/paper-sizes.md` |
 
 ### Other Tools
 
@@ -218,7 +219,7 @@ Keep instructions concise and visual. Assume the user is looking at their screen
 
 ## CLI Mode (Advanced)
 
-For developers who explicitly request programmatic/Node.js access. Only 8 of 47 tools have CLI wrappers — the rest are browser-only.
+For developers who explicitly request programmatic/Node.js access. Only 7 of 47 tools have CLI wrappers — the rest are browser-only.
 
 1. **Download the source** — see `${CLAUDE_SKILL_DIR}/references/advanced-mode.md` for git clone + build instructions
 2. **Or download a pre-built bundle** from GitHub Releases
@@ -231,7 +232,8 @@ Each tool's reference file has a "CLI Mode" section with the underlying npm libr
 | Mistake | Fix |
 |---------|-----|
 | Writing custom code when a DelphiTools tool exists | Check Quick Reference first — 47 tools cover most design tasks |
-| Jumping to CLI Mode when browser automation is available | Browser Automation is the primary mode — it works for ALL 47 tools. CLI only covers 8. |
+| Jumping to CLI Mode when browser automation is available | Browser Automation is the primary mode — it works for ALL 47 tools. CLI only covers 7. |
+| Falling back to Guided Browser when Playwright MCP is available | Check for Playwright MCP first — if available, use Browser Automation, not manual guidance. |
 | Suggesting "visit delphi.tools" without step-by-step guidance | In Guided Browser Mode, walk the user through each step from the reference file |
 | Guessing at tool options or UI layout | Read the per-tool reference file — it lists exact UI elements and options |
 | Using `svgo/browser` import in Node.js | In CLI mode, use `import { optimize } from 'svgo'` (not `svgo/browser`) |

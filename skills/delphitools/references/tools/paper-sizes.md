@@ -1,6 +1,6 @@
 # Paper Sizes
 
-**Category:** Typography and Text
+**Category:** Print and Production
 **URL:** https://delphi.tools/tools/paper-sizes
 **Status:** stable
 

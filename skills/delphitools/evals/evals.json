@@ -1,6 +1,6 @@
 {
   "skill_name": "delphitools",
-  "description": "Comprehensive eval suite for the delphitools skill. Run whenever the skill is updated. Covers: tool identification, browser-mode instructions, advanced-mode instructions, edge cases, bug report routing, and domain knowledge.",
+  "description": "Comprehensive eval suite for the delphitools skill. Run whenever the skill is updated. Covers: tool identification, browser-mode instructions, cli-mode instructions, edge cases, bug report routing, and domain knowledge.",
   "evals": [
     {
       "id": 1,
@@ -224,7 +224,7 @@
     },
     {
       "id": 28,
-      "category": "advanced-mode",
+      "category": "cli-mode",
       "prompt": "I want to optimize SVGs in a build script, not through the browser. How do I do it programmatically?",
       "expected_tool": "svg-optimiser",
       "expected_output": "Agent should offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/optimize-svg.mjs input.svg -o output.svg. Should mention it requires 'npm install svgo@4' and that the Node.js import is 'svgo' (NOT 'svgo/browser').",
@@ -233,7 +233,7 @@
     },
     {
       "id": 29,
-      "category": "advanced-mode",
+      "category": "cli-mode",
       "prompt": "I need to generate barcodes from a CSV list in a Node.js script. What library should I use?",
       "expected_tool": "code-genny",
       "expected_output": "Agent should recommend bwip-js (the library behind DelphiTools Barcode Generator) and offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/generate-barcode.mjs. Should mention bwip-js.toBuffer() for PNG and bwip-js.toSVG() for vector output.",
@@ -242,7 +242,7 @@
     },
     {
       "id": 30,
-      "category": "advanced-mode",
+      "category": "cli-mode",
       "prompt": "Can I impose PDFs for booklet printing from the command line?",
       "expected_tool": "imposer",
       "expected_output": "Agent should offer the wrapper script: node ${CLAUDE_SKILL_DIR}/scripts/impose-pdf.mjs input.pdf -o booklet.pdf. Should mention it requires 'npm install pdf-lib' and supports --paper and --orientation flags.",
@@ -251,7 +251,7 @@
     },
     {
       "id": 31,
-      "category": "advanced-mode",
+      "category": "cli-mode",
       "prompt": "Solve x^2 - 5x + 6 = 0 using the command line.",
       "expected_tool": "algebra-calc",
       "expected_output": "Agent should offer: node ${CLAUDE_SKILL_DIR}/scripts/algebra.mjs solve 'x^2 - 5*x + 6 = 0'. Result should be 2,3. Should mention it requires 'npm install nerdamer'.",
@@ -260,7 +260,7 @@
     },
     {
       "id": 32,
-      "category": "advanced-mode",
+      "category": "cli-mode",
       "prompt": "I need to trace this PNG to SVG in a build pipeline, not manually.",
       "expected_tool": "image-tracer",
       "expected_output": "Agent should offer: node ${CLAUDE_SKILL_DIR}/scripts/trace-image.mjs input.png -o output.svg. Should mention it requires 'npm install imagetracerjs sharp' and supports --colors and --blur flags.",

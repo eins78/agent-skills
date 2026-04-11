@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build DelphiTools locally from source
-# Usage: bash build-local.sh [--dir TARGET_DIR]
+# Usage: bash build-local.sh [TARGET_DIR]
 #
 # Clones the DelphiTools repository, installs dependencies, and builds
 # the static site. The output is in TARGET_DIR/out/ (default: ./delphitools/out/).

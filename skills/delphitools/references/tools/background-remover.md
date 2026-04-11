@@ -39,13 +39,7 @@ A single PNG file with the background replaced by transparency (alpha channel).
 
 No configurable settings — the BRIA RMBG-1.4 model determines the mask automatically.
 
-## IMPORTANT: Licensing
-
-**The BRIA RMBG-1.4 model is licensed CC BY-NC-ND 4.0 — non-commercial use only.**
-
-- You may NOT use this tool for commercial projects, client work, or any output that generates revenue.
-- All other DelphiTools code surrounding the model is MIT licensed.
-- Check https://huggingface.co/briaai/RMBG-1.4 for the current licence terms before use.
+**Licensing:** The BRIA RMBG-1.4 model is **CC BY-NC-ND 4.0 — non-commercial use only.** You may NOT use this tool for commercial projects, client work, or any output that generates revenue. All other DelphiTools code is MIT. Check https://huggingface.co/briaai/RMBG-1.4 for current terms.
 
 ## CLI Mode (Node.js)
 

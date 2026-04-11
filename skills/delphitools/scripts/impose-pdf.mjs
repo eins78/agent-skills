@@ -115,45 +115,101 @@ try {
   process.exit(1);
 }
 
-// Use the imposition engine
-const availableExports = Object.keys(impositionModule);
-console.log(`Imposition module loaded. Exports: ${availableExports.join(', ')}`);
-console.log(`Input: ${inputFile} (${readFileSync(inputPath).length} bytes)`);
+// Use the imposition engine to compute layout, then apply with pdf-lib.
+let inputBytes = readFileSync(inputPath);
+const inputDoc = await PDFDocument.load(inputBytes);
+const totalPages = inputDoc.getPageCount();
+
+console.log(`Input: ${inputFile} (${totalPages} pages, ${inputBytes.length} bytes)`);
+inputBytes = null; // allow GC — inputDoc holds the parsed data
+
 console.log(`Layout: ${layout}, Paper: ${paper}, Orientation: ${orientation}`);
-console.log(`Output: ${outputFile}`);
-console.log('');
 
-// The exact wiring depends on the module's exported API.
-// lib/imposition.ts exports: computeImposition, PaperSize, ImpositionConfig, etc.
-// Use those functions to compute the layout, then apply with pdf-lib.
-
-if (impositionModule.computeImposition) {
-  // Wire up the full imposition pipeline
-  const config = {
-    layoutId: layout,
-    paperSize: impositionModule.PAPER_SIZES?.find(p => p.id === paper.toLowerCase()) || { id: paper.toLowerCase(), label: paper, widthMm: 210, heightMm: 297 },
-    orientation,
-    marginMm: 5,
-    gutterMm: 0,
-    creepMm: 0,
-    cropMarks: false,
-    blankMode: 'auto',
-  };
-  const inputBytes = readFileSync(inputPath);
-  const inputDoc = await PDFDocument.load(inputBytes);
-  const totalPages = inputDoc.getPageCount();
-
-  const result = impositionModule.computeImposition(config, totalPages);
-  console.log(`Computed: ${result.sheets?.length || '?'} sheets`);
-  console.log('Applying layout with pdf-lib...');
-
-  // Apply the computed layout to create the imposed PDF
-  // (The computeImposition function returns sheet definitions with page placements)
-  // Full application code follows the same pattern as the DelphiTools imposer component.
-  console.log('Imposition complete. Saved to', outputFile);
-} else {
-  console.error('Warning: computeImposition not found in module exports.');
-  console.error('Available exports:', availableExports);
+if (!impositionModule.computeImposition) {
+  console.error('Error: computeImposition not found in bundle module.');
+  console.error('Available exports:', Object.keys(impositionModule).join(', '));
   console.error('');
   console.error('For full imposition, use the browser tool: https://delphi.tools/tools/imposer');
+  process.exit(1);
 }
+
+const config = {
+  layoutId: layout,
+  paperSize: impositionModule.PAPER_SIZES?.find(p => p.id === paper.toLowerCase()) || { id: paper.toLowerCase(), label: paper, widthMm: 210, heightMm: 297 },
+  orientation,
+  marginMm: 5,
+  gutterMm: 0,
+  creepMm: 0,
+  cropMarks: false,
+  blankMode: 'auto',
+};
+
+const result = impositionModule.computeImposition(config, totalPages);
+const sheets = result.sheets || [];
+console.log(`Computed: ${sheets.length} sheets`);
+
+const MM_TO_PT = 72 / 25.4;
+const sheetWidthPt = config.paperSize.widthMm * MM_TO_PT;
+const sheetHeightPt = config.paperSize.heightMm * MM_TO_PT;
+
+// Embed all source pages once (avoids N+1 re-embedding per placement)
+const outDoc = await PDFDocument.create();
+const embeddedPages = await outDoc.embedPages(inputDoc, Array.from({ length: totalPages }, (_, i) => i));
+
+for (const sheet of sheets) {
+  for (const side of ['front', 'back']) {
+    const placements = sheet[side];
+    if (!placements || placements.length === 0) continue;
+
+    const [pageWidth, pageHeight] = orientation === 'landscape'
+      ? [sheetHeightPt, sheetWidthPt]
+      : [sheetWidthPt, sheetHeightPt];
+    const page = outDoc.addPage([pageWidth, pageHeight]);
+
+    for (const placement of placements) {
+      const srcPageIndex = placement.pageIndex;
+      if (srcPageIndex == null || srcPageIndex < 0 || srcPageIndex >= totalPages) continue;
+
+      const embeddedPage = embeddedPages[srcPageIndex];
+      const xPt = (placement.x ?? 0) * MM_TO_PT;
+      const yPt = (placement.y ?? 0) * MM_TO_PT;
+      const wPt = (placement.width ?? 0) * MM_TO_PT;
+      const hPt = (placement.height ?? 0) * MM_TO_PT;
+      const rotation = placement.rotation ?? 0;
+
+      if (wPt === 0 || hPt === 0) continue;
+
+      const srcDims = embeddedPage.size();
+      const scaleX = wPt / srcDims.width;
+      const scaleY = hPt / srcDims.height;
+
+      // Rotation pivot: pdf-lib rotates around (x, y). For non-zero rotation,
+      // offset the origin so the page lands in the correct placement slot.
+      let drawX = xPt;
+      let drawY = pageHeight - yPt - hPt;
+      if (rotation === 180) {
+        drawX += wPt;
+        drawY += hPt;
+      } else if (rotation === 90) {
+        drawY += hPt;
+      } else if (rotation === 270 || rotation === -90) {
+        drawX += wPt;
+      }
+
+      page.drawPage(embeddedPage, {
+        x: drawX,
+        y: drawY,
+        xScale: scaleX,
+        yScale: scaleY,
+        rotate: { type: 'degrees', angle: rotation },
+      });
+    }
+  }
+}
+
+const outBytes = await outDoc.save();
+writeFileSync(resolve(outputFile), outBytes);
+console.log(`Imposed PDF saved to ${outputFile} (${sheets.length} sheets, ${outBytes.length} bytes)`);
+console.log('');
+console.log('Note: For advanced options (creep compensation, crop marks, N-up),');
+console.log('use the browser tool: https://delphi.tools/tools/imposer');

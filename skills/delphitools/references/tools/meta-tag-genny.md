@@ -54,14 +54,9 @@ Generates HTML meta tags for SEO and social sharing (Open Graph and Twitter Card
 
 ## CLI Mode (Node.js)
 
-### Underlying Library
-
-N/A — meta tag generation is straightforward template string assembly.
-
-### Recipe
+No library needed — meta tag generation is straightforward template string assembly:
 
 ```js
-// Inline template — no library needed
 function generateMetaTags({ title, description, url, imageUrl, siteName, type = 'website', twitterCard = 'summary_large_image' }) {
   return `<!-- SEO -->
 <meta name="description" content="${description}">
@@ -80,28 +75,9 @@ function generateMetaTags({ title, description, url, imageUrl, siteName, type = 
 <meta name="twitter:description" content="${description}">
 <meta name="twitter:image" content="${imageUrl}">`;
 }
-
-console.log(generateMetaTags({
-  title: 'My Page Title',
-  description: 'A concise description under 160 characters.',
-  url: 'https://example.com/page',
-  imageUrl: 'https://example.com/images/share.jpg',
-  siteName: 'Example Site',
-  type: 'article',
-  twitterCard: 'summary_large_image',
-}));
 ```
 
-### Wrapper Script
-
-N/A
-
-### Notes
-
-- Escape any `"` characters in field values to `&quot;` before inserting into attributes to avoid broken HTML.
-- The `og:image` URL must be absolute (include `https://`); relative paths are not valid for social crawlers.
-- Twitter Card tags are also read by LinkedIn, Slack, and other platforms that fall back from Open Graph.
-- Recommended image dimensions for `og:image` / `twitter:image`: 1200×630 px, under 5 MB.
+**Notes:** Escape `"` in field values to `&quot;`. The `og:image` URL must be absolute. Twitter Card tags are also read by LinkedIn, Slack, and other platforms. Recommended image: 1200×630 px, under 5 MB.
 
 ---
 

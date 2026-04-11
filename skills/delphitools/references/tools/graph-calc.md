@@ -43,23 +43,9 @@ An interactive SVG graph rendered via the mafs library. The graph is pannable an
 
 ## CLI Mode (Node.js)
 
-### Underlying Library
+N/A — mafs renders via React DOM and cannot produce SVG output in a headless Node.js context. Use Browser Mode for all graph generation and export.
 
-mafs (React component library) — requires a React DOM environment.
-
-### Recipe
-
-N/A — mafs renders via React DOM and cannot produce SVG output in a headless Node.js context without a full browser runtime. Use Browser Mode for all graph generation and export.
-
-### Wrapper Script
-
-N/A
-
-### Notes
-
-- mafs has no standalone server-side rendering path; do not attempt to use it with `jsdom` — the output will be incomplete.
-- For programmatic SVG graph generation outside the browser, consider `function-plot` (npm) or `chart.js` with the `canvas` package as alternatives.
-- The exported SVG preserves the current viewport (pan/zoom position), so pan to the region of interest before exporting.
+For programmatic SVG graph generation outside the browser, consider `function-plot` (npm) or `chart.js` with the `canvas` package as alternatives. The exported SVG preserves the current viewport (pan/zoom position), so pan to the region of interest before exporting.
 
 ---
 

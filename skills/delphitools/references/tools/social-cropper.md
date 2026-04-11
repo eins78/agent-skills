@@ -45,9 +45,7 @@ No quality or format options — output is always PNG.
 
 ## CLI Mode (Node.js)
 
-N/A — the crop repositioning uses a custom Canvas drag UI that has no direct scripting equivalent in this tool.
-
-For scripted social cropping, use the `sharp` npm package:
+The browser tool uses a custom Canvas drag UI. Equivalent cropping with `sharp`:
 
 ```js
 import sharp from 'sharp';

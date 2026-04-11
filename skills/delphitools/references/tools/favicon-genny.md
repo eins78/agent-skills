@@ -39,9 +39,7 @@ No configurable settings. The tool always produces all four standard sizes and t
 
 ## CLI Mode (Node.js)
 
-N/A — ICO file assembly uses a custom Canvas resize and ICO byte assembly implementation with no direct Node.js library equivalent in this tool.
-
-For scripted favicon generation, use the `sharp` npm package for PNG resizing and a dedicated ICO library such as `ico-endec` or `png-to-ico`:
+The browser tool uses a custom Canvas implementation, but equivalent results can be achieved with `sharp` for PNG resizing and `ico-endec` for ICO assembly:
 
 ```js
 import sharp from 'sharp';

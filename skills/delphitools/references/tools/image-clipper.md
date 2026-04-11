@@ -38,9 +38,7 @@ No configurable settings. The tool always trims all fully-transparent edges usin
 
 ## CLI Mode (Node.js)
 
-N/A — the tool uses a custom Canvas pixel-scanning implementation that has no direct Node.js equivalent.
-
-Use the `sharp` npm package for equivalent trimming in scripts:
+The browser tool uses a custom Canvas pixel-scanning implementation. Equivalent trimming with `sharp`:
 
 ```js
 import sharp from 'sharp';

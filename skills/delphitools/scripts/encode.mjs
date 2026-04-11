@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Wrapper: Base64, URL encoding, and hashing (same as DelphiTools Encoding Tools)
+// Wrapper: Base64, URL encoding, and hashing (functionally equivalent to DelphiTools Encoding Tools; uses Node.js crypto instead of crypto-js)
 // Reference: ${CLAUDE_SKILL_DIR}/references/tools/encoder.md
 //
 // Usage:
