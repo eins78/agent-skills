@@ -66,7 +66,7 @@ if command -v gh >/dev/null 2>&1; then
   echo "  ✓ Created GitHub Release v${VERSION}"
 else
   echo "  WARN: gh CLI not available — skipping GitHub Release creation"
-  echo "  Run manually: gh release create v${VERSION} --title 'v${VERSION}' --generate-notes"
+  echo "  Run manually: gh release create v${VERSION} --title 'v${VERSION}' --notes-file CHANGELOG.md"
 fi
 
 echo "Done."

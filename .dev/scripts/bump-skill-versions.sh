@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
-# bump-skill-versions.sh — parse changeset Skills: lines, bump SKILL.md versions
+# bump-skill-versions.sh — parse changeset bumps block, bump SKILL.md versions
 # Must run BEFORE `changeset version` (which deletes changeset files)
 # Called by: pnpm run version
+#
+# Reads structured YAML from HTML comments in changeset files:
+#   <!--
+#   bumps:
+#     skills:
+#       bye: patch
+#       lab-notes: minor
+#   -->
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -18,31 +26,42 @@ all_bumps=""
 for cs_file in "$CHANGESET_DIR"/*.md; do
   [ ! -f "$cs_file" ] && continue
   basename_file="$(basename "$cs_file")"
-  # Skip non-changeset files
   [[ "$basename_file" == "README.md" ]] && continue
   [[ "$basename_file" == "_template" ]] && continue
 
-  # Extract Skills: line (e.g., "Skills: lab-notes (minor), bye (patch)")
-  skills_line=$(grep -E '^Skills:' "$cs_file" 2>/dev/null || true)
-  [ -z "$skills_line" ] && continue
+  # Extract YAML from <!-- bumps: ... --> HTML comment block
+  # Uses awk to find content between <!-- and -->, then looks for skills: entries
+  bumps_yaml=$(awk '
+    /^<!--/  { in_comment=1; next }
+    /^-->/   { in_comment=0; next }
+    in_comment { print }
+  ' "$cs_file")
 
-  # Remove "Skills: " prefix
-  entries="${skills_line#Skills: }"
+  [ -z "$bumps_yaml" ] && continue
 
-  # Split on comma and parse each "skill-name (bump-type)" pair
-  IFS=',' read -ra PAIRS <<< "$entries"
-  for pair in "${PAIRS[@]}"; do
-    pair="$(echo "$pair" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
-    skill="$(echo "$pair" | sed 's/[[:space:]]*(.*//;s/[[:space:]]*$//')"
-    bump="$(echo "$pair" | sed -n 's/.*(\([^)]*\)).*/\1/p')"
-
-    if [ -z "$skill" ] || [ -z "$bump" ]; then
-      echo "  WARN: could not parse '$pair' in $basename_file"
+  # Parse "skills:" section — each line is "    skill-name: bump-type"
+  in_skills=0
+  while IFS= read -r line; do
+    # Detect "skills:" section header
+    if echo "$line" | grep -qE '^[[:space:]]*skills:[[:space:]]*$'; then
+      in_skills=1
       continue
     fi
-
-    all_bumps="${all_bumps}${skill}:${bump}"$'\n'
-  done
+    # Detect other top-level keys (e.g., "agents:") — exit skills section
+    if echo "$line" | grep -qE '^[[:space:]]{0,2}[a-z]'; then
+      if [ $in_skills -eq 1 ] && ! echo "$line" | grep -qE '^[[:space:]]{4,}'; then
+        in_skills=0
+      fi
+    fi
+    # Parse skill entries (indented under skills:)
+    if [ $in_skills -eq 1 ]; then
+      skill=$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*:.*//')
+      bump=$(echo "$line" | sed 's/.*:[[:space:]]*//')
+      if [ -n "$skill" ] && [ -n "$bump" ]; then
+        all_bumps="${all_bumps}${skill}:${bump}"$'\n'
+      fi
+    fi
+  done <<< "$bumps_yaml"
 done
 
 # Deduplicate: if same skill appears multiple times, keep highest bump
@@ -69,7 +88,6 @@ if [ ${#SKILL_BUMPS[@]} -eq 0 ]; then
 fi
 
 # Apply version bumps
-errors=0
 for skill in "${!SKILL_BUMPS[@]}"; do
   bump="${SKILL_BUMPS[$skill]}"
   skill_md="$REPO_ROOT/skills/$skill/SKILL.md"
@@ -90,5 +108,4 @@ for skill in "${!SKILL_BUMPS[@]}"; do
   echo "  ✓ $skill: $current → $new_version ($bump)"
 done
 
-[ $errors -gt 0 ] && exit 1
 echo "Done bumping skill versions."

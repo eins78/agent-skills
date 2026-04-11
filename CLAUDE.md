@@ -103,9 +103,9 @@ The changeset describes what changed and at what semver level:
 - Skill minor → plugin `minor` changeset (at minimum)
 - Skill major → plugin `major` changeset
 
-### Changeset `Skills:` Footer (required)
+### Changeset `bumps:` Block (required)
 
-Every changeset that modifies a skill MUST include a `Skills:` footer line. This is parsed by `bump-skill-versions.sh` to automatically update each skill's `metadata.version` in its SKILL.md frontmatter.
+Every changeset that modifies a skill MUST include a `<!-- bumps: -->` HTML comment block with structured YAML listing affected skills and their bump types. This is parsed by `bump-skill-versions.sh` to automatically update each skill's `metadata.version` in its SKILL.md frontmatter. The block is hidden from the rendered CHANGELOG.
 
 ```markdown
 ---
@@ -114,14 +114,27 @@ Every changeset that modifies a skill MUST include a `Skills:` footer line. This
 
 Add `lab-notes` skill — structured experiment management
 
-Skills: lab-notes (minor)
+<!--
+bumps:
+  skills:
+    lab-notes: minor
+-->
 ```
 
-Multiple skills in one changeset: `Skills: dossier (patch), bye (patch)`
+Multiple skills:
 
-If two changesets bump the same skill differently, the highest bump wins (major > minor > patch).
+```markdown
+<!--
+bumps:
+  skills:
+    dossier: patch
+    bye: patch
+-->
+```
 
-**Do NOT manually edit version numbers** in `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, or `.cursor-plugin/plugin.json`. These are managed by `pnpm run version` which syncs all files automatically. Skill versions in SKILL.md are bumped automatically from the `Skills:` footer — do not manually edit those either.
+If two changesets bump the same skill differently, the highest bump wins (major > minor > patch). The `bumps:` block is extensible — `agents:` can be added alongside `skills:` in the future.
+
+**Do NOT manually edit version numbers** in `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, or `.cursor-plugin/plugin.json`. These are managed by `pnpm run version` which syncs all files automatically. Skill versions in SKILL.md are bumped automatically from the `bumps:` block — do not manually edit those either.
 
 ## Releasing
 

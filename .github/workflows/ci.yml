@@ -41,21 +41,21 @@ jobs:
           echo "Found changesets:"
           echo "$changeset_files"
 
-          # Validate that Skills: lines reference existing skill directories
+          # Validate that bumps: block references existing skill directories
           echo "$changeset_files" | while IFS= read -r f; do
             [ -z "$f" ] && continue
-            skills_line=$(grep -E '^Skills:' "$f" 2>/dev/null || true)
-            [ -z "$skills_line" ] && continue
 
-            entries="${skills_line#Skills: }"
-            IFS=',' read -ra PAIRS <<< "$entries"
-            for pair in "${PAIRS[@]}"; do
-              skill=$(echo "$pair" | sed 's/^[[:space:]]*//;s/[[:space:]]*(.*//;s/[[:space:]]*$//')
+            # Extract skill names from <!-- bumps: skills: skill-name: bump --> block
+            awk '/^<!--/{c=1;next}/^-->/{c=0;next}c' "$f" | \
+              awk '/skills:/{s=1;next} /^[[:space:]]{0,2}[a-z]/{s=0} s && /[a-z]/' | \
+              sed 's/^[[:space:]]*//;s/[[:space:]]*:.*//' | \
+            while IFS= read -r skill; do
+              [ -z "$skill" ] && continue
               if [ ! -d "skills/$skill" ]; then
-                echo "::error file=$f::Skills line references non-existent skill directory: '$skill'"
+                echo "::error file=$f::bumps block references non-existent skill directory: '$skill'"
                 exit 1
               fi
             done
           done
 
-          echo "All changeset Skills: references are valid."
+          echo "All changeset bumps references are valid."

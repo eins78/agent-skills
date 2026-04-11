@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # generate-skill-manifests.sh — rebuild marketplace.json with per-skill entries
-# Each skill gets its own marketplace entry for individual installation/discovery
+# Uses `skills ls --json` for canonical skill list, then reads metadata from SKILL.md
 # Called by: sync-versions.sh (part of pnpm run version)
 set -euo pipefail
 
@@ -19,7 +19,7 @@ echo "Generating marketplace.json with per-skill entries..."
 # Start building the plugins array as a JSON file
 tmp_plugins=$(mktemp)
 
-# Entry [0]: full collection (must remain at index 0 — sync-versions.sh references .plugins[0])
+# Entry [0]: full collection
 jq -n --arg v "$PLUGIN_VERSION" --arg d "$COLLECTION_DESC" \
   --arg an "$AUTHOR_NAME" --arg ae "$AUTHOR_EMAIL" \
   '[{
@@ -30,15 +30,28 @@ jq -n --arg v "$PLUGIN_VERSION" --arg d "$COLLECTION_DESC" \
     author: { name: $an, email: $ae }
   }]' > "$tmp_plugins"
 
+# Get canonical skill list from skills CLI
+skill_json=$(cd "$REPO_ROOT" && pnpx skills ls --json 2>/dev/null || true)
+
+if [ -z "$skill_json" ] || [ "$skill_json" = "[]" ]; then
+  # Fallback: scan directories if CLI unavailable
+  echo "  (skills CLI unavailable, scanning directories)"
+  skill_json=$(
+    for d in "$REPO_ROOT"/skills/*/; do
+      [ ! -f "$d/SKILL.md" ] && continue
+      n=$(basename "$d")
+      printf '{"name":"%s","path":"%s"}\n' "$n" "$d"
+    done | jq -s '.'
+  )
+fi
+
 # Add per-skill entries
-for skill_dir in "$REPO_ROOT"/skills/*/; do
-  [ ! -d "$skill_dir" ] && continue
-  skill_md="$skill_dir/SKILL.md"
+echo "$skill_json" | jq -r '.[] | "\(.name)\t\(.path)"' | while IFS=$'\t' read -r name skill_path; do
+  [ -z "$name" ] && continue
+  skill_md="$skill_path/SKILL.md"
   [ ! -f "$skill_md" ] && continue
 
-  dir_name="$(basename "$skill_dir")"
-  name=$(extract_frontmatter_field "$skill_md" "name")
-  [ -z "$name" ] && name="$dir_name"
+  dir_name="$(basename "$skill_path")"
 
   # Read description (handles multi-line >- format)
   desc=$(extract_description "$skill_md")
@@ -52,7 +65,7 @@ for skill_dir in "$REPO_ROOT"/skills/*/; do
     desc="${desc:0:197}..."
   fi
 
-  # Use directory name for source path (always correct, even if frontmatter name diverges)
+  # Use directory name for source path (always correct)
   jq --arg n "$name" --arg d "$desc" --arg v "$version" \
     --arg s "./skills/$dir_name" --arg an "$AUTHOR_NAME" --arg ae "$AUTHOR_EMAIL" \
     '. + [{

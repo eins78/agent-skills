@@ -4,4 +4,8 @@
 
 Brief description of change
 
-Skills: skill-name (patch)
+<!--
+bumps:
+  skills:
+    skill-name: patch
+-->

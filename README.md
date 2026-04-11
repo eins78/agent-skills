@@ -142,13 +142,15 @@ When making changes, add a changeset to describe your change:
 pnpm changeset
 ```
 
-Edit the created file to set the bump type (`patch`, `minor`, or `major`), describe the change, and add a `Skills:` footer naming the affected skills:
+Edit the created file to set the bump type (`patch`, `minor`, or `major`), describe the change, and add a `<!-- bumps: -->` block naming the affected skills:
 
 ```markdown
-Skills: skill-name (minor)
+<!--
+bumps:
+  skills:
+    skill-name: minor
+-->
 ```
-
-Multiple skills: `Skills: dossier (patch), bye (patch)`
 
 ### Releasing
 
