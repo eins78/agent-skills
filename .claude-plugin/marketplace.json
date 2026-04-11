@@ -9,8 +9,118 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.1.0",
+      "version": "2.2.0",
       "source": "./",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "ai-review",
+      "description": "Get AI code review from a second model (Gemini/OpenAI) mid-session via CLI. Use when asked to review code, get a second opinion, check quality, or verify implementation — especially in unfamiliar s...",
+      "version": "0.0.3",
+      "source": "./skills/ai-review",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "apple-mail",
+      "description": "Read email via Apple Mail.app and AppleScript. Use when asked to check, search, or read emails. READ ONLY — no sending or modifying emails.",
+      "version": "1.0.0",
+      "source": "./skills/apple-mail",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "apple-notes",
+      "description": "Read Apple Notes via AppleScript. Use when asked to check, search, or read notes. READ ONLY — no creating or modifying notes.",
+      "version": "1.0.0",
+      "source": "./skills/apple-notes",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "bye",
+      "description": "Use when the user says /bye, \"wrap up\", \"end session\", or similar. Reconstructs full session history including compacted context, creates a sessionlog (if project has a sessionlog directory), commi...",
+      "version": "2.1.0",
+      "source": "./skills/bye",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "chrome-browser",
+      "description": "Use when setting up a dedicated Chrome browser for Playwright MCP with session persistence, or when encountering Cloudflare challenges during browser automation. Covers CDP setup, launchd auto-star...",
+      "version": "1.1.0",
+      "source": "./skills/chrome-browser",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "dossier",
+      "description": "Use when asked to research, compare, evaluate, or investigate any topic. Triggers: research this, compare options, evaluate alternatives, investigate, find the best, product comparison, technology ...",
+      "version": "1.0.1",
+      "source": "./skills/dossier",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "lab-notes",
+      "description": "Use when starting experiments, planning features with hypothesis-first approach, checking experiment status, logging observations, or wrapping up trials. Triggers: start an experiment, new trial, b...",
+      "version": "1.1.0",
+      "source": "./skills/lab-notes",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "pandoc",
+      "description": "Use when converting documents between formats — HTML, Markdown, DOCX, PDF, LaTeX, EPUB, reStructuredText, Org, JIRA, CSV, Jupyter notebooks, slides, and 60+ others. Triggers: convert file, export t...",
+      "version": "1.1.0",
+      "source": "./skills/pandoc",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "tmux-control",
+      "description": "Use when sending commands to tmux panes, reading pane output, creating windows/panes, or monitoring tmux sessions. Covers reliable targeting, synchronization, and output capture patterns.",
+      "version": "1.0.0",
+      "source": "./skills/tmux-control",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "tracer-bullets",
+      "description": "Use when facing technical uncertainty, unproven architecture, or building a large feature where agents or humans risk getting lost in details before confirming the architecture works. Prevents hori...",
+      "version": "1.0.0-beta.1",
+      "source": "./skills/tracer-bullets",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "typescript-strict-patterns",
+      "description": "Use when writing or reviewing any TypeScript code. Covers discriminated unions, branded types, Zod at boundaries, const arrays over enums, and safe access patterns.",
+      "version": "1.0.0-beta.1",
+      "source": "./skills/typescript-strict-patterns",
       "author": {
         "name": "Max Albrecht",
         "email": "1@178.is"
