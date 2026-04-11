@@ -10,6 +10,26 @@ DelphiTools is an open-source collection of 47 browser-based design utilities at
 
 ---
 
+## Cross-Cutting Requirement: Smaller Model Compatibility
+
+**All skill content MUST be actionable by Sonnet/Haiku-class models.** If a smaller model cannot follow the instructions without Opus-level reasoning, the instructions need rewriting.
+
+This applies to SKILL.md, every per-tool reference file, every wrapper script, and every shared reference. Concretely:
+
+| Principle | Example |
+|-----------|---------|
+| **Explicit tool names, URLs, file paths** | Write `https://delphi.tools/tools/svg-optimiser` not "the SVG tool" or "the usual URL" |
+| **Concrete browser actions** | Write `Click the "Download Optimized SVG" button` not "download the result" |
+| **Copy-pasteable commands** | Write `node ${CLAUDE_SKILL_DIR}/scripts/optimize-svg.mjs input.svg > output.svg` not "run the SVG script on your file" |
+| **No implicit context** | Each reference file is self-contained — never say "as described in the previous tool" |
+| **One tool per file** | Never combine multiple tools into a single reference file |
+| **Short, focused files** | Per-tool references target 40-80 lines — scannable by any model |
+| **Step numbers for every procedure** | Numbered steps, not prose paragraphs |
+
+**Verification gate:** Before committing any reference file, mentally ask: "Could a Haiku agent follow these steps with zero additional context?" If the answer is no, rewrite until the answer is yes.
+
+---
+
 ## Phase 0: Baseline Testing (RED)
 
 **Goal:** Establish what agents do WITHOUT the skill when asked to perform DelphiTools tasks.
