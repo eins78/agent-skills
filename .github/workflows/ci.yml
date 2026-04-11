@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate skills parse
+        run: pnpm test
+
+      - name: Validate skill frontmatter
+        run: pnpm run validate
+
+      - name: Check for changeset
+        if: github.event_name == 'pull_request'
+        run: |
+          # Find pending changeset files (not README.md or _template)
+          changeset_files=$(find .changeset -name '*.md' -not -name 'README.md' -not -name '_template' 2>/dev/null || true)
+
+          if [ -z "$changeset_files" ]; then
+            echo "::warning::No changeset found. If this PR changes skills, run 'pnpm changeset' to add one."
+            exit 0
+          fi
+
+          echo "Found changesets:"
+          echo "$changeset_files"
+
+          # Validate that Skills: lines reference existing skill directories
+          echo "$changeset_files" | while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            skills_line=$(grep -E '^Skills:' "$f" 2>/dev/null || true)
+            [ -z "$skills_line" ] && continue
+
+            entries="${skills_line#Skills: }"
+            IFS=',' read -ra PAIRS <<< "$entries"
+            for pair in "${PAIRS[@]}"; do
+              skill=$(echo "$pair" | sed 's/^[[:space:]]*//;s/[[:space:]]*(.*//;s/[[:space:]]*$//')
+              if [ ! -d "skills/$skill" ]; then
+                echo "::error file=$f::Skills line references non-existent skill directory: '$skill'"
+                exit 1
+              fi
+            done
+          done
+
+          echo "All changeset Skills: references are valid."

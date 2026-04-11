@@ -38,6 +38,14 @@ Skills auto-update when you run `/plugin update`.
 pnpx skills add https://github.com/eins78/agent-skills.git --global --agent claude-code --all --yes
 ```
 
+### Single skill (via plugin marketplace)
+
+Individual skills are listed in the marketplace and can be installed by name:
+
+```
+/plugin install bye@eins78-marketplace
+```
+
 ### Manual (single skill)
 
 ```bash
@@ -134,13 +142,33 @@ When making changes, add a changeset to describe your change:
 pnpm changeset
 ```
 
-Edit the created file to set the bump type (`patch`, `minor`, or `major`) and describe the change.
+Edit the created file to set the bump type (`patch`, `minor`, or `major`), describe the change, and add a `Skills:` footer naming the affected skills:
+
+```markdown
+Skills: skill-name (minor)
+```
+
+Multiple skills: `Skills: dossier (patch), bye (patch)`
 
 ### Releasing
 
+Releases are automated via GitHub Actions. When a PR with changesets merges to `main`:
+
+1. The Action creates a "Version Packages" PR with version bumps and CHANGELOG updates
+2. Merging the version PR creates git tags and a GitHub Release
+
+**Manual release (fallback):**
+
 ```bash
-pnpm run version   # bumps version, writes changelog, syncs all metadata files
-pnpm run release   # commits and tags — then push with: git push --follow-tags
+pnpm run version   # bumps skill + plugin versions, writes changelog, syncs metadata
+pnpm run release   # runs version, commits, tags — then push with: git push --follow-tags
+```
+
+### Validation
+
+```bash
+pnpm test          # skills parse correctly
+pnpm run validate  # SKILL.md frontmatter checks (name, version, license)
 ```
 
 ## License
