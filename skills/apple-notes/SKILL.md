@@ -18,6 +18,24 @@ Read notes via Notes.app AppleScript. **No creating, updating, or deleting notes
 - Automation permissions granted (System Settings → Privacy & Security → Automation → Terminal/Claude Code → Notes)
 - If first access attempt times out, ask user to check for macOS permission dialog
 
+## Reliability: always wrap osascript with timeout + retry
+
+Notes.app's AppleScript bridge hangs intermittently. AppleScript-internal `with timeout of N seconds` does NOT kill a wedged osascript process — wrap with shell-level `timeout` and retry.
+
+```bash
+notes_query() {
+  local script="$1" attempt
+  for attempt in 1 2 3; do
+    result=$(timeout 15 osascript -e "$script" 2>&1) && { echo "$result"; return 0; }
+    sleep 2
+  done
+  echo "ERROR: Notes query failed after 3 attempts" >&2
+  return 1
+}
+```
+
+Reasonable defaults: **15s timeout, 3 retries, 2s sleep**. Bump to 30s for full-text search across many notes. If all retries fail, report and move on.
+
 ## Scripts
 
 ### List folders
