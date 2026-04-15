@@ -9,13 +9,30 @@
     <key>ProgramArguments</key>
     <array>
         <string>/Users/USERNAME/.local/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing</string>
+        <!-- Core CDP / Profile -->
         <string>--remote-debugging-port=9222</string>
         <string>--user-data-dir=/Users/USERNAME/.cache/chrome-cdp-profile</string>
+        <!-- First-run / Default Browser -->
         <string>--no-default-browser-check</string>
         <string>--no-first-run</string>
-        <string>--disable-features=Translate</string>
-        <string>--disable-breakpad</string>
+        <!-- UI Suppression -->
         <string>--disable-infobars</string>
+        <string>--disable-search-engine-choice-screen</string>
+        <string>--disable-popup-blocking</string>
+        <string>--disable-prompt-on-repost</string>
+        <string>--disable-hang-monitor</string>
+        <!-- Background Activity Reduction -->
+        <string>--disable-breakpad</string>
+        <string>--disable-background-networking</string>
+        <string>--disable-client-side-phishing-detection</string>
+        <string>--disable-component-update</string>
+        <string>--disable-sync</string>
+        <string>--metrics-recording-only</string>
+        <!-- Password / Keychain -->
+        <string>--password-store=basic</string>
+        <string>--use-mock-keychain</string>
+        <!-- Disabled Features -->
+        <string>--disable-features=Translate,TranslateUI,PasswordCheck,PasswordManagerOnboarding,AutofillServerCommunication,MediaRouter,DialMediaRouteProvider,OptimizationHints,GlobalMediaControls,TabOrganization,AiModeOmniboxEntryPoint,OmniboxAiModeEntryPointVariations</string>
     </array>
 
     <!-- Start Chrome with CDP on login -->
