@@ -1,5 +1,11 @@
 # @eins78/agent-skills
 
+## 2.3.1
+
+### Patch Changes
+
+- [#38](https://github.com/eins78/agent-skills/pull/38) [`e27a458`](https://github.com/eins78/agent-skills/commit/e27a4584d58a241f03902b56df232e63ac27ffc3) - Release pipeline: include version in commit message and PR title (e.g. `release: 2.3.0` instead of `chore: release`)
+
 ## 2.3.0
 
 ### Minor Changes
