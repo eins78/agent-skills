@@ -1,5 +1,17 @@
 # @eins78/agent-skills
 
+## 2.4.0
+
+### Minor Changes
+
+- [#40](https://github.com/eins78/agent-skills/pull/40) [`549cfe3`](https://github.com/eins78/agent-skills/commit/549cfe36615e0353fd704c24b5622322fea0fc50) - `chrome-browser`: expand and consolidate Chrome automation flags — disable password checks, AI mode badge, tab organization, autofill, media routing, background networking, and other UI distractions. Flags organized by category with inline comments.
+
+  <!--
+  bumps:
+    skills:
+      chrome-browser: minor
+  -->
+
 ## 2.3.1
 
 ### Patch Changes
