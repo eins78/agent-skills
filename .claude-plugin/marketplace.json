@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.2.0",
+      "version": "2.3.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -119,7 +119,7 @@
     {
       "name": "typescript-strict-patterns",
       "description": "Use when writing or reviewing any TypeScript code. Covers discriminated unions, branded types, Zod at boundaries, const arrays over enums, and safe access patterns.",
-      "version": "1.0.0-beta.1",
+      "version": "1.0.0",
       "source": "./skills/typescript-strict-patterns",
       "author": {
         "name": "Max Albrecht",
