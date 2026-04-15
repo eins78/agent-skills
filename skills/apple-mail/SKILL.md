@@ -18,6 +18,30 @@ Read email via Mail.app AppleScript. **No sending or modifying emails.**
 - Automation permissions granted (System Settings → Privacy & Security → Automation → Terminal/Claude Code → Mail)
 - If first access attempt times out, ask user to check for macOS permission dialog
 
+## Reliability: always wrap osascript with timeout + retry
+
+Apple Mail's AppleScript bridge hangs intermittently — sometimes for minutes — even on simple queries. The AppleScript-internal `with timeout of N seconds` does NOT kill a wedged osascript process. **Always wrap calls with shell-level `timeout` and retry on failure.**
+
+Pattern:
+
+```bash
+# Run osascript with 15s shell timeout, retry up to 3 times with 2s backoff.
+mail_query() {
+  local script="$1" attempt
+  for attempt in 1 2 3; do
+    result=$(timeout 15 osascript -e "$script" 2>&1) && { echo "$result"; return 0; }
+    sleep 2
+  done
+  echo "ERROR: Mail query failed after 3 attempts" >&2
+  return 1
+}
+
+# Usage:
+mail_query 'tell application "Mail" to count (messages of inbox whose read status is false)'
+```
+
+Reasonable defaults: **15s timeout, 3 retries, 2s sleep**. Bump the timeout for `messages of every mailbox` (cross-account searches) to 60s. If all 3 retries fail, report the failure and move on — never block a briefing on Mail.
+
 ## Account & Machine Context
 
 See `docs/email-accounts.md` for which accounts are configured on which machines.
