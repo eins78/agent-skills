@@ -22,6 +22,7 @@ echo "Scanning changesets for skill version bumps..."
 # Collect skill bumps from all pending changesets
 # Format: SKILL_NAME:BUMP_TYPE (one per line)
 all_bumps=""
+declare -A SKILL_BUMPS=()
 
 for cs_file in "$CHANGESET_DIR"/*.md; do
   [ ! -f "$cs_file" ] && continue
@@ -65,7 +66,6 @@ for cs_file in "$CHANGESET_DIR"/*.md; do
 done
 
 # Deduplicate: if same skill appears multiple times, keep highest bump
-declare -A SKILL_BUMPS
 while IFS= read -r line; do
   [ -z "$line" ] && continue
   skill="${line%%:*}"
