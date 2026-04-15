@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/skills
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Dedicated Chrome Browser
@@ -57,8 +57,10 @@ ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 | Headed (not headless) | User can log into sites manually, cookies persist for automation |
 | launchd KeepAlive on crash only | Restart on crash, but intentional quit stays quit |
 | `--no-first-run --no-default-browser-check` | Zero-friction automated sessions |
-| `--disable-features=Translate --disable-breakpad` | No translation popups, no crash reports |
-| `--disable-infobars` | Suppresses CfT's "only for automated testing" notice bar |
+| `--disable-infobars` + UI suppression flags | Suppress infobars, search engine choice, hang monitor, popup blocking, form repost dialogs |
+| `--disable-features=Translate,...` | Disable translation, password check, autofill, media routing, AI mode, tab organization, optimization hints |
+| `--password-store=basic --use-mock-keychain` | Bypass macOS keychain — no unlock prompts during automation |
+| Background reduction flags | Disable background networking, phishing detection, component updates, sync, metrics upload |
 | User-scope MCP (`-s user`) | Available across all projects |
 
 ## Troubleshooting
