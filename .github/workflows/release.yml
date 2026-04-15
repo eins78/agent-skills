@@ -29,14 +29,28 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Compute next release version
+        id: nextver
+        run: |
+          # Predict the next package version from pending changesets so the
+          # release PR title and commit message can include the actual version
+          # (e.g. "release: 2.3.0") instead of a generic "chore: release".
+          npx changeset status --output=/tmp/changeset-status.json \
+            || echo '{"releases":[]}' > /tmp/changeset-status.json
+          NEXT=$(jq -r '.releases[] | select(.name=="@eins78/agent-skills") | .newVersion' \
+            /tmp/changeset-status.json | head -n1)
+          NEXT="${NEXT:-pending}"
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "Next version: $NEXT"
+
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm run version
           publish: bash .dev/scripts/create-release.sh
-          commit: "chore: release"
-          title: "chore: release"
+          commit: "release: ${{ steps.nextver.outputs.version }}"
+          title: "release: ${{ steps.nextver.outputs.version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
