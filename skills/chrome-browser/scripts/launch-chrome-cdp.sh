@@ -13,13 +13,35 @@ CFT_BIN="$HOME/.local/Applications/Google Chrome for Testing.app/Contents/MacOS/
 CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 CHROME_FLAGS=(
+  # Core CDP / Profile
   --remote-debugging-port="${PORT}"
   --user-data-dir="${USER_DATA_DIR}"
+
+  # First-run / Default Browser
   --no-default-browser-check
   --no-first-run
-  --disable-features=Translate
-  --disable-breakpad
+
+  # UI Suppression
   --disable-infobars
+  --disable-search-engine-choice-screen
+  --disable-popup-blocking
+  --disable-prompt-on-repost
+  --disable-hang-monitor
+
+  # Background Activity Reduction
+  --disable-breakpad
+  --disable-background-networking
+  --disable-client-side-phishing-detection
+  --disable-component-update
+  --disable-sync
+  --metrics-recording-only
+
+  # Password / Keychain
+  --password-store=basic
+  --use-mock-keychain
+
+  # Disabled Features
+  --disable-features=Translate,TranslateUI,PasswordCheck,PasswordManagerOnboarding,AutofillServerCommunication,MediaRouter,DialMediaRouteProvider,OptimizationHints,GlobalMediaControls,TabOrganization,AiModeOmniboxEntryPoint,OmniboxAiModeEntryPointVariations
 )
 
 if curl -s "${CDP_URL}/json/version" >/dev/null 2>&1; then
