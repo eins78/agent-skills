@@ -10,7 +10,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.0.1"
+  version: "1.0.2"
 ---
 
 # Dossier
@@ -46,6 +46,7 @@ Each agent returns structured findings with URLs for every claim. Check `/last30
 - Build attribute tables appropriate to the domain
 - Cross-reference across agents — multi-source citations get highest weight
 - Flag contradictions
+- **Flag commercial incentives:** when sources have financial motivation, call this out explicitly in the dossier (e.g. "most links are vendor/affiliate sites") rather than silently discarding them
 
 ### 4. SYNTHESIZE
 

@@ -31,9 +31,17 @@ When synthesizing findings, weight by source quality:
 | **High** | Community with engagement signals (upvotes, stars, views) | Crowd-validated |
 | **Medium** | Expert blog posts, comparison articles | Informed but single-perspective |
 | **Lower** | News coverage, marketing materials | May have bias or lack depth |
-| **Lowest** | AI-generated content, SEO articles | Often superficial or recycled |
+| **Lowest** | AI-generated content, SEO/affiliate articles, marketing content | Often superficial, recycled, or financially motivated |
 
 Cross-source signals are strongest: an item praised on Reddit AND HN AND official docs is high-confidence.
+
+### Commercial Bias Flagging
+
+When sources have financial incentives (affiliate sites, vendor comparison pages, service-provider blogs), flag this **explicitly in the dossier** rather than silently down-weighting:
+
+> "Most sources found are [type] with a commercial incentive to [framing]. The underlying facts are verifiable against [primary source], but treat the framing with skepticism."
+
+Apply especially when researching: financial/tax products, SaaS comparisons, health supplements, or any domain where vendors profit from the recommendation. (Source: @young.mete on Threads, DXPjx_JDuMR)
 
 ## last30days Integration
 
