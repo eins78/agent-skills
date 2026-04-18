@@ -16,5 +16,18 @@
     "session-management",
     "tmux",
     "apple"
-  ]
+  ],
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/hooks/dossier-hook-dispatcher.sh"
+          }
+        ]
+      }
+    ]
+  }
 }

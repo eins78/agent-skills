@@ -1,3 +1,9 @@
+<!--
+  Section-order rule (reviewed in references/review-checklist.md):
+  Glossary stays at top (read-support); Sources stays at end (trust-support).
+  See skills/dossier/SKILL.md §SYNTHESIZE for the asymmetry rationale.
+-->
+
 # {Title}
 
 **Date:** {YYYY-MM-DD}
@@ -6,10 +12,29 @@
 
 ---
 
+## Key Facts
+
+<!-- REQUIRED. One screen. If it overflows, trim. -->
+<!-- Readers with 5 minutes read only this section. Make every line count. -->
+
+| | |
+|---|---|
+| **Who decides** | {named reviewer(s)} |
+| **Decision model** | {e.g. single decider, majority / two-reviewer, must-agree-on-must / consensus-of-N} |
+| **Deadline** | {YYYY-MM-DD or "no hard deadline"} |
+| **Audience** | {who reads the dossier — not always the same as who decides} |
+| **Hard constraints** | {1-3 items that any chosen option must satisfy} |
+| **Load-bearing claim 1** | {the single fact that most shapes the recommendation} |
+| **Load-bearing claim 2** | {second-most} |
+| **Load-bearing claim 3** | {third-most — omit row if not needed} |
+
+---
+
 ## Key Concepts
 
 <!-- REQUIRED: 3-8 domain terms. Skip what any generalist knows. -->
 <!-- Link priority: Wikipedia > official docs > tutorial > blog post -->
+<!-- STAYS AT TOP — see section-order rule comment above. -->
 
 | Term | What it is | Learn more |
 |------|-----------|------------|
@@ -75,7 +100,7 @@
 
 {Key details, integration specifics, code blocks if applicable.}
 
-{Cite factual claims inline: `claim ([source](url))`}
+{Cite factual claims with clickable reference-link syntax: `claim [S1][ref-S1]`. Inline `([text](url))` also works for one-off sources. Every `[Sn][ref-Sn]` citation must have a matching `[ref-Sn]: url` definition in §Sources.}
 
 #### Requirement Fit
 
@@ -112,40 +137,61 @@
 
 ## Sources
 
-<!-- REQUIRED: Categorized. Adapt headings to domain — not all apply. -->
+<!-- REQUIRED: Categorized. Adapt headings to domain — not all apply.
+     Citation pattern: body uses [Sn][ref-Sn]; §Sources lists each entry
+     with a verbal description and a reference-link definition
+     [ref-Sn]: https://... at the bottom. Pick any consistent
+     category-prefix (S, G, R, O, etc.) and keep numbering
+     contiguous per prefix. The rendered link shows "Sn"; clicking
+     navigates to the URL. -->
 
 ### Official Documentation
-- [{Name}]({url}): {what it covers}
+- **S1** — [{Name}][ref-S1]: {what it covers}
 
 ### Community Discussions
-- [{Platform}: {Title} ({Date})]({url}) — {key takeaway}
+- **S2** — [{Platform}: {Title} ({Date})][ref-S2]: {key takeaway}
 
 ### Comparison Articles
-- [{Author/Site}: {Title}]({url})
+- **S3** — [{Author/Site}: {Title}][ref-S3]
 
 ### Blog Posts
-- [{Author}: {Title}]({url}) — {why it's relevant}
+- **S4** — [{Author}: {Title}][ref-S4]: {why it's relevant}
 
 ### Academic/Research
 <!-- OPTIONAL: Health, policy, scientific topics -->
-- [{Authors} ({Year}): {Title}]({url}) — {finding}
+- **S5** — [{Authors} ({Year}): {Title}][ref-S5]: {finding}
 
 ### News Coverage
 <!-- OPTIONAL: Current events, emerging trends -->
-- [{Outlet}: {Title} ({Date})]({url})
+- **S6** — [{Outlet}: {Title} ({Date})][ref-S6]
 
 ### Podcasts
 <!-- OPTIONAL: Niche topics with podcast coverage -->
-- [{Show} {Episode}: {Title}]({url}) — {relevant segment}
+- **S7** — [{Show} {Episode}: {Title}][ref-S7]: {relevant segment}
 
 ### Repositories
 <!-- OPTIONAL: Open source projects -->
-- [{Name}]({url}) — {stars} ★
+- **S8** — [{Name}][ref-S8]: {stars} ★
 
 ### Reviews/Ratings
 <!-- OPTIONAL: Consumer products, travel, services -->
-- [{Source}: {Title}]({url}) — {rating/verdict}
+- **S9** — [{Source}: {Title}][ref-S9]: {rating/verdict}
 
 ### Government/Regulatory
 <!-- OPTIONAL: Policy, compliance, legal -->
-- [{Body}: {Document}]({url})
+- **S10** — [{Body}: {Document}][ref-S10]
+
+<!-- Reference-link definitions. Keep at the bottom of §Sources so any
+     [Sn][ref-Sn] in the body resolves. Add one per source actually
+     cited; delete the unused placeholders. -->
+
+[ref-S1]: {url}
+[ref-S2]: {url}
+[ref-S3]: {url}
+[ref-S4]: {url}
+[ref-S5]: {url}
+[ref-S6]: {url}
+[ref-S7]: {url}
+[ref-S8]: {url}
+[ref-S9]: {url}
+[ref-S10]: {url}

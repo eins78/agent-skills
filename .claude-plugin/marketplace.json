@@ -47,6 +47,16 @@
       }
     },
     {
+      "name": "ballot",
+      "description": "Use when decisions happen async — reviewer(s) look at it over chat, on a PR, on a train, or any time outside the agent session. Triggers: async decision, PR review, pull request, remote reviewer, handoff, away-from-keyboard, decision ballot, architecture call, ADR, hiring panel, vendor selection, household decision, reconcile, per-reviewer, ballot.",
+      "version": "1.0.0",
+      "source": "./skills/ballot",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
       "name": "bye",
       "description": "Use when the user says /bye, \"wrap up\", \"end session\", or similar. Reconstructs full session history including compacted context, creates a sessionlog (if project has a sessionlog directory), commi...",
       "version": "2.1.0",
