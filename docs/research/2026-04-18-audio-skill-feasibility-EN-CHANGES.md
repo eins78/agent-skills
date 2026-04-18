@@ -121,9 +121,15 @@ DEC-1, DEC-2, DEC-4, DEC-5, DEC-7, DEC-8 are unchanged from the original ballot.
 
 ---
 
-## Apple Notes "AI Tools" folder cross-reference
+## Apple Notes "AI Tools" note cross-reference
 
-**Negative finding.** The "AI Tools" folder referenced by the operator was not found in the current Apple Notes structure. Full enumeration of all iCloud Notes folders (top-level: Archive/Cold Storage, Clothing, Collections, Food, Fun, GIdeas, Ideas, Logs, Notes, NTS178, Quatico, Quick Notes, Recently Deleted, Research, Tech, Velo, WohnungF16, ZHdK; nested: Collections/Clothing, Collections/Tech, Collections/Velo) confirmed no "AI Tools" folder exists. Manual inspection of note titles in Tech, Research, and Ideas folders found no TTS-relevant bookmarks. **No candidates added from this source.**
+**Negative finding (updated 2026-04-18 after operator clarification).**
+
+Initial delegate scan looked for a *folder* named "AI Tools" and found none — operator clarified it's a single *note* in iCloud/Notes titled "AI Tools". Orchestrator pulled the note body directly and extracted 49 unique non-social href URLs.
+
+Content profile: AI agents / prompt engineering / coding tooling bookmarks (Anthropic docs, Cursor rules, Aider, Devin, Claudesidian, DeepSeek-R1, Ollama, MCP server patterns, agent-building blog posts, prompt-engineering whitepapers). Zero TTS engines, voice models, or audio-synthesis tools in the link set.
+
+**Confirmed result:** the dossier's top-3 ranking (Kokoro / Dia / Piper) plus MeloTTS as also-ran and Qwen3-TTS / VoxCPM2 on the Watch list remains the complete OSS-TTS shortlist surfaced by available research sources. No candidates added or changed from the Notes review.
 
 ---
 
