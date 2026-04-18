@@ -67,7 +67,7 @@ To verify the skill works:
 
 ## Known Gaps
 
-- **Alerting-level gates.** PostToolUse fires *after* file write; exit 2 feeds stderr back to Claude but a motivated agent can ignore. PreToolUse rigor is documented future work; `ballot-filename.sh` is the cheapest upgrade candidate (filename is in `tool_input.file_path` before write).
+- **Alerting-level gate.** PostToolUse fires *after* file write; exit 2 feeds stderr back to Claude but a motivated agent can ignore. Only one gate remains (`ballot-filename.sh`) after the polish and preflight passes removed the other six. PreToolUse rigor is documented future work; `ballot-filename.sh` is the cheapest upgrade candidate (filename is in `tool_input.file_path` before write).
 - **Checklist discipline depends on the reviewer.** The review-checklist replaces 4 deleted grep hooks; its value depends on a judgement-capable reviewer actually running it. Agents under time pressure may skim. Planned: seed a subagent test scenario that runs the checklist.
 - **Must-tier ballot gate deferred.** A hook that detects unticked Must items at delivery time would require parsing reviewer intent; too fragile. Kept as a prose rule in `skills/ballot/SKILL.md` — flag in sessionlog if blocked.
 - **Source reference file** covers 13 domains — will grow with usage.
