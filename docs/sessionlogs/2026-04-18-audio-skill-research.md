@@ -85,3 +85,67 @@ The ballot carries these; this sessionlog notes them for future session continui
 [ref-a]: https://github.com/OHF-Voice/piper1-gpl
 [ref-b]: https://huggingface.co/rhasspy/piper-voices
 [ref-c]: https://github.com/hexgrad/kokoro/issues/186
+
+---
+
+## 2026-04-18 — EN-only scope update
+
+**Session owner:** Claude Code (Sonnet 4.6, fresh session in worktree `feat/delphitools-skill`)
+**Branch:** `feat/delphitools-skill` (worktree off main)
+**Deliverables:** EN-only dossier + CHANGES file
+
+### Operator direction
+
+After receiving the ballot, operator scoped the target language to **English only** and asked three things:
+
+1. Update the report for English-only TTS output.
+2. Check if any OSS tools were missed (especially on HuggingFace).
+3. Check Apple Notes "AI Tools" bookmark folder for any tools not in the evaluation.
+
+### Approach
+
+**Phase 1 — Read existing work.** All three prior artifacts read in full:
+- `docs/research/2026-04-18-audio-skill-feasibility.md` (475 lines)
+- `docs/research/2026-04-18-audio-skill-feasibility-ballot.md` (8 DECs)
+- `docs/sessionlogs/2026-04-18-audio-skill-research.md` (this file)
+
+**Phase 2 — Parallel research.** Two Explore subagents dispatched in one message:
+
+| Agent | Focus |
+|-------|-------|
+| A | Four new candidates via GitHub: Bark, StyleTTS 2, OpenVoice, MeloTTS — license, last commit, Apple Silicon, headless, output format. |
+| B | HuggingFace TTS model scan: recent activity, downloads, trending; coverage check against all already-evaluated models. |
+
+**Phase 3 — Apple Notes cross-reference.** AppleScript via `osascript` to enumerate Apple Notes folders and check for an "AI Tools" bookmark folder. Negative result (folder not found — see below).
+
+### Key findings
+
+1. **Re-ranking confirmed.** In the EN-only frame, Kokoro-82M is the clear primary: the German requirement was its only disqualifier. Dia becomes a strong #2 pending a latency listen-test (1.6B params + MPS). Piper demotes to #3 — reliable fallback, freshest activity, but lower English quality relative to Kokoro.
+
+2. **Four new candidates checked:**
+   - Bark: CUT (20mo stale, archived)
+   - StyleTTS 2: CUT (20mo stale, headless ambiguity)
+   - OpenVoice: CUT (active, but Jupyter-primary; fails R2)
+   - MeloTTS: ALSO-RAN (MIT, CLI headless, but Apple Silicon undocumented)
+
+3. **HuggingFace scan.** Genuine new find: Qwen3-TTS (Apache-2.0, Jan 2026, 3.4M downloads, community MLX/ONNX ports). Not enough production track record for a top-3 slot today; listed as a Watch candidate. Everything else in the HF top-N is a derivative/port of already-evaluated models or carries a non-commercial license.
+
+4. **Apple Notes "AI Tools" folder: not found.** Full folder enumeration confirmed no such folder exists in the current iCloud Notes structure. Manual inspection of Tech, Research, and Ideas note titles found no TTS-relevant bookmarks. No candidates added from this source.
+
+### Trade-offs noted
+
+- Qwen3-TTS MLX port maturity is unknown — the HF agent reported "community ports available" but did not verify the port quality or API completeness. Listed as Watch, not as a top-3, for this reason.
+- MeloTTS Apple Silicon path: Docker workaround noted in the repo suggests native MPS may not work cleanly. Not enough evidence to promote beyond ALSO-RAN.
+- Kokoro single-maintainer / 8mo-stale risk is real and noted in the Key Facts constraints as "amber signal on cadence." Not a blocker for v0 but worth monitoring before v1 commitment.
+
+### What shipped
+
+- `docs/research/2026-04-18-audio-skill-feasibility-EN.md` — EN-only reframe, 500+ lines; same section structure as original; 5 new source citations (S30–S34).
+- `docs/research/2026-04-18-audio-skill-feasibility-EN-CHANGES.md` — Changes summary; ranking table; 4 candidate verdicts; HF scan result; Apple Notes negative finding.
+- This sessionlog section.
+
+### Next actions
+
+- Orchestrator merges/PRs the branch to main.
+- Max reviews the EN dossier and updates DEC-3 (TTS primary → Kokoro-82M) and DEC-6 (resolved → English only) on the original ballot, OR a new EN-scoped ballot is issued.
+- On ballot clearance: implementation session scoped to `audio-version` skill authoring, starting with Kokoro wrapper script + feedgen integration.
