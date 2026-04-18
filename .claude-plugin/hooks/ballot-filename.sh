@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# dossier-ballot-filename.sh — enforce per-reviewer ballot naming convention.
+# ballot-filename.sh — enforce per-reviewer ballot naming convention.
 #
 # Accepts:  DOSSIER-<slug>-BALLOT-<reviewer>.md  (e.g. DOSSIER-A11y-BALLOT-Max.md)
 # Rejects:  DOSSIER-<slug>-BALLOT.md             (single-file, two-checkbox format)

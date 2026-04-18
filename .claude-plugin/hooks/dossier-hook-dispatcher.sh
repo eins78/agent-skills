@@ -42,7 +42,16 @@ if [[ "$name" == *BALLOT* ]]; then
   if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
     failures+="$output"$'\n'
   fi
+  if ! output=$("$here/ballot-anti-option.sh" "$file_path" 2>&1); then
+    failures+="$output"$'\n'
+  fi
+  if ! output=$("$here/ballot-cover-archaeology.sh" "$file_path" 2>&1); then
+    failures+="$output"$'\n'
+  fi
 else
+  if ! output=$("$here/dossier-framing-declared.sh" "$file_path" 2>&1); then
+    failures+="$output"$'\n'
+  fi
   if ! output=$("$here/dossier-citation-audit.sh" "$file_path" 2>&1); then
     failures+="$output"$'\n'
   fi
