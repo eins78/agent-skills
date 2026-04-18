@@ -148,3 +148,86 @@ After this commit, I will:
 3. `gh pr edit 43 --body-file /tmp/pr43-body.md` with the TL;DR / What shipped / What to review / Out of scope / Read time structure.
 
 PR #43 then contains the full narrative: pitch → Pitch A POC → assessment → Pitch B implementation.
+
+---
+
+## Post-review Polish (2026-04-18, same-day follow-up)
+
+Max reviewed the merged branch and surfaced two concerns. This follow-up session addresses both on top of the Pitch B work.
+
+### Concerns
+
+1. **Most audit scripts are overfit** to the a11y-extension session. Each grep gate encodes assumptions that won't hold for dossiers in other styles (`[Xn]` citation format, OSS-mode forbidden words, H2-level glossary heading, specific archaeology phrases). The Pitch-A assessment §§3.1 and 3.3 already flagged these as alerting-level-not-gates and wordlist-duplication-prone.
+2. **Ballot skill framing is wrong.** Currently framed around reviewer count ("two or more reviewers; single decider doesn't need a ballot"). The real axis is **async decision-making** — any time decider(s) aren't all in the agent session. Canonical cases: review a dossier over chat, review a PR on the train, hand off to remote collaborators. Single-decider async is still ballot-worthy; reviewer count is incidental.
+
+### Decisions made (post-review)
+
+| # | Decision | Rationale |
+|---|---|---|
+| P1 | Ballot reframed as async-decision instrument, not multi-reviewer instrument | Max's review: the real axis is async (decider(s) outside the session), not reviewer count. Single async decider still benefits from empty checkboxes, tiered Must/Should/Could, filename-survives-listing, 12-hour-later readability. |
+| P2 | Delete 6 overfit hooks: citation-audit, forbidden-words, section-order, dated-claim-scan, ballot-anti-option, ballot-cover-archaeology | Each encoded a specific pattern from the a11y session. Dossiers in other styles (hiring, architecture, vendor) use different conventions. Pattern lists don't generalize; judgement-capable reviewers do. |
+| P3 | Keep 2 hooks: `ballot-filename.sh`, `dossier-framing-declared.sh` | Mechanical checks — filename shape and YAML field presence are genuinely pattern-reliable across all dossier styles. |
+| P4 | Keep `dossier-hook-dispatcher.sh` (simplified) rather than inline into plugin.json | The kept scripts take argv for CLI-testability; Claude Code pipes JSON on stdin. The dispatcher exists purely as an argv/stdin shim. Rewriting the scripts to accept both would have violated "do NOT touch the 2 kept scripts" from the brief. |
+| P5 | Delete `framing-modes.yaml` (orphaned once `forbidden-words.sh` deleted) | No remaining script consumes it. `dossier-framing-declared.sh` only checks for `framing-mode:` field presence, not values. Vocabulary guidance folded into `framing-modes.md` (prose, with examples). |
+| P6 | Delete `audit-checks.md` (80% documented deleted scripts) | The 2 kept hooks are self-documenting in one line each in their respective SKILL.md §Gates sections. The review-checklists become the canonical "what quality looks like" doc. |
+| P7 | Two reviewer-checklists as the grep-gate replacement | Each item has what-to-check / why / good / red-flags structure. Generalizes the concerns (framing coherence, citation integrity, dated-claim freshness, cover archaeology, etc.) without hard-coding the patterns. Dossier checklist: 8 items, ~180 lines. Ballot checklist: 8 items, ~150 lines. |
+| P8 | Changeset: `minor` bump for both ballot and dossier | Ballot reframe is user-visible semantic expansion (single async decider now first-class). Dossier gains review-checklist as new review mechanism. No breaking changes. |
+| P9 | Append to this sessionlog rather than split | This sessionlog was 150 lines; appending a ~60-line Post-review section keeps the narrative coherent at ~210 lines. |
+
+### Files touched (post-review)
+
+**Created (3):**
+- `skills/dossier/references/review-checklist.md` (~180 lines, 8 items)
+- `skills/ballot/references/review-checklist.md` (~150 lines, 8 items)
+- `.changeset/20260418-130906-polish-pass.md`
+
+**Deleted (8):**
+- `.claude-plugin/hooks/dossier-citation-audit.sh`
+- `.claude-plugin/hooks/dossier-forbidden-words.sh`
+- `.claude-plugin/hooks/dossier-section-order.sh`
+- `.claude-plugin/hooks/dossier-dated-claim-scan.sh`
+- `.claude-plugin/hooks/ballot-anti-option.sh`
+- `.claude-plugin/hooks/ballot-cover-archaeology.sh`
+- `skills/dossier/references/framing-modes.yaml`
+- `skills/dossier/references/audit-checks.md`
+
+**Modified (10):**
+- `skills/ballot/SKILL.md` (frontmatter, When-to-Use, When-NOT-to-Use, workflow, conventions, gates → "Reviewing a ballot", use cases)
+- `skills/ballot/README.md` (purpose intro, file structure, testing scenarios, known gaps)
+- `skills/ballot/references/ballot-conventions.md` (intro, "one file per decider", "clean cover block", "no anti-options", tier-rule, gate-rigor, template-placeholder)
+- `skills/ballot/templates/ballot-per-reviewer.md` (optional peer ballot line, "reviewers disagree" → "reviewers disagree or single async decider flags dissent", delivery checklist comment)
+- `skills/dossier/SKILL.md` (FRAME mode pointer, GATHER dated-claim, DELIVER, Gates table, Common Mistakes table, ballot cross-ref, output convention)
+- `skills/dossier/README.md` (added Post-review polish paragraph, file structure, testing, known gaps)
+- `skills/dossier/references/framing-modes.md` (intro re-framed; each mode gets inline vocabulary examples replacing the YAML pointer)
+- `skills/dossier/templates/dossier.md` (section-order comment now points to review-checklist)
+- `.claude-plugin/marketplace.json` (ballot entry description)
+- `.claude-plugin/hooks/dossier-hook-dispatcher.sh` (simplified: removed routing logic; each kept script self-gates)
+- `README.md` (root skills table ballot row)
+
+### Hook test matrix (post-review)
+
+| Script | Input | Expected exit | Got |
+|--------|-------|---------------|-----|
+| `ballot-filename.sh` | `/tmp/DOSSIER-Test-BALLOT-Max.md` | 0 | 0 ✅ |
+| `ballot-filename.sh` | `/tmp/DOSSIER-Test-BALLOT.md` (no reviewer) | 1 | 1 ✅ |
+| `ballot-filename.sh` | `/tmp/DOSSIER-Regular.md` (non-ballot path) | 0 | 0 ✅ (self-gating works) |
+| `dossier-framing-declared.sh` | `/tmp/DOSSIER-Clean.md` with `framing-mode: oss` | 0 | 0 ✅ |
+| `dossier-framing-declared.sh` | `/tmp/DOSSIER-Bad.md` with no frontmatter | 1 | 1 ✅ |
+| `dossier-framing-declared.sh` | `/tmp/DOSSIER-Test-BALLOT-Max.md` (ballot path) | 0 | 0 ✅ (self-gating works) |
+
+Both scripts self-gate on filename pattern, which is why the simplified dispatcher can call them unconditionally.
+
+### Validation
+
+- `pnpm test` → passes; both skills list with new descriptions.
+- `pnpm run validate` → "All skills valid (0 warning(s))".
+- `grep -r <deleted-refs> skills/ .claude-plugin/ README.md` → only intentional historical references in review-checklist.md and ballot-conventions.md (describing why the hooks were deleted).
+
+### Git strategy
+
+Same as Pitch B:
+1. Commit in logical chunks on `worktree-dossier-polish`.
+2. Fast-forward-merge into `dossier-skill-pitch`.
+3. Push to origin.
+4. Append `## Post-review adjustments` section to PR #43 body via `gh pr edit 43 --body-file`.
+5. Do NOT open a new PR. Do NOT merge to main.
