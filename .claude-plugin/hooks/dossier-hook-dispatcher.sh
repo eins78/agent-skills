@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
-# dossier-hook-dispatcher.sh — runs all dossier audit scripts against a file
-# path extracted from a Claude Code PostToolUse event. Called by plugin.json
-# hook wiring on Write|Edit.
+# dossier-hook-dispatcher.sh — extracts file_path from the Claude Code
+# PostToolUse JSON payload (piped on stdin) and invokes the two mechanical
+# hooks against it. Each hook self-gates on filename pattern, so the
+# dispatcher calls both unconditionally and aggregates failures.
 #
-# Reads JSON from stdin; extracts .tool_input.file_path. If the path matches
-# DOSSIER-*.md, runs each audit script and aggregates exit codes. Exit 2 on
-# any failure (PostToolUse convention: exit 2 pipes stderr back to Claude).
+# The dispatcher exists purely as an argv/stdin shim — the kept scripts
+# take argv for CLI-testability, while Claude Code pipes JSON on stdin.
 #
-# Non-dossier paths, template files, and non-.md files exit 0 silently.
+# Prior versions of this dispatcher routed to 7 hooks and branched on
+# filename pattern. Six of those hooks were removed in the 2026-04-18
+# polish pass as overfit to the a11y-extension session (see
+# docs/sessionlogs/2026-04-18-pitch-b-impl.md §Post-review Polish).
+# The remaining two (ballot-filename, dossier-framing-declared) are the
+# mechanical checks that generalize across dossier styles.
 
 set -euo pipefail
 
@@ -37,30 +42,12 @@ fi
 
 failures=""
 
-# Ballot files get the ballot-specific audits only; full dossier audit does not apply.
-if [[ "$name" == *BALLOT* ]]; then
-  if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-  if ! output=$("$here/ballot-anti-option.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-  if ! output=$("$here/ballot-cover-archaeology.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-else
-  if ! output=$("$here/dossier-framing-declared.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-  if ! output=$("$here/dossier-citation-audit.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-  if ! output=$("$here/dossier-forbidden-words.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
-  if ! output=$("$here/dossier-section-order.sh" "$file_path" 2>&1); then
-    failures+="$output"$'\n'
-  fi
+# Each script self-gates on filename pattern — safe to call unconditionally.
+if ! output=$("$here/dossier-framing-declared.sh" "$file_path" 2>&1); then
+  failures+="$output"$'\n'
+fi
+if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
+  failures+="$output"$'\n'
 fi
 
 if [[ -n "$failures" ]]; then
