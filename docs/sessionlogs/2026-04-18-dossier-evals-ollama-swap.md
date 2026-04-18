@@ -23,7 +23,7 @@
 
 ## Comparison summary
 
-→ See `evals/JUDGE-COMPARISON.md` for full per-fixture scores and aggregate statistics.
+→ See `docs/2026-04-18-judge-comparison.md` for full per-fixture scores and aggregate statistics.
 
 Both models score **1.0 on pass fixtures, 0.0 on fail fixtures** across all 6 judge scorers.
 Perfect classification accuracy. Binary scoring rather than nuanced decimals, but this
