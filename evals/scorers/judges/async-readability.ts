@@ -1,7 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { JUDGE_MODEL } from "./_model";
-
-const client = new Anthropic();
+import { judge } from "./_model";
 
 const RUBRIC = `
 The ballot reads sensibly to the decider seeing it cold, 12 hours after handoff, on a phone.
@@ -16,13 +13,7 @@ Red flags:
 `;
 
 export async function judgeAsyncReadability(content: string): Promise<number> {
-  const response = await client.messages.create({
-    model: JUDGE_MODEL,
-    max_tokens: 128,
-    messages: [
-      {
-        role: "user",
-        content: `You are a ballot quality reviewer. Score the following ballot on "Async-Readability".
+  return judge(`You are a ballot quality reviewer. Score the following ballot on "Async-Readability".
 
 CRITERION:
 ${RUBRIC}
@@ -34,12 +25,5 @@ Score 0.5 if ambiguous.
 Respond with ONLY a decimal number between 0 and 1, nothing else.
 
 BALLOT:
-${content}`,
-      },
-    ],
-  });
-
-  const text = response.content[0]?.type === "text" ? response.content[0].text.trim() : "0";
-  const score = parseFloat(text);
-  return isNaN(score) ? 0 : Math.min(1, Math.max(0, score));
+${content}`);
 }

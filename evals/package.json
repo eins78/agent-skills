@@ -5,6 +5,10 @@
   "scripts": {
     "evals": "evalite run",
     "evals:full": "EVAL_MODE=full evalite run",
+    "evals:full:anthropic": "EVAL_MODE=full EVAL_PROVIDER=anthropic evalite run",
+    "evals:full:ollama": "EVAL_MODE=full EVAL_PROVIDER=ollama evalite run",
+    "evals:full:ollama-gemma": "EVAL_MODE=full EVAL_PROVIDER=ollama EVAL_OLLAMA_MODEL=gemma4:26b evalite run",
+    "evals:full:ollama-qwen": "EVAL_MODE=full EVAL_PROVIDER=ollama EVAL_OLLAMA_MODEL=qwen3:30b evalite run",
     "evals:watch": "evalite watch",
     "evals:full:watch": "EVAL_MODE=full evalite watch"
   },

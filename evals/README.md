@@ -11,10 +11,14 @@ pnpm install
 # Mechanical scorers only (zero API cost, fast, default dev loop)
 pnpm evals
 
-# All 16 scorers including LLM-as-judge (requires ANTHROPIC_API_KEY)
-ANTHROPIC_API_KEY=sk-... pnpm evals:full
+# All 16 scorers — Anthropic judges (requires ANTHROPIC_API_KEY)
+ANTHROPIC_API_KEY=sk-... pnpm evals:full:anthropic
 # or: copy .env.example to .env and add your key, then:
-pnpm evals:full
+pnpm evals:full:anthropic
+
+# All 16 scorers — Ollama judges (requires Ollama running on localhost:11434)
+pnpm evals:full:ollama-gemma    # gemma4:26b (default)
+pnpm evals:full:ollama-qwen     # qwen3:30b
 
 # Watch mode
 pnpm evals:watch
@@ -26,6 +30,23 @@ pnpm evals:full:watch
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+### Provider env vars
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EVAL_PROVIDER` | `anthropic` | `anthropic` or `ollama` |
+| `EVAL_ANTHROPIC_MODEL` | `claude-sonnet-4-6` | Anthropic model ID |
+| `EVAL_OLLAMA_BASE_URL` | `http://localhost:11434/v1` | Ollama OpenAI-compatible endpoint |
+| `EVAL_OLLAMA_MODEL` | `gemma4:26b` | Ollama model tag |
+
+**Anthropic:** needs `ANTHROPIC_API_KEY`. `.env` is gitignored — copy from `.env.example`.
+
+**Ollama:** needs `ollama serve` running locally with the target model pulled (`ollama pull gemma4:26b`). No API key required. Models with thinking mode (Gemma 4, Qwen3) have thinking disabled via `options: {think: false}` so the score lands in `content`, not `reasoning`.
+
+### Score parsing
+
+Judges prompt for a bare decimal (`0.7`). If a model responds with surrounding prose (`"The score is 0.7."`), the parser extracts the first word-boundary decimal in range `[0, 1]`. If no decimal can be found, the scorer throws so the fixture is not silently scored `0`.
 
 ## Stack
 
@@ -98,4 +119,4 @@ Smoke fixtures in `fixtures/{dossiers,ballots}/smoke/` are real artefacts from `
 
 ## Model
 
-Judge model: `claude-sonnet-4-6`. Centralized in `scorers/judges/_model.ts` for easy swaps.
+Judge provider and model are configured via env vars (see Provider env vars above). Default: Anthropic `claude-sonnet-4-6`. Provider switching is centralized in `scorers/judges/_model.ts`.
