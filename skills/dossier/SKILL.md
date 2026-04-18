@@ -17,24 +17,26 @@ metadata:
 
 Structured research producing actionable reports with ranked recommendations, cited sources, and optional decision ballots. Works for any domain — tech, travel, health, policy, finance, art.
 
-## Workflow: FRAME → GATHER → EVALUATE → SYNTHESIZE → DELIVER
+## Workflow: SCOPE → GATHER → EVALUATE → SYNTHESIZE → DELIVER
 
-### 0. FRAME (before any research)
+### 0. Preflight — verify the request is actionable
 
-Declare three things in writing before the first WebSearch. Without these, framing drifts and entire rounds get wasted.
+Before starting research, confirm all three:
 
-- **Decision model.** Three axes, each explicit:
-  - *Who decides* — single decider / panel of N / consensus-of-N / recommending-decider-plus-approver
-  - *By when* — calendar date, sprint end, or "no deadline"
-  - *How* — majority / unanimous / single-choice / must-agree-on-must-tier
-- **Framing mode.** One of `oss` / `commercial` / `hiring` / `vendor` / `personal`. Declared in YAML frontmatter as `framing-mode: <value>`. Consult `${CLAUDE_SKILL_DIR}/references/framing-modes.md` for when each applies and what vocabulary each mode commits the dossier to. A missing declaration fails the `dossier-framing-declared` gate; framing coherence (matching tone to declared mode) is reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
-- **Audience.** Who reads the dossier (not who decides — different people often). Readers shape jargon, link density, and the Key Facts box. Expressed as a prose line inside the Key Facts box, not as a frontmatter field.
+1. **Specific** — what to investigate is bounded: a named topic, a concrete comparison, or a clear question. "Look into the X space generically" fails this.
+2. **Unambiguous** — contested terms are defined by context. If the request uses a word with multiple plausible meanings and context doesn't resolve which, flag it.
+3. **Well-understood** — you can state the objective back to the operator in 1–2 sentences without hedging. If you'd have to pad with "I think you mean…" or "depending on what you want from this…", you don't understand it yet.
+
+If one or more checks fail, **ask before starting**. A dossier built on unclear objectives wastes more research time than the clarifying turn costs. Batch questions; offer choices where reasonable; skip the obvious.
+
+If all three check out, proceed directly to SCOPE. Do not ask just to perform diligence — the bar is "the answer isn't obvious from context," not "I want to be extra sure."
 
 ### 1. SCOPE
 
 - **Type:** comparison, evaluation, or investigation?
 - **Requirements:** R1-Rn with weights (Critical/High/Medium) — for comparisons
 - **Selectivity:** 5-8 options, not a laundry list
+- **Decision model** (when a choice is being made): note who decides, by when, and how — record in the Key Facts box before GATHER.
 - **Sources:** consult `${CLAUDE_SKILL_DIR}/references/sources-by-domain.md`
 - **Output folder:** Check existing `research/` directories first — if one matches the current topic, add to it rather than creating a new folder. Ask the user when unsure. Only create `research/YYYY-MM-DD-slug/` for genuinely new topics.
 
@@ -76,7 +78,7 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 
 ### 5. DELIVER
 
-Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers framing coherence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, and Key Facts box accuracy. The two mechanical gates (`dossier-framing-declared`, `ballot-filename`) fire automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
+Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers preflight evidence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, and Key Facts box accuracy. The mechanical gate (`ballot-filename`) fires automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
 
 - Commit dossier folder (`D:` intention per commit-notation).
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers.
@@ -98,22 +100,18 @@ Multiple dossiers per folder is expected.
 
 ## Gates (hooks)
 
-Two mechanical gates run PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. These are **alerting-level** — the file is already on disk when they fire; a motivated agent can ignore. PreToolUse rigor is future work.
+One mechanical gate runs PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. **Alerting-level** — the file is already on disk when it fires; a motivated agent can ignore. PreToolUse rigor is future work.
 
 | Gate | Fails on |
 |------|----------|
-| `dossier-framing-declared.sh` | Non-ballot DOSSIER-*.md with no `framing-mode:` declaration |
 | `ballot-filename.sh` | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
 
-Everything else is reviewed by checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session (the `[Xn]` citation style, the OSS-mode wordlist, H2-level glossary heading, specific archaeology phrases). Dossiers in other styles use different conventions; a judgement-capable reviewer catches the concerns more reliably. See `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
+Everything else is reviewed by checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced doesn't generalize across dossier styles. See `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---------|-----|
-| Skipping FRAME, letting evidence set the framing | Declare mode/decider/audience before the first WebSearch |
-| Missing `framing-mode:` frontmatter | `dossier-framing-declared.sh` fails; add the frontmatter |
-| Commercial vocabulary in an OSS dossier | Re-read the framing-mode; reviewed in the checklist (framing-coherence item) |
 | Orphan citations | Reviewed in the checklist (citation-integrity item) — every inline reference should match a §Sources entry |
 | Glossary at the back of the dossier | Glossary first (read-support); Sources last (trust-support) |
 | Dates treated as static | Reviewed in the checklist (dated-claim-freshness item) — re-verify each |
