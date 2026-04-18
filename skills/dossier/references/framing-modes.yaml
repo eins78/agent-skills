@@ -1,0 +1,62 @@
+# framing-modes.yaml — single source of truth for per-mode forbidden-word lists.
+#
+# Consumed by: .claude-plugin/hooks/dossier-forbidden-words.sh via yq v4.
+# Human-readable companion: framing-modes.md (same directory).
+#
+# Each word is a case-insensitive grep pattern. To add or remove a word,
+# edit this file — the gate picks it up on next invocation.
+
+modes:
+  oss:
+    description: >-
+      Free / libre / open-source artefact, published without a commercial
+      lead-gen layer. No revenue thesis, no pricing table, no donation ask.
+    forbidden:
+      - lead-gen
+      - paddle
+      - stripe
+      - mor
+      - compliance officer
+      - vat
+      - pricing
+      - monetiz
+      - revenue
+      - donation
+
+  commercial:
+    description: >-
+      Paid SaaS, one-time licence, or freemium with a paid tier — revenue
+      and pricing are load-bearing. Not charity; not donation-supported.
+    forbidden:
+      - charity
+      - pro bono
+      - donation
+      - volunteer basis
+      - freemium-forever
+
+  hiring:
+    description: >-
+      Hiring-panel decision, candidate comparison, or role-scoping.
+      Compensation specifics stay out of the ballot body — they live in
+      the offer letter.
+    forbidden:
+      - salary
+      - compensation
+      - equity
+      - bonus
+
+  vendor:
+    description: >-
+      Evaluating an outside vendor for adoption. Price the real cost at
+      expected scale; do not smuggle "we'll stay on free tier forever"
+      into the evaluation.
+    forbidden:
+      - free tier
+      - community edition
+      - open core
+
+  personal:
+    description: >-
+      Household / personal decisions where framing-mode enforcement
+      would be noise. No forbidden words; the gate exits 0 for this mode.
+    forbidden: []
