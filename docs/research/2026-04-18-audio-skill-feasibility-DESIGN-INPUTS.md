@@ -33,7 +33,7 @@ Three concrete additions to the v0 scope beyond what the feasibility dossier alr
 
 ### Reference material
 
-- [Overcast episode about auto transcripts][ref-R1] — operator's source; Marco Arment discusses transcript support implementation in Overcast
+- [ATP (Accidental Tech Podcast) episode transcript][ref-R1] — linked via David Smith's `podcastsearch.david-smith.org` transcript-search service. Marco Arment (Overcast dev, ATP co-host) discusses transcript support in this ATP episode and later ones. Operator's source. Corrected 2026-04-18 20:34Z (had been attributed to an Overcast episode).
 - Podcasting 2.0 transcript spec: `<podcast:transcript>` namespace element
 - ID3v2 CHAP (chapter) frames: MP3 chapter support
 - Apple iTunes chapters: `moov/udta/chpl` atom in M4A/AAC
