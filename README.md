@@ -11,6 +11,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [ai-review](skills/ai-review/) | Get AI code review from a second model (Gemini/OpenAI) mid-session via CLI |
 | [apple-mail](skills/apple-mail/) | Read email via Apple Mail.app and AppleScript (read-only) |
 | [apple-notes](skills/apple-notes/) | Read Apple Notes via AppleScript (read-only) |
+| [ballot](skills/ballot/) | Per-reviewer decision ballots for contested decisions — Must/Should/Could tiers, empty-by-default checkboxes, reconciliation in sessionlog. Pairs with `dossier` or stands alone (ADRs, hiring panels, vendor selection, household) |
 | [bye](skills/bye/) | Session wrap-up — reconstructs history, creates sessionlog, commits, summarizes next steps |
 | [chrome-browser](skills/chrome-browser/) | Dedicated Chrome with CDP for Playwright MCP — persistent sessions, launchd-managed, Cloudflare tips |
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |

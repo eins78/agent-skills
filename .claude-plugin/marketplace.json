@@ -47,6 +47,16 @@
       }
     },
     {
+      "name": "ballot",
+      "description": "Use when a decision has two or more reviewers and needs a durable artefact. Triggers: decision ballot, multi-reviewer decision, architecture call, ADR, hiring panel, vendor selection, household decision, reconcile, per-reviewer, contested decision, ballot.",
+      "version": "1.0.0",
+      "source": "./skills/ballot",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
       "name": "bye",
       "description": "Use when the user says /bye, \"wrap up\", \"end session\", or similar. Reconstructs full session history including compacted context, creates a sessionlog (if project has a sessionlog directory), commi...",
       "version": "2.1.0",
