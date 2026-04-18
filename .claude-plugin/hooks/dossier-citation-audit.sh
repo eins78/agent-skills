@@ -27,8 +27,15 @@ sources=$(awk '/^## Sources[[:space:]]*$/{flag=1} flag{print}' "$file")
 used=$(printf '%s\n' "$body" | grep -oE '\[[A-Z]+[0-9]+\]' | sort -u || true)
 defined=$(printf '%s\n' "$sources" | grep -oE '\[[A-Z]+[0-9]+\]' | sort -u || true)
 
-# No footnote-style citations at all → nothing to audit.
+# No footnote-style citations at all → emit a warning and exit 0.
+# A dossier that relies exclusively on inline [text](url) hyperlinks is
+# legitimate, but the author should confirm this was deliberate — otherwise
+# citations may have been written as [Xn] but never defined, or the §Sources
+# section may be absent by accident.
 if [[ -z "$used" ]]; then
+  echo "WARNING: no [Xn] footnote refs found in $file — citation audit is a no-op." >&2
+  echo "  If this dossier uses inline [text](url) hyperlinks only, this is expected." >&2
+  echo "  Otherwise, check refs were written as [X1], [X2], etc. and defined in ## Sources." >&2
   exit 0
 fi
 

@@ -3,17 +3,9 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 ---
 
 <!--
-  Section-order rule (enforced by .claude-plugin/hooks/dossier-section-order.sh):
-
-    Glossary / Key Concepts / Terminology  →  STAYS AT TOP
-    Sources                                 →  STAYS AT END
-
-  The asymmetry is deliberate. Glossary is READ-SUPPORT — a reader needs the
-  definitions BEFORE encountering the terms in content. Sources are
-  TRUST-SUPPORT — consulted AFTER content, when a specific claim is questioned.
-
-  Do not move Glossary to the appendix by analogy with Sources. The hook
-  will fail the build and this comment will stay.
+  Section-order rule (enforced by dossier-section-order.sh):
+  Glossary stays at top (read-support); Sources stays at end (trust-support).
+  See skills/dossier/SKILL.md §SYNTHESIZE for the asymmetry rationale.
 -->
 
 # {Title}
@@ -32,8 +24,9 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 | | |
 |---|---|
 | **Who decides** | {named reviewer(s)} |
-| **Decision model** | {e.g. single decider / two-reviewer vote / consensus of N} |
+| **Decision model** | {e.g. single decider, majority / two-reviewer, must-agree-on-must / consensus-of-N} |
 | **Deadline** | {YYYY-MM-DD or "no hard deadline"} |
+| **Audience** | {who reads the dossier — not always the same as who decides} |
 | **Hard constraints** | {1-3 items that any chosen option must satisfy} |
 | **Load-bearing claim 1** | {the single fact that most shapes the recommendation} |
 | **Load-bearing claim 2** | {second-most} |
