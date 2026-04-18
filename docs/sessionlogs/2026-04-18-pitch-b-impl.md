@@ -231,3 +231,38 @@ Same as Pitch B:
 3. Push to origin.
 4. Append `## Post-review adjustments` section to PR #43 body via `gh pr edit 43 --body-file`.
 5. Do NOT open a new PR. Do NOT merge to main.
+
+---
+
+## Post-review follow-up: clickable citations (2026-04-18, same-day)
+
+Max surfaced one more concrete bugfix for the same PR before /bye: make `[R1]` / `[G6]` / `[Sn]` style citations clickable via Markdown reference-link syntax, while preserving the bracket tokens readers see in raw markdown.
+
+### Decisions made
+
+| # | Decision | Rationale |
+|---|---|---|
+| C1 | Default to reference-link syntax (`[S1][ref-S1]` + `[ref-S1]: url`) over footnote syntax (`[^S1]`) | Portability. Reference-links render consistently in GitHub, Obsidian, Bitbucket, Confluence, iOS Markdown Reader, terminal previewers. Footnote rendering is uneven — GitHub does it, Confluence internal renderers often don't, many mobile readers skip them. Brief said "favour portability"; reference-links win. Footnote form documented as an alternative for authors whose target renderer supports it. |
+| C2 | Accept plain-bracket rendering (rendered link text shows `S1`, not `[S1]`) over fullwidth unicode brackets or backslash-escaping | Raw markdown keeps `[S1]` bracket tokens for a reviewer viewing the file directly. Rendered link shows `S1` without brackets, which is the standard markdown rendering and what readers expect from link text. Fullwidth `［S1］` is visually heavier and looks foreign in otherwise plain prose. Backslash-escape makes raw markdown noisier (`\[S1\][ref-S1]`). Both alternatives trade raw-file readability or rendered polish for marginal bracket preservation — not worth it. |
+| C3 | Backwards-compatible — existing bare `[Xn]` citations remain valid, they just aren't clickable | No retroactive rewrite required. Forward-looking convention. Existing dossiers pass the review-checklist's citation-integrity item as long as each bare `[Xn]` resolves to a §Sources entry (same as before); upgrading to `[Xn][ref-Xn]` adds the clickability. |
+| C4 | Category-prefix scheme left to the author's convention (S, G, R, O, W, X...) but must be internally consistent | Different dossier styles organize sources differently (Requirements-anchored vs Gather-buckets vs Sources-only vs Official/Other). Mandating one scheme would over-fit. The review-checklist flags mixed prefixes without a pattern as a red flag. |
+
+### Files touched
+
+- `skills/dossier/SKILL.md` — §4 SYNTHESIZE citation guidance (one bullet).
+- `skills/dossier/templates/dossier.md` — §Evaluations inline-cite hint; §Sources fully rewritten to use `[ref-Sn]` labels with reference-link definitions at the bottom.
+- `skills/dossier/references/review-checklist.md` — citation-integrity item (#2) rewritten to describe the new pattern, document the footnote alternative + portability rationale, and list concrete red flags for the new syntax.
+- `.changeset/20260418-130906-polish-pass.md` — added bullet describing the clickable-citations upgrade; still minor bump for both skills (additive UX improvement; no breakage).
+- This sessionlog — appended this section.
+
+### What was NOT changed
+
+- `skills/ballot/templates/ballot-per-reviewer.md` — ballots don't have a §Sources section and don't carry citations; the reference-link pattern doesn't apply.
+- `skills/dossier/references/sources-by-domain.md` — already uses inline `[name](url)` links throughout; no `[Xn]`-style citations to upgrade.
+- Hook scripts — the kept hooks (`ballot-filename.sh`, `dossier-framing-declared.sh`) are mechanical checks unrelated to citation style.
+
+### Verification
+
+- Mental simulation of a reader opening a dossier produced under the new pattern: body text reads `"Kubernetes 1.29 shipped in January 2026 [S4][ref-S4]"`; `S4` is a clickable link to the release notes; raw markdown still shows the bracket token for file-viewing reviewers. The §Sources entry near the end gives the verbal citation; the `[ref-S4]: https://...` definition right after makes the link work. Click UX matches expectations.
+- `pnpm test` + `pnpm run validate` — to be run after the commit before push.
+- No regression of the existing citation-integrity concern — every `[Xn]` still needs a §Sources entry; the addition is the `[ref-Xn]` label that makes the link clickable.
