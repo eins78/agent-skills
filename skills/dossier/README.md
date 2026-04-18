@@ -19,7 +19,9 @@ Extracted from validated research artifacts across multiple domains:
 
 **Path B refactor (2026-04-18).** Ballot conventions and template extracted into a standalone `ballot` skill — see `skills/ballot/`. The dossier SKILL now cross-references ballot; the per-reviewer template moved from `skills/dossier/templates/` to `skills/ballot/templates/`. Wordlists consolidated into `references/framing-modes.yaml` (single source of truth, consumed by the gate via yq). Added `dossier-framing-declared` gate (closes the declaration-vs-consequence split) and citation-audit no-op warning. Rationale: `docs/pitches/2026-04-18-pitch-A-assessment.md` §§3, 5, 6.
 
-**Post-review polish (2026-04-18).** Six overfit grep hooks removed (citation-audit, forbidden-words, section-order, dated-claim-scan, ballot-anti-option, ballot-cover-archaeology); two mechanical hooks kept (`dossier-framing-declared`, `ballot-filename`). The removed hooks encoded a11y-session-specific patterns that didn't generalize across dossier styles. Replaced by `references/review-checklist.md` — a reviewer-facing audit doc that generalizes the concerns. `framing-modes.yaml` and `audit-checks.md` were deleted as orphaned once `forbidden-words.sh` was removed; `framing-modes.md` retains mode-selection guidance.
+**Post-review polish (2026-04-18).** Six overfit grep hooks removed (citation-audit, forbidden-words, section-order, dated-claim-scan, ballot-anti-option, ballot-cover-archaeology); two mechanical hooks kept (`dossier-framing-declared`, `ballot-filename`). The removed hooks encoded a11y-session-specific patterns that didn't generalize across dossier styles. Replaced by `references/review-checklist.md` — a reviewer-facing audit doc that generalizes the concerns. `framing-modes.yaml` and `audit-checks.md` were deleted as orphaned; `framing-modes.md` temporarily retained mode-selection guidance (removed in the preflight-gate pass below).
+
+**Preflight gate (2026-04-18).** `dossier-framing-declared.sh` and `framing-modes.md` removed — the framing-mode convention (`oss`/`commercial`/`hiring`/`vendor`/`personal`) was over-specific, same anti-pattern as the six deleted grep hooks. Replaced the `### 0. FRAME` step with a three-check preflight gate (Specific / Unambiguous / Well-understood). Review-checklist item 1 swapped from "framing coherence" to "preflight evidence".
 
 ## Design Influences
 
@@ -35,7 +37,6 @@ dossier/
 ├── README.md                         # This file
 ├── references/
 │   ├── sources-by-domain.md          # Domain → source mapping (13 domains)
-│   ├── framing-modes.md              # When to pick each mode + vocabulary guidance
 │   └── review-checklist.md           # Reviewer audit checklist (8 items)
 └── templates/
     └── dossier.md                    # Report template with REQUIRED/OPTIONAL sections
@@ -43,9 +44,8 @@ dossier/
 
 # Hooks (repo-level, wired in .claude-plugin/plugin.json via dossier-hook-dispatcher.sh):
 .claude-plugin/hooks/
-├── dossier-framing-declared.sh       # Gate: framing-mode: declared in frontmatter
 ├── ballot-filename.sh                # Gate: per-reviewer ballot naming (owned by skills/ballot)
-└── dossier-hook-dispatcher.sh        # Argv/stdin shim — extracts file_path from PostToolUse JSON and invokes the two kept scripts
+└── dossier-hook-dispatcher.sh        # Argv/stdin shim — extracts file_path from PostToolUse JSON and invokes ballot-filename.sh
 ```
 
 ## Dependencies
@@ -58,13 +58,12 @@ dossier/
 To verify the skill works:
 
 1. **Trigger test:** Say "research the best X" or "compare A vs B" — the skill should load
-2. **FRAME test:** Verify the produced dossier declares framing mode, decision model, and audience before research content
+2. **Preflight test:** Give an ambiguous request ("look into the AI space") — the skill should ask for clarification before starting research
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
-4. **Framing-declaration gate:** Remove the `framing-mode:` frontmatter — the `dossier-framing-declared.sh` hook fires via the dispatcher, stderr reports the missing declaration, exit code 2.
-5. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
-6. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 8 items should be actionable against the finished dossier.
-7. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
-8. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
+4. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
+5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 8 items should be actionable against the finished dossier.
+6. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
+7. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
 
 ## Known Gaps
 
