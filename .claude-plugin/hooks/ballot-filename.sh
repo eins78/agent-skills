@@ -27,7 +27,9 @@ if [[ "$name" != *BALLOT* ]]; then
 fi
 
 # Strict: DOSSIER-*-BALLOT-<reviewer>.md, reviewer non-empty.
-if [[ "$name" =~ ^DOSSIER-.+-BALLOT-[A-Za-z0-9_]+\.md$ ]]; then
+# Reviewer segment permits letters, digits, underscore, and hyphen
+# (hyphen supports names like "Max-Albrecht" or "Anne-Marie").
+if [[ "$name" =~ ^DOSSIER-.+-BALLOT-[A-Za-z0-9_-]+\.md$ ]]; then
   exit 0
 fi
 
