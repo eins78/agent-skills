@@ -11,7 +11,7 @@
 
 **Recommendation.** Ship **Path A** (status-quo-plus improvements to `dossier`) in the next 1–2 weeks. Then, after two more real-world uses of the improved skill validate the new conventions, split **`ballot` out as a standalone skill** (Path B). Leave the three-way split (Path C) out of scope — research and synthesis iterate too tightly to separate cleanly.
 
-**Why this order.** The recent a11y-extension session exposed ten concrete failure modes (framing mismatch, dated-claim drift, citation orphans, commercial-framing leaks, anti-option padding, DEC-008 time-horizon mixing, ballot-format iteration, misplaced reconciliation, cover-block archaeology, over-engineered intermediate templates). Six of the ten are addressable with small additions to the existing `dossier` skill — and five of those six can be **gates** (hook-backed shell checks with exit codes) rather than rules the agent might rationalise away. The remaining failure modes are about the *ballot as an artefact*; they deserve a dedicated skill because the ballot is already used outside dossier contexts (Quatico sales-hub ballots, and natural fits for ADRs, architecture reviews, hiring panels, vendor selection, household decisions).
+**Why this order.** The recent a11y-extension session exposed eleven concrete failure modes (framing mismatch, dated-claim drift, citation orphans, commercial-framing leaks, anti-option padding, DEC-008 time-horizon mixing, ballot-format iteration, misplaced reconciliation, cover-block archaeology, over-engineered intermediate templates, and glossary-and-key-facts placed at the back instead of the front). Seven of the eleven are addressable with small additions to the existing `dossier` skill — and six of those seven can be **gates** (hook-backed shell checks with exit codes) rather than rules the agent might rationalise away. The remaining failure modes are about the *ballot as an artefact*; they deserve a dedicated skill because the ballot is already used outside dossier contexts (Quatico sales-hub ballots, and natural fits for ADRs, architecture reviews, hiring panels, vendor selection, household decisions).
 
 **What this pitch is not.** A commit-ready plan. It recommends a direction, quantifies effort, and lists the open questions that must be answered before implementation begins.
 
@@ -128,6 +128,30 @@ Artefact paths used below (all in `quatico-workspace`):
 
 **Gate-capable.** N/A (not a failure).
 
+### 11. Glossary and key facts landed at the back, not the top
+
+**What.** The quatico dossier's reader hits §1 Executive Summary on line 32, then §2 through §10 across lines 116–704, and only reaches the Glossary at §11 (line 735) and Sources at §12 (line 755). By the time the reader reaches §11 they have already encountered CDP, AX tree, `chrome.debugger`, EAA, BehiG, MoR, trader verification, Established Publisher, Group publisher, CLA, DCO, MV3 — each for the first time, without context. There is no "key facts" box at the top summarising who decides, the decision model, hard constraints, deadline, or the 3–5 most load-bearing claims.
+
+**Evidence.** Quatico dossier `DOSSIER-A11y-Extension-Chrome-Store-2026-04-17.md` lines 14–28 (How-To-Read block — correctly at top), line 32 (§1 Executive Summary — starts using jargon before glossary), line 735 (§11 Glossary — first definition appears after 703 lines of content), line 755 (§12 Sources — correctly at end).
+
+**Why.** The current template at `skills/dossier/templates/dossier.md` actually has **Key Concepts at line 9**, right after metadata — correctly placed. The a11y session moved it to the back, likely by analogy with the sources convention (both are "reference material"). That analogy is wrong: glossary is *read-support* (needed **before** encountering terms in content); sources are *trust-support* (checked **after** content, when a specific claim is questioned). Conflating them places both at the back and breaks read-support.
+
+The template also has **no key-facts box** — a quick-reference one-screen summary of who/what/when/constraints. Readers with five minutes currently get routed to "read §1 Executive Summary" (per the How-To-Read block), but §1 is prose, not a key-facts box.
+
+**Gate-capable.** **Yes — partial.** A hook can check section ordering: if a section titled Glossary / Key Concepts / Terminology appears after the Executive Summary or Management Summary section, fail. Key-facts box can be enforced by grep for a known heading or frontmatter field.
+
+**Template implication (specific).** The default dossier structure should be:
+
+1. Title + date + authors + status
+2. **How to read this document** (5 / 15 / 60-minute paths — quatico dossier already has this)
+3. **Key facts** (one-screen box: who decides, decision model, hard constraints, deadline, 3–5 load-bearing claims) — **new**
+4. **Glossary** (terms needed to read the rest — skim or skip, but present so terms are loaded before they appear) — **moved from back to front**
+5. Executive summary
+6. …rest of sections (current state, requirements, evaluations, recommendations, ballot)
+7. Sources (stays at end — trust-support, consulted after content)
+
+The asymmetry (glossary-first + sources-last) is deliberate: different reader needs, different placements.
+
 ---
 
 ## Pitch directions
@@ -216,11 +240,12 @@ Three evolution paths, each with one-line description, scope, pros/cons, effort 
 **Phase 1 (next 1–2 weeks): Path A improvements land in `dossier`.**
 
 What goes into `skills/dossier/`:
-- SKILL.md: new §0 SCOPE-AND-FRAME step (framing declaration + audience + decision model), new citation-integrity step in §4 SYNTHESIZE, new dated-claim verification step in §2 GATHER, new "anti-options are friction" warning near the ballot reference, new forbidden-word sweep step before DELIVER.
+- SKILL.md: new §0 SCOPE-AND-FRAME step (framing declaration + audience + decision model), new citation-integrity step in §4 SYNTHESIZE, new dated-claim verification step in §2 GATHER, new "anti-options are friction" warning near the ballot reference, new forbidden-word sweep step before DELIVER, explicit **"glossary and key-facts go first, sources go last"** template rule (addresses failure mode #11).
+- `templates/dossier.md`: restructure to lead with (1) metadata, (2) How-to-read block, (3) **Key facts box** (new), (4) Glossary (currently named "Key Concepts" — stays at top, relabel optional), (5) Executive/Management Summary, then rest, with Sources always last. Preserve the existing REQUIRED/OPTIONAL comment markers; add a sharp comment at the top of Glossary saying *"stay at top; do not move to appendix — asymmetric to Sources on purpose."*
 - `references/framing-modes.md`: OSS / commercial / hiring / vendor / personal with per-mode forbidden-word lists and typical section structures.
-- `references/audit-checks.md`: citation-integrity shell snippet, dated-claim grep pattern, forbidden-word sweep script, ballot format check.
+- `references/audit-checks.md`: citation-integrity shell snippet, dated-claim grep pattern, forbidden-word sweep script, ballot format check, section-order check (Glossary position before Executive Summary).
 - `templates/ballot-per-reviewer.md`: the sales-hub per-reviewer ballot template with Must/Should/Could tiers, clean cover block, no anti-options by default.
-- Optional: `.claude-plugin/hooks/dossier-audit.sh` as a PostToolUse hook (or `pnpm run dossier:audit` — see Open Questions) that runs the three automatable checks.
+- Optional: `.claude-plugin/hooks/dossier-audit.sh` as a PostToolUse hook (or `pnpm run dossier:audit` — see Open Questions) that runs the four automatable checks (citation integrity, forbidden-words, ballot filename, section-order).
 - Root `README.md`: no change (no new skill, no rename).
 - CHANGESET: minor bump (new sections, expanded coverage — semver `1.0.1` → `1.1.0`).
 
@@ -232,6 +257,8 @@ What goes into `skills/dossier/`:
 | Forbidden-word sweep | **Gate** | `grep -i -c` per-mode wordlist, exit 1 on hit |
 | Ballot filename pattern (`*-BALLOT-<reviewer>.md`) | **Gate** | path check in hook |
 | Framing declaration present | **Gate** | grep for framing frontmatter or declaration line |
+| Section-order (Glossary before Executive, Sources at end) | **Gate** | parse H2 order, fail if Glossary appears after Executive Summary |
+| Key-facts box present | **Gate** | grep for the Key-facts heading within first N sections |
 | Dated-claim verification | Rule + partial gate | gate flags dates, agent must verify |
 | Anti-option discouragement | Rule + partial gate | gate flags phrase patterns, agent justifies or removes |
 | Time-horizon-per-DEC | Rule | semantic, can't auto-check |
@@ -296,10 +323,11 @@ Not an implementation plan — a sketch of what each phase touches. The actual i
 ### Phase 1 — Path A improvements (Week 1–2 after approval)
 
 **Files touched:**
-- `skills/dossier/SKILL.md` — rewrite, ~99 → ~150 lines
+- `skills/dossier/SKILL.md` — rewrite, ~99 → ~160 lines
 - `skills/dossier/README.md` — update known-gaps and provenance sections
+- `skills/dossier/templates/dossier.md` — **restructure**: insert Key-facts box between How-to-read and Glossary; affix top-of-file comment *"Glossary stays at top; Sources stay at end; this asymmetry is deliberate — glossary is read-support, sources are trust-support."*
 - `skills/dossier/references/framing-modes.md` — **new**, ~80 lines
-- `skills/dossier/references/audit-checks.md` — **new**, ~60 lines
+- `skills/dossier/references/audit-checks.md` — **new**, ~60 lines (includes section-order check script)
 - `skills/dossier/templates/ballot-per-reviewer.md` — **new**, ~120 lines (per-reviewer template with Must/Should/Could tiers, clean cover, anti-option warnings inline)
 - `.changeset/<timestamp>.md` — **new**, minor bump per Q6
 
