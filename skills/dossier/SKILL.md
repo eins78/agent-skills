@@ -27,7 +27,7 @@ Declare three things in writing before the first WebSearch. Without these, frami
   - *Who decides* — single decider / panel of N / consensus-of-N / recommending-decider-plus-approver
   - *By when* — calendar date, sprint end, or "no deadline"
   - *How* — majority / unanimous / single-choice / must-agree-on-must-tier
-- **Framing mode.** One of `oss` / `commercial` / `hiring` / `vendor` / `personal`. Declared in YAML frontmatter as `framing-mode: <value>`. Consult `${CLAUDE_SKILL_DIR}/references/framing-modes.md` for when each applies; canonical forbidden-word lists live in `${CLAUDE_SKILL_DIR}/references/framing-modes.yaml`. A missing declaration fails the `dossier-framing-declared` gate.
+- **Framing mode.** One of `oss` / `commercial` / `hiring` / `vendor` / `personal`. Declared in YAML frontmatter as `framing-mode: <value>`. Consult `${CLAUDE_SKILL_DIR}/references/framing-modes.md` for when each applies and what vocabulary each mode commits the dossier to. A missing declaration fails the `dossier-framing-declared` gate; framing coherence (matching tone to declared mode) is reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
 - **Audience.** Who reads the dossier (not who decides — different people often). Readers shape jargon, link density, and the Key Facts box. Expressed as a prose line inside the Key Facts box, not as a frontmatter field.
 
 ### 1. SCOPE
@@ -51,7 +51,7 @@ Dispatch parallel subagents scaled to complexity:
 
 Each agent returns structured findings with URLs for every claim. Check `/last30days` first for topics with social signal (consumer, OSS). Skip for B2B, academic, niche. Pivot to WebSearch if <3 results.
 
-**Dated-claim verification.** Every deadline, CFP date, release-window, or "closes X 2026" claim must be re-verified against a primary source accessed on the production date. The `dossier-dated-claim-scan` hook lists every dated claim at audit time for manual verification. Dates stale silently; they are the single most common source of drift in multi-session dossiers.
+**Dated-claim verification.** Every deadline, CFP date, release-window, or "closes X 2026" claim must be re-verified against a primary source accessed on the production date. Dates stale silently; they are the single most common source of drift in multi-session dossiers. Reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (dated-claim-freshness item).
 
 ### 3. EVALUATE
 
@@ -72,11 +72,11 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 - **Source categories** adapt to domain (see template).
 - **Template-order rule.** Glossary stays at the top; Sources stay at the end. The asymmetry is deliberate — glossary is read-support (before), sources are trust-support (after). Do not move glossary to the appendix by analogy with sources.
 
-**Ballot** (when the decision has two or more reviewers): use the `ballot` skill. Template at `skills/ballot/templates/ballot-per-reviewer.md`; conventions at `skills/ballot/SKILL.md`.
+**Ballot** (when decisions happen async — reviewed over chat, on a PR, after the session ends): use the `ballot` skill. Works for multi-reviewer panels and single async deciders alike. Template at `skills/ballot/templates/ballot-per-reviewer.md`; conventions at `skills/ballot/SKILL.md`.
 
 ### 5. DELIVER
 
-Audits run automatically on Write/Edit via the PostToolUse hook wiring — exit 2 feeds stderr back to Claude, which should fix and re-write. See §Gates below. Once audits pass:
+Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers framing coherence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, and Key Facts box accuracy. The two mechanical gates (`dossier-framing-declared`, `ballot-filename`) fire automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
 
 - Commit dossier folder (`D:` intention per commit-notation).
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers.
@@ -86,8 +86,8 @@ Audits run automatically on Write/Edit via the PostToolUse hook wiring — exit 
 ```
 research/YYYY-MM-DD-slug/
 ├── DOSSIER-Title-Words-YYYY-MM-DD.md           # Main report
-├── DOSSIER-Title-Words-BALLOT-Max.md           # Optional: one per reviewer
-├── DOSSIER-Title-Words-BALLOT-Patrick.md       # Optional: one per reviewer
+├── DOSSIER-Title-Words-BALLOT-Max.md           # Optional: one per decider
+├── DOSSIER-Title-Words-BALLOT-Patrick.md       # Optional: one per decider (multi-reviewer case)
 ├── DOSSIER-Followup-Title-YYYY-MM-DD.md        # Follow-up dossiers in same folder
 └── (attachments — rare)
 ```
@@ -98,17 +98,14 @@ Multiple dossiers per folder is expected.
 
 ## Gates (hooks)
 
-PostToolUse on `Write|Edit` routes through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. These are **alerting-level** hooks — the file is already on disk when they fire; a motivated agent can ignore. PreToolUse rigor is future work.
+Two mechanical gates run PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. These are **alerting-level** — the file is already on disk when they fire; a motivated agent can ignore. PreToolUse rigor is future work.
 
 | Gate | Fails on |
 |------|----------|
 | `dossier-framing-declared.sh` | Non-ballot DOSSIER-*.md with no `framing-mode:` declaration |
-| `dossier-citation-audit.sh` | Orphan `[Xn]` ref with no §Sources definition; emits warning when zero `[Xn]` refs found (audit is a no-op on hyperlink-only dossiers) |
-| `dossier-forbidden-words.sh` | Forbidden word for declared framing mode (wordlists in `references/framing-modes.yaml`) |
-| `dossier-section-order.sh` | Glossary after Executive Summary, or Sources not last |
-| `dossier-dated-claim-scan.sh` | (Never fails — lists dates at audit time for manual verification) |
+| `ballot-filename.sh` | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
 
-Ballot-specific gates (fire on `DOSSIER-*BALLOT*.md`) are owned by the `ballot` skill. Full rationale and invocation details: `${CLAUDE_SKILL_DIR}/references/audit-checks.md`.
+Everything else is reviewed by checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session (the `[Xn]` citation style, the OSS-mode wordlist, H2-level glossary heading, specific archaeology phrases). Dossiers in other styles use different conventions; a judgement-capable reviewer catches the concerns more reliably. See `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
 
 ## Common Mistakes
 
@@ -116,12 +113,11 @@ Ballot-specific gates (fire on `DOSSIER-*BALLOT*.md`) are owned by the `ballot` 
 |---------|-----|
 | Skipping FRAME, letting evidence set the framing | Declare mode/decider/audience before the first WebSearch |
 | Missing `framing-mode:` frontmatter | `dossier-framing-declared.sh` fails; add the frontmatter |
-| Commercial vocabulary in an OSS dossier | `framing-mode: oss` plus fixing each gate hit |
-| Orphan `[Xn]` citations | Citation audit fails until each `[Xn]` has a §Sources definition |
-| Zero `[Xn]` refs without intent | Citation audit emits warning — verify the dossier uses inline `[text](url)` deliberately |
+| Commercial vocabulary in an OSS dossier | Re-read the framing-mode; reviewed in the checklist (framing-coherence item) |
+| Orphan citations | Reviewed in the checklist (citation-integrity item) — every inline reference should match a §Sources entry |
 | Glossary at the back of the dossier | Glossary first (read-support); Sources last (trust-support) |
-| Dates treated as static | Dated-claim scan after GATHER; re-verify each |
-| Exhaustive list, not selective | Set selectivity in SCOPE ("5-8, not all") |
+| Dates treated as static | Reviewed in the checklist (dated-claim-freshness item) — re-verify each |
+| Exhaustive list, not selective | Set selectivity in SCOPE ("5-8, not all"); reviewed in the checklist |
 | Generic recommendations | Tailor to THIS user's context and infrastructure |
 | Bare product names without URLs | Hyperlink every entity on first mention |
 | Same source categories every time | Adapt to domain (see `references/sources-by-domain.md`) |

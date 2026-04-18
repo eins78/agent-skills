@@ -1,16 +1,18 @@
 <!--
-  Per-reviewer ballot template.
+  Per-decider ballot template. Works for multi-reviewer async sign-off AND
+  single-decider async handoffs (PR review, chat sign-off, remote collaboration).
 
   Conventions and rationale: see skills/ballot/SKILL.md (§Conventions).
-  Gates: ballot-filename.sh (naming), ballot-anti-option.sh (option quality),
-  ballot-cover-archaeology.sh (clean cover block). Full detail:
+  Review: skills/ballot/references/review-checklist.md.
+  Filename gate: ballot-filename.sh (naming). Full detail:
   skills/ballot/references/ballot-conventions.md.
 -->
 
 # Ballot — {Dossier Title}
 
 **Reviewer:** {Reviewer Name}
-**Role:** {e.g. publication sponsor / product owner / technical reviewer}
+**Role:** {e.g. publication sponsor / product owner / technical reviewer / PR reviewer}
+<!-- Omit the Peer ballot line for a single async decider. -->
 **Peer ballot:** [DOSSIER-{slug}-BALLOT-{Other Reviewer}.md](./DOSSIER-{slug}-BALLOT-{Other Reviewer}.md)
 **Full dossier:** [DOSSIER-{slug}-{YYYY-MM-DD}.md](./DOSSIER-{slug}-{YYYY-MM-DD}.md)
 
@@ -21,7 +23,7 @@
 <!-- REQUIRED. Keep to one screen. -->
 
 - Tick the checkbox you choose. Boxes are **empty by default** — your mark is the decision.
-- **Must** items block delivery. **Should** items block only if both reviewers disagree. **Could** items are informational.
+- **Must** items block delivery. **Should** items block if reviewers disagree (or if a single async decider flags dissent). **Could** items are informational.
 - If you want to change an already-ticked box, strike through and re-tick — a diff is cleaner than a rewrite.
 - Reconciliation happens in the sessionlog, not here.
 
@@ -85,14 +87,14 @@
 ---
 
 <!--
-  Delivery checklist — the hooks in .claude-plugin/hooks/ballot-*.sh enforce
-  the first three; the last two are agent discipline:
+  Delivery checklist — ballot-filename.sh enforces naming; everything else is
+  reviewed against skills/ballot/references/review-checklist.md before handoff:
 
   1. Filename matches DOSSIER-<slug>-BALLOT-<Reviewer>.md (ballot-filename.sh).
-  2. No anti-options ("not recommended", "for completeness", etc.) without a
-     <!- - justify: ... - -> comment (ballot-anti-option.sh).
-  3. Cover block is clean — no "updated YYYY-MM-DD" / "changes since" /
-     "previous version" paragraph (ballot-cover-archaeology.sh).
+  2. Cover block is clean — no "updated YYYY-MM-DD" / changelog / "changes since".
+  3. No anti-options ("not recommended", "for completeness", etc.) without a
+     <!- - justify: ... - -> comment.
   4. Every DEC heading: one decision surface, one time-horizon.
   5. No checkbox is pre-ticked.
+  6. Reads sensibly on a phone 12 hours after handoff.
 -->

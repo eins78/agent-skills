@@ -48,7 +48,7 @@
     },
     {
       "name": "ballot",
-      "description": "Use when a decision has two or more reviewers and needs a durable artefact. Triggers: decision ballot, multi-reviewer decision, architecture call, ADR, hiring panel, vendor selection, household decision, reconcile, per-reviewer, contested decision, ballot.",
+      "description": "Use when decisions happen async — reviewer(s) look at it over chat, on a PR, on a train, or any time outside the agent session. Triggers: async decision, PR review, pull request, remote reviewer, handoff, away-from-keyboard, decision ballot, architecture call, ADR, hiring panel, vendor selection, household decision, reconcile, per-reviewer, ballot.",
       "version": "1.0.0",
       "source": "./skills/ballot",
       "author": {
