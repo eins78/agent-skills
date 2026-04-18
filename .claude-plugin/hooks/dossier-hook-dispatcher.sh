@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
 # dossier-hook-dispatcher.sh — extracts file_path from the Claude Code
-# PostToolUse JSON payload (piped on stdin) and invokes the two mechanical
-# hooks against it. Each hook self-gates on filename pattern, so the
-# dispatcher calls both unconditionally and aggregates failures.
+# PostToolUse JSON payload (piped on stdin) and invokes the one remaining
+# mechanical hook against it. The hook self-gates on filename pattern, so
+# the dispatcher calls it unconditionally and aggregates failures.
 #
-# The dispatcher exists purely as an argv/stdin shim — the kept scripts
-# take argv for CLI-testability, while Claude Code pipes JSON on stdin.
+# The dispatcher exists purely as an argv/stdin shim — the kept script
+# takes argv for CLI-testability, while Claude Code pipes JSON on stdin.
 #
 # Prior versions of this dispatcher routed to 7 hooks and branched on
 # filename pattern. Six of those hooks were removed in the 2026-04-18
 # polish pass as overfit to the a11y-extension session (see
 # docs/sessionlogs/2026-04-18-pitch-b-impl.md §Post-review Polish).
-# The remaining two (ballot-filename, dossier-framing-declared) are the
-# mechanical checks that generalize across dossier styles.
+# dossier-framing-declared was removed in the 2026-04-18 preflight-gate
+# pass (framing-mode convention replaced by judgment-based preflight gate).
+# The remaining hook (ballot-filename) is the mechanical check that
+# generalizes across dossier styles.
 
 set -euo pipefail
 
@@ -42,10 +44,7 @@ fi
 
 failures=""
 
-# Each script self-gates on filename pattern — safe to call unconditionally.
-if ! output=$("$here/dossier-framing-declared.sh" "$file_path" 2>&1); then
-  failures+="$output"$'\n'
-fi
+# The script self-gates on filename pattern — safe to call unconditionally.
 if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
   failures+="$output"$'\n'
 fi

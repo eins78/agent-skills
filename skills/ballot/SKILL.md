@@ -64,7 +64,7 @@ Each is a 2-3 line sketch of how the template adapts.
 - **ADR voting.** Senior engineers approve an architectural decision. Must tier = the chosen architecture; Could tier = migration preferences. Dossier optional; the ADR itself can be the context doc.
 - **Architecture call reconciliation.** Whiteboard session ended contested. Ballot captures the surviving options per sub-decision, each reviewer ticks over the following week, reconciliation at the next standup.
 - **PR review handoff.** Agent session produces a change set; reviewer will look at the PR after hours. Ballot captures the decision surfaces (approve / request-changes per thread, merge strategy, release-note wording). Reviewer ticks on the train; reconciliation lands in the sessionlog once the PR merges.
-- **Hiring panel.** Must = ship offer / reject / more-interview. Should = role scoping (seniority band, onboarding pairing). Could = onboarding prefs. Use `hiring` framing mode in the companion dossier (compensation stays out of the ballot body).
+- **Hiring panel.** Must = ship offer / reject / more-interview. Should = role scoping (seniority band, onboarding pairing). Could = onboarding prefs. Compensation stays out of the ballot body — keep it in the offer doc.
 - **Vendor selection.** Must = which vendor (one option per vendor). Should = contract term, payment schedule. Could = optional add-ons. Dossier provides the comparison table; ballot captures commitments.
 - **Household decision.** Max + partner choosing among options (holiday, appliance, move-date). Low-stakes but the ballot mechanism scales down — two Must items is plenty.
 
@@ -72,7 +72,7 @@ Each is a 2-3 line sketch of how the template adapts.
 
 Ballots are reviewed against `${CLAUDE_SKILL_DIR}/references/review-checklist.md`. The checklist covers filename pattern, cover-block cleanliness, anti-options, time-horizon-per-DEC, recommended-but-not-pre-ticked, tier discipline, async-readability, and reconciliation location.
 
-**One mechanical gate.** `ballot-filename.sh` fires PostToolUse on `Write|Edit` for files matching `DOSSIER-*BALLOT*.md` and fails on anything not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md`. Alerting level, not true blocking — the file is already on disk when the hook fires; exit 2 feeds stderr back to Claude, which usually corrects. Everything else is reviewed by checklist, not by grep: the other concerns (cover-block archaeology, anti-options, dated claims, framing coherence) don't generalize cleanly across dossier styles, and a judgement-capable reviewer catches them more reliably than a pattern match.
+**One mechanical gate.** `ballot-filename.sh` fires PostToolUse on `Write|Edit` for files matching `DOSSIER-*BALLOT*.md` and fails on anything not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md`. Alerting level, not true blocking — the file is already on disk when the hook fires; exit 2 feeds stderr back to Claude, which usually corrects. Everything else is reviewed by checklist, not by grep: the other concerns (cover-block archaeology, anti-options, dated claims, scope coherence) don't generalize cleanly across dossier styles, and a judgement-capable reviewer catches them more reliably than a pattern match.
 
 Must-tier "blocks delivery" is a convention, not a gate. A ballot-state parser to detect final-status-with-unticked-Must would be too fragile (requires reconstructing reviewer intent). Flag in the sessionlog if a Must item is unresolved at delivery time.
 
