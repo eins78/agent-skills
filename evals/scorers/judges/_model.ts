@@ -33,8 +33,8 @@ async function callOllama(prompt: string): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
-      max_tokens: 128,
-      // Disable thinking mode so the score lands in content, not reasoning
+      // 4096 needed: thinking models (Gemma4, Qwen3) fill reasoning first, then output to content
+      max_tokens: 4096,
       options: { think: false },
       messages: [{ role: "user", content: prompt }],
     }),
