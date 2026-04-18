@@ -8,7 +8,12 @@ This file is a log, not a decision surface — add new entries as they arrive; t
 
 ## 2026-04-18 — hard-example dossiers, chapters, embedded transcript
 
-**Context.** Operator reviewed the [v2.3.0 MeteoSwiss test report](https://claude.ai/public/artifacts/fe91e313-04a2-4fd1-b2f1-b6aa3da9a4d0) (34 test-case table, 10 prioritized recommendations table, 7 per-tool subsections each containing nested tables). Reported it as "an extreme example for the audio-skill."
+**Context.** Operator reviewed the PR #45 `JUDGE-COMPARISON.md` report (horizontal 5-column × 12-row pass/fail matrix per scorer, plus aggregate stats and failure-modes section with technical-term-dense narrative — "max_tokens saturates CoT", "poolOptions.threads.maxThreads", "reasoning field"). Reported it as "an extreme example for the audio-skill." Clarified 2026-04-18 20:26Z that the hard example is the JUDGE-COMPARISON doc, not the v2.3.0 QA report referenced initially.
+
+**Two-tier fixture corpus** (operator clarified 2026-04-18 20:27Z):
+
+- **Normal example** — any of the recent research dossiers, e.g. [`research/2026-04-13-bluesky-personal-llm-bots/`](../../../OPS/home-workspace/research/2026-04-13-bluesky-personal-llm-bots) or [`research/2026-04-12-ghost-pepper-security-audit/dossier.md`](../../../OPS/home-workspace/research/2026-04-12-ghost-pepper-security-audit). Prose-dominant with occasional bullet lists and short tables. Representative of the daily output the skill will transform.
+- **Hard example** — `JUDGE-COMPARISON.md` from PR #45 on eins78/agent-skills. Multi-column technical comparison matrices, mixed acronyms (MoE, CoT, SDK), verdict sections with embedded code snippets (` ``` ` blocks) and metric expressions (`0.00`, `1.00`, `~21s vs ~24s`). Stress-tests the transformation rules and the chapter-skip UX.
 
 **Operator quote (verbatim):**
 
@@ -24,7 +29,7 @@ Three concrete additions to the v0 scope beyond what the feasibility dossier alr
 
 2. **Embedded transcript** — the "original text before transforming for audio" rather than a reconstructed transcript from ASR. Podcasting 2.0 supports a `<podcast:transcript>` RSS namespace element with `type="text/html"` or `text/vtt`. Alternative: embed the transcript as a separate enclosure OR reference a sibling URL in the RSS feed. For v0, serving the source markdown (or the audio-transformed markdown) as a sibling `.txt` or `.html` at a predictable path like `/p/<token>/transcripts/<slug>.{txt|html}` and referencing it via `<podcast:transcript>` is cleanest. Overcast supports Podcasting 2.0 transcripts.
 
-3. **Table-shaped content is the worst case** — this re-weights the transformation conventions (§Transformation Conventions in the EN dossier). "Tables → prose summary first, then optional row-by-row" gets tested on this dossier as the stress fixture. The test-case table (34 rows × 5 cols) and the priority-ranked recommendations (10 rows × 5 cols) are both legitimately skip-worthy by chapter.
+3. **Table-shaped content is the worst case** — this re-weights the transformation conventions (§Transformation Conventions in the EN dossier). "Tables → prose summary first, then optional row-by-row" gets tested on `JUDGE-COMPARISON.md` as the stress fixture: a 5-column scorer × fixture × model matrix (12 rows), a 6-column aggregate-statistics matrix (2 rows), plus verdict prose with inline code fences and acronym-dense technical jargon. Both matrices are legitimately skip-worthy by chapter.
 
 ### Reference material
 
