@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.4.0",
+      "version": "2.4.1",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -69,7 +69,7 @@
     {
       "name": "dossier",
       "description": "Use when asked to research, compare, evaluate, or investigate any topic. Triggers: research this, compare options, evaluate alternatives, investigate, find the best, product comparison, technology ...",
-      "version": "1.0.1",
+      "version": "1.0.3",
       "source": "./skills/dossier",
       "author": {
         "name": "Max Albrecht",
