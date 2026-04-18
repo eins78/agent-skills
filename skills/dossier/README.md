@@ -19,6 +19,8 @@ Extracted from validated research artifacts across multiple domains:
 
 **Path B refactor (2026-04-18).** Ballot conventions and template extracted into a standalone `ballot` skill — see `skills/ballot/`. The dossier SKILL now cross-references ballot; the per-reviewer template moved from `skills/dossier/templates/` to `skills/ballot/templates/`. Wordlists consolidated into `references/framing-modes.yaml` (single source of truth, consumed by the gate via yq). Added `dossier-framing-declared` gate (closes the declaration-vs-consequence split) and citation-audit no-op warning. Rationale: `docs/pitches/2026-04-18-pitch-A-assessment.md` §§3, 5, 6.
 
+**Post-review polish (2026-04-18).** Six overfit grep hooks removed (citation-audit, forbidden-words, section-order, dated-claim-scan, ballot-anti-option, ballot-cover-archaeology); two mechanical hooks kept (`dossier-framing-declared`, `ballot-filename`). The removed hooks encoded a11y-session-specific patterns that didn't generalize across dossier styles. Replaced by `references/review-checklist.md` — a reviewer-facing audit doc that generalizes the concerns. `framing-modes.yaml` and `audit-checks.md` were deleted as orphaned once `forbidden-words.sh` was removed; `framing-modes.md` retains mode-selection guidance.
+
 ## Design Influences
 
 - **[last30days](https://github.com/ScrapCreators/last30days-skill):** Parallel source dispatch + judge synthesis pass. Adapted: per-topic agent design instead of fixed 10+ platform roster.
@@ -33,25 +35,17 @@ dossier/
 ├── README.md                         # This file
 ├── references/
 │   ├── sources-by-domain.md          # Domain → source mapping (13 domains)
-│   ├── framing-modes.md              # When to pick each mode + template-placeholder guidance
-│   ├── framing-modes.yaml            # Canonical forbidden-word lists (consumed by the gate via yq)
-│   └── audit-checks.md               # Gate documentation + rationale
+│   ├── framing-modes.md              # When to pick each mode + vocabulary guidance
+│   └── review-checklist.md           # Reviewer audit checklist (8 items)
 └── templates/
     └── dossier.md                    # Report template with REQUIRED/OPTIONAL sections
                                       # (ballot template moved to skills/ballot/)
 
-# Hooks (repo-level, wired in .claude-plugin/plugin.json):
+# Hooks (repo-level, wired in .claude-plugin/plugin.json via dossier-hook-dispatcher.sh):
 .claude-plugin/hooks/
 ├── dossier-framing-declared.sh       # Gate: framing-mode: declared in frontmatter
-├── dossier-citation-audit.sh         # Gate: [Xn] refs all defined in §Sources; warns on zero-[Xn] dossiers
-├── dossier-forbidden-words.sh        # Gate: mode's wordlist (from framing-modes.yaml)
-├── dossier-section-order.sh          # Gate: Glossary first, Sources last
-├── dossier-dated-claim-scan.sh       # Listing-only: flags dates at audit time
-
-# Ballot-specific hooks (owned by skills/ballot; route when filename matches *BALLOT*):
-├── ballot-filename.sh                # Gate: per-reviewer naming
-├── ballot-anti-option.sh             # Gate: "not recommended" options need <!-- justify -->
-└── ballot-cover-archaeology.sh       # Gate: no "updated YYYY-MM-DD" in cover block
+├── ballot-filename.sh                # Gate: per-reviewer ballot naming (owned by skills/ballot)
+└── dossier-hook-dispatcher.sh        # Argv/stdin shim — extracts file_path from PostToolUse JSON and invokes the two kept scripts
 ```
 
 ## Dependencies
@@ -66,21 +60,20 @@ To verify the skill works:
 1. **Trigger test:** Say "research the best X" or "compare A vs B" — the skill should load
 2. **FRAME test:** Verify the produced dossier declares framing mode, decision model, and audience before research content
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
-4. **Citation test:** Verify every product/project is hyperlinked and key facts have inline citations. The citation-audit hook fires automatically on Write/Edit; a dossier with zero `[Xn]` refs produces a stderr warning (no-op guard against accidentally missed refs).
-5. **Forbidden-word test:** Seed an intentional violation (e.g. `monetization` in an `oss`-framed dossier) — the gate fires via the dispatcher, stderr reports the hit, exit code 2.
-6. **Section-order test:** Move Glossary after Management Summary and re-save — section-order hook fires.
-7. **Framing-declaration test:** Remove the `framing-mode:` frontmatter — the new `dossier-framing-declared` hook fires before the other audits.
-8. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used and hooks fire on the ballot files.
-9. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
+4. **Framing-declaration gate:** Remove the `framing-mode:` frontmatter — the `dossier-framing-declared.sh` hook fires via the dispatcher, stderr reports the missing declaration, exit code 2.
+5. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
+6. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 8 items should be actionable against the finished dossier.
+7. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
+8. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
 
 ## Known Gaps
 
 - **Alerting-level gates.** PostToolUse fires *after* file write; exit 2 feeds stderr back to Claude but a motivated agent can ignore. PreToolUse rigor is documented future work; `ballot-filename.sh` is the cheapest upgrade candidate (filename is in `tool_input.file_path` before write).
+- **Checklist discipline depends on the reviewer.** The review-checklist replaces 4 deleted grep hooks; its value depends on a judgement-capable reviewer actually running it. Agents under time pressure may skim. Planned: seed a subagent test scenario that runs the checklist.
 - **Must-tier ballot gate deferred.** A hook that detects unticked Must items at delivery time would require parsing reviewer intent; too fragile. Kept as a prose rule in `skills/ballot/SKILL.md` — flag in sessionlog if blocked.
-- **Time-horizon-per-DEC semantics** cannot be machine-checked — remains a convention in the ballot skill.
 - **Source reference file** covers 13 domains — will grow with usage.
 - **Template comments** (REQUIRED/OPTIONAL markers) need to be stripped from final output.
-- **Hook routing scope.** Wiring targets Write/Edit on `DOSSIER-*.md` paths only; other paths that happen to contain `[Xn]` citations are not audited.
+- **Hook routing scope.** Wiring targets Write/Edit on `DOSSIER-*.md` paths only; non-dossier research files are not audited.
 
 ## Future Improvements
 

@@ -3,7 +3,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 ---
 
 <!--
-  Section-order rule (enforced by dossier-section-order.sh):
+  Section-order rule (reviewed in references/review-checklist.md):
   Glossary stays at top (read-support); Sources stays at end (trust-support).
   See skills/dossier/SKILL.md §SYNTHESIZE for the asymmetry rationale.
 -->

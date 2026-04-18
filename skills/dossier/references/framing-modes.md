@@ -1,6 +1,6 @@
 # Framing Modes
 
-Consult during FRAME (phase 0) to pick the framing that matches the decision model, audience, and artefact context. The canonical forbidden-word lists live in [`framing-modes.yaml`](./framing-modes.yaml) and are enforced by `.claude-plugin/hooks/dossier-forbidden-words.sh`. Edit the YAML; this file documents *when* to pick each mode and *what* the mode commits the dossier to.
+Consult during FRAME (phase 0) to pick the framing that matches the decision model, audience, and artefact context. This file documents *when* to pick each mode and *what* the mode commits the dossier to. Coherence between declared mode and dossier tone is reviewed via [`review-checklist.md`](./review-checklist.md) (framing-coherence item).
 
 A framing mode is **declared**, not guessed. Add it to the dossier frontmatter:
 
@@ -10,23 +10,7 @@ framing-mode: oss    # one of: oss, commercial, hiring, vendor, personal
 ---
 ```
 
-Declaration is enforced by `dossier-framing-declared.sh`. A dossier with no `framing-mode:` frontmatter (and no `<!-- dossier-framing-mode: ... -->` HTML-comment fallback) fails the declaration gate — this closes a silent-skip where a missing declaration bypassed all vocabulary enforcement.
-
-## Meta-denial exception
-
-When a forbidden word must appear (e.g. "this is *not* lead-gen"), append `<!-- allow-forbidden -->` to the same line. The gate then skips that line. Put the whole denial phrase on one line. If you need the word unmarked, you probably have the wrong mode.
-
-## Template placeholder handling
-
-Templates use `{curly-brace-or-pipe}` placeholders to signal fields to fill in. Example in `skills/dossier/templates/dossier.md`:
-
-```yaml
----
-framing-mode: {oss | commercial | hiring | vendor | personal}
----
-```
-
-`dossier-forbidden-words.sh` skips brace- or pipe-containing mode values (template not yet instantiated). Any new hook that reads `framing-mode:` from a template file must apply the same skip. The dispatcher also filters `*/templates/*` paths; most hooks inherit the skip for free, but direct invocation against a template file must handle the placeholder.
+Declaration is enforced by `dossier-framing-declared.sh`. A dossier with no `framing-mode:` frontmatter (and no `<!-- dossier-framing-mode: ... -->` HTML-comment fallback) fails the declaration gate.
 
 ---
 
@@ -34,7 +18,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 **When to use.** Free / libre / open-source artefact, published without a commercial lead-gen layer. Examples: Chrome extension to the Web Store, CLI tool on GitHub, Fediverse client, personal plugin.
 
-**Canonical forbidden-word list:** [`framing-modes.yaml`](./framing-modes.yaml) → `modes.oss.forbidden`. Rationale per word lives there as inline comments; the sweep is case-insensitive.
+**Vocabulary to avoid.** Commercial-payment terms (`lead-gen`, `Paddle`, `Stripe`, `MoR`, `VAT`, `compliance officer`), revenue framing (`pricing`, `monetize`, `revenue`, `donation` as a revenue line). A reviewer reading an OSS dossier should not encounter these as load-bearing concerns.
 
 **Typical section emphasis.** Community, reputation, contribution process, license choice, sustainability through maintainership (not revenue), adoption and discoverability.
 
@@ -48,7 +32,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 **When to use.** Paid SaaS, one-time licence, freemium with a paid tier — anything where revenue and pricing are load-bearing.
 
-**Canonical forbidden-word list:** [`framing-modes.yaml`](./framing-modes.yaml) → `modes.commercial.forbidden`.
+**Vocabulary to avoid.** OSS framing (`charity`, `pro bono`, `donation`, `volunteer basis`, `freemium-forever`). A commercial dossier treating revenue as optional reads as tone-deaf to the business context.
 
 **Typical section emphasis.** Revenue model, pricing tiers, target customer segment, cost of acquisition, payment-rail choice, MoR/VAT/compliance, refund policy.
 
@@ -60,7 +44,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 **When to use.** Hiring-panel decision, candidate comparison, role-scoping.
 
-**Canonical forbidden-word list:** [`framing-modes.yaml`](./framing-modes.yaml) → `modes.hiring.forbidden`. Compensation specifics require explicit approval; add `<!-- allow-forbidden -->` on the relevant line after checking with the hiring lead.
+**Vocabulary to avoid.** Compensation specifics (`salary`, `compensation`, `equity`, `bonus`) in the dossier body. Compensation lives in the offer letter. If a compensation reference is load-bearing for the decision, flag it and get hiring-lead approval before including.
 
 **Typical section emphasis.** Role scope, must-have vs nice-to-have skills, team fit, interview-stage observations, references. Compensation lives in the offer letter, not the dossier body.
 
@@ -72,7 +56,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 **When to use.** Evaluating outside vendors / services / providers for adoption.
 
-**Canonical forbidden-word list:** [`framing-modes.yaml`](./framing-modes.yaml) → `modes.vendor.forbidden`. If the evaluation deliberately considers a free-tier as the adoption target, mark those lines `<!-- allow-forbidden -->` and justify in a §Pricing section.
+**Vocabulary to watch.** `free tier`, `community edition`, `open core`. A vendor evaluation assuming the free tier is the long-term target may be misaligned with the decision model — if the free tier is genuinely the adoption target, justify it in a §Pricing section so the reviewer can challenge.
 
 **Typical section emphasis.** Terms of service, pricing at expected scale, support tier, SLA, exit strategy, data-portability, contract model.
 
@@ -84,9 +68,9 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 **When to use.** Household decisions, personal health, personal finance, personal project where framing-mode enforcement would be noise.
 
-**Forbidden words.** None (`modes.personal.forbidden: []`). The gate exits 0 for this mode.
+**Vocabulary.** No special constraints. Use natural language; the Key Facts box still applies (who decides, by when, under what constraints).
 
-**Typical section emphasis.** Personal preferences, time cost, reversibility, stakes. The Key Facts box still applies — who decides, by when, under what constraints.
+**Typical section emphasis.** Personal preferences, time cost, reversibility, stakes.
 
 **Example framing to emulate.** "Which Italian region for two weeks of holiday — sea vs mountains vs city."
 
