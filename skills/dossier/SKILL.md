@@ -68,7 +68,7 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 - **Key Facts box** (required, one screen): who decides, decision model, deadline, hard constraints, audience line, 3–5 load-bearing claims. Readers with five minutes read only this section — make every line count.
 - **Glossary / Key Concepts** (3–8 terms): after Key Facts, **before** any summary or content section. Glossary is *read-support* — a reader needs definitions before encountering terms in content.
 - **Hyperlink every entity** on first mention.
-- **Cite factual claims** inline: `claim ([source](url))` — bar: "could someone verify this?". If using `[Xn]` footnote refs instead, every reference must have a matching definition in §Sources.
+- **Cite factual claims** with clickable reference-link syntax: `claim [S1][ref-S1]` where each citation token (`S1`, `G6`, `R1`, `O3` — pick a consistent category-prefix scheme) has a matching `[ref-S1]: https://...` definition at the end of §Sources. The raw markdown preserves the `[S1]` bracket token for anyone reading the file directly; the rendered link reads as `S1` and clicks through to the URL. Inline `([text](url))` also works for one-off sources. Bar: "could someone verify this?". If your target renderer supports them, the footnote form `[^S1]` is lighter — see `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (citation-integrity) for the portability trade-off.
 - **Source categories** adapt to domain (see template).
 - **Template-order rule.** Glossary stays at the top; Sources stay at the end. The asymmetry is deliberate — glossary is read-support (before), sources are trust-support (after). Do not move glossary to the appendix by analogy with sources.
 

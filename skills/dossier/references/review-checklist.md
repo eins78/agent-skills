@@ -29,18 +29,26 @@ Each item is structured:
 
 ## 2. Citation integrity
 
-**What to check.** Every inline reference — whether `[Xn]`-style footnote, `[text](url)` hyperlink, or numbered superscript — resolves to a §Sources entry (for footnotes) or a live URL (for hyperlinks). Factual claims that would make a reviewer ask "how do you know?" have citations attached.
+**What to check.** The dossier uses **clickable reference-link citations**: every `[S1][ref-S1]` (or `[G6][ref-G6]`, `[R1][ref-R1]` — the prefix letter is the author's category convention) in the body has a matching `[ref-S1]: https://...` definition in §Sources, and the definition resolves to a primary source. Inline `[text](url)` hyperlinks are also fine for one-off sources. Factual claims that would make a reviewer ask "how do you know?" have citations attached.
 
-**Why it matters.** Orphan refs are cut-paste errors or last-minute edits that lost their source. A reviewer who finds one orphan starts distrusting every other citation in the dossier.
+**Why it matters.** Orphan refs are cut-paste errors or last-minute edits that lost their source. A reviewer who finds one orphan starts distrusting every other citation. The reference-link pattern makes citations clickable in rendered markdown (GitHub, Obsidian, Bitbucket, most renderers) while preserving the `[S1]` bracket token in raw markdown for readers viewing the file directly.
 
-**What good looks like.** Evidence of intent. Either the dossier uses footnote-style `[Xn]` refs consistently throughout and every one appears in §Sources, or it uses inline hyperlinks consistently and §Sources is a grouped/annotated reading list, or both are used deliberately for different purposes and the pattern is consistent. Zero-citation dossiers are acceptable for opinion pieces and thought experiments — judge whether the load-bearing claims demand citations.
+**What good looks like.** Every body citation like `[S4][ref-S4]` has:
+1. A verbal §Sources entry for `S4` (e.g. "**S4** — [Author: Title][ref-S4]: why relevant").
+2. A reference-link definition `[ref-S4]: https://...` at the bottom of §Sources.
+3. A live URL that returns the cited source when clicked.
+
+Evidence of intent: the author picked one category-prefix scheme (say, `S` for all sources, or `R`/`G`/`S` for requirement-anchors / general context / supporting) and applied it consistently. Zero-citation dossiers are acceptable for opinion pieces and thought experiments — judge whether the load-bearing claims demand citations.
+
+**Renderer-portability alternative.** If the dossier's target renderer supports markdown footnotes (GitHub, Obsidian, pandoc), `[^S1]` → `[^S1]: https://...` is lighter syntax with numbered jump-backs. The reference-link pattern is the default because it parses identically in Confluence, mobile markdown readers, and terminal previewers, which often don't render footnotes. When in doubt: reference-links.
 
 **Red flags.**
-- A single orphan `[G6]`-style ref with no §Sources entry.
-- Mixed footnote and hyperlink styles in the same paragraph with no pattern.
-- §Sources entries for URLs that don't appear anywhere in the body.
+- A `[S4][ref-S4]` citation with no `[ref-S4]: ...` definition anywhere.
+- A single orphan bare `[G6]` that isn't paired with `[ref-G6]` — either upgrade to clickable or drop the ref.
+- §Sources entries or reference definitions whose URLs don't appear in the body.
 - Dated claims with no citation ("Kubernetes 1.29 released in January 2026" with no link).
 - A §Sources section with live URLs that 404 when spot-checked.
+- Mixed category prefixes without a pattern (`S1`, `G2`, `X3`, `foo4` in the same dossier).
 
 ---
 

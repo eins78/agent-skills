@@ -104,7 +104,7 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 {Key details, integration specifics, code blocks if applicable.}
 
-{Cite factual claims inline: `claim ([source](url))`}
+{Cite factual claims with clickable reference-link syntax: `claim [S1][ref-S1]`. Inline `([text](url))` also works for one-off sources. Every `[Sn][ref-Sn]` citation must have a matching `[ref-Sn]: url` definition in §Sources.}
 
 #### Requirement Fit
 
@@ -141,40 +141,61 @@ framing-mode: {oss | commercial | hiring | vendor | personal}
 
 ## Sources
 
-<!-- REQUIRED: Categorized. Adapt headings to domain — not all apply. -->
+<!-- REQUIRED: Categorized. Adapt headings to domain — not all apply.
+     Citation pattern: body uses [Sn][ref-Sn]; §Sources lists each entry
+     with a verbal description and a reference-link definition
+     [ref-Sn]: https://... at the bottom. Pick any consistent
+     category-prefix (S, G, R, O, etc.) and keep numbering
+     contiguous per prefix. The rendered link shows "Sn"; clicking
+     navigates to the URL. -->
 
 ### Official Documentation
-- [{Name}]({url}): {what it covers}
+- **S1** — [{Name}][ref-S1]: {what it covers}
 
 ### Community Discussions
-- [{Platform}: {Title} ({Date})]({url}) — {key takeaway}
+- **S2** — [{Platform}: {Title} ({Date})][ref-S2]: {key takeaway}
 
 ### Comparison Articles
-- [{Author/Site}: {Title}]({url})
+- **S3** — [{Author/Site}: {Title}][ref-S3]
 
 ### Blog Posts
-- [{Author}: {Title}]({url}) — {why it's relevant}
+- **S4** — [{Author}: {Title}][ref-S4]: {why it's relevant}
 
 ### Academic/Research
 <!-- OPTIONAL: Health, policy, scientific topics -->
-- [{Authors} ({Year}): {Title}]({url}) — {finding}
+- **S5** — [{Authors} ({Year}): {Title}][ref-S5]: {finding}
 
 ### News Coverage
 <!-- OPTIONAL: Current events, emerging trends -->
-- [{Outlet}: {Title} ({Date})]({url})
+- **S6** — [{Outlet}: {Title} ({Date})][ref-S6]
 
 ### Podcasts
 <!-- OPTIONAL: Niche topics with podcast coverage -->
-- [{Show} {Episode}: {Title}]({url}) — {relevant segment}
+- **S7** — [{Show} {Episode}: {Title}][ref-S7]: {relevant segment}
 
 ### Repositories
 <!-- OPTIONAL: Open source projects -->
-- [{Name}]({url}) — {stars} ★
+- **S8** — [{Name}][ref-S8]: {stars} ★
 
 ### Reviews/Ratings
 <!-- OPTIONAL: Consumer products, travel, services -->
-- [{Source}: {Title}]({url}) — {rating/verdict}
+- **S9** — [{Source}: {Title}][ref-S9]: {rating/verdict}
 
 ### Government/Regulatory
 <!-- OPTIONAL: Policy, compliance, legal -->
-- [{Body}: {Document}]({url})
+- **S10** — [{Body}: {Document}][ref-S10]
+
+<!-- Reference-link definitions. Keep at the bottom of §Sources so any
+     [Sn][ref-Sn] in the body resolves. Add one per source actually
+     cited; delete the unused placeholders. -->
+
+[ref-S1]: {url}
+[ref-S2]: {url}
+[ref-S3]: {url}
+[ref-S4]: {url}
+[ref-S5]: {url}
+[ref-S6]: {url}
+[ref-S7]: {url}
+[ref-S8]: {url}
+[ref-S9]: {url}
+[ref-S10]: {url}
