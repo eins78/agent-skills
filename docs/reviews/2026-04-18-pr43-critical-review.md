@@ -92,11 +92,9 @@ FRAME phase, four hooks, framing-mode wordlists, and the ballot template under `
 
 **Why deferred.** These are historical records — they document what the thinking *was* at the time of writing. The repo convention treats pitches and sessionlogs as immutable intellectual history (per `skills/bye` patterns). Rewriting them would be a lie about the past. Future readers encountering the docs arrive via git log or cross-references, not as "current state of the skill" documents.
 
-### D5. Preflight-gate refactor has no dedicated sessionlog
+### D5. Preflight-gate refactor sessionlog coverage — ~~gap~~ retracted
 
-**Where.** Commits `a8c6dc0..cdd687f` (5 commits) implemented the preflight-gate refactor that removed `dossier-framing-declared.sh` and the `framing-mode` convention. Rationale lives only in the changeset body (`20260418-181406-preflight-gate.md`), not in a sessionlog.
-
-**Why deferred (and mitigation).** Instead of creating a third 2026-04-18 sessionlog, append a short section to `docs/sessionlogs/2026-04-18-pitch-b-impl.md` during step 2 (fix commits). Keeps the Path-B / Polish / Preflight narrative in one place and cheaper than a separate file.
+**Retraction (self-review finding).** The preflight-gate refactor *does* have sessionlog coverage — `docs/sessionlogs/2026-04-18-pitch-b-impl.md` lines 272–308 contain a "Post-review Preflight Gate (2026-04-18, same-day)" section documenting the design, files deleted/modified, and retroactive policy. The original finding was incorrect. No fix commit needed.
 
 ### D6. Template placeholder `{url}` URLs in `templates/dossier.md`
 
@@ -172,6 +170,6 @@ In order:
 1. `dossier: restore version baseline to 1.0.1` — revert SKILL.md `metadata.version` to `1.0.1`; let the squashed changeset drive the minor bump cleanly. Addresses R2.
 2. `dossier: singularize "gates" in README known-gaps` — one-word edit to line 70. Addresses R3.
 3. *(No separate fix for R1 — resolves automatically when `sync-versions.sh` runs during the release flow, conditional on R2's changeset squash producing a real bump. Verified post-fix via `pnpm run version --dry-run`.)*
-4. `dossier: append preflight-gate section to 2026-04-18-pitch-b-impl.md sessionlog` — short block covering the `a8c6dc0..cdd687f` arc. Addresses D5.
+4. *(No fix for D5 — retracted: sessionlog coverage already exists at `docs/sessionlogs/2026-04-18-pitch-b-impl.md` lines 272–308.)*
 
 Deferred items (D1–D4, D6) are not fixed in this session — documented here for anyone auditing post-merge.
