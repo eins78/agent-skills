@@ -266,3 +266,43 @@ Max surfaced one more concrete bugfix for the same PR before /bye: make `[R1]` /
 - Mental simulation of a reader opening a dossier produced under the new pattern: body text reads `"Kubernetes 1.29 shipped in January 2026 [S4][ref-S4]"`; `S4` is a clickable link to the release notes; raw markdown still shows the bracket token for file-viewing reviewers. The §Sources entry near the end gives the verbal citation; the `[ref-S4]: https://...` definition right after makes the link work. Click UX matches expectations.
 - `pnpm test` + `pnpm run validate` — to be run after the commit before push.
 - No regression of the existing citation-integrity concern — every `[Xn]` still needs a §Sources entry; the addition is the `[ref-Xn]` label that makes the link clickable.
+
+---
+
+## Post-review Preflight Gate (2026-04-18, same-day)
+
+Max's review of PR #43 identified the `framing-mode` convention as another over-specific pattern to remove — the same judgment applied when deleting the six grep hooks in the polish pass.
+
+### Why framing-modes was the wrong abstraction
+
+The framing-mode classification (`oss` / `commercial` / `hiring` / `vendor` / `personal`) was designed during the a11y-extension session to prevent vocabulary mismatch (OSS dossier using commercial pricing language, etc.). The `dossier-framing-declared.sh` hook enforced declaration of a mode in YAML frontmatter; the checklist's "framing coherence" item verified the body matched the declared mode.
+
+The problem: dossiers in other styles use different conventions. A travel dossier, an architecture decision record, a hardware comparison — none fit the five-mode taxonomy. The enforcement locked correct behaviour to one style, produced false failures in other styles, and required an 89-line reference file (`framing-modes.md`) to explain the modes. Same fate as the six deleted grep hooks: mechanical enforcement of a judgment call.
+
+### Preflight gate design
+
+The replacement: a three-check gate at step 0 of the workflow (before GATHER), modelled on Claude.ai / ChatGPT deep-research UX:
+
+1. **Specific** — the request is bounded to a named topic, concrete comparison, or clear question.
+2. **Unambiguous** — contested terms are resolved by context.
+3. **Well-understood** — the agent can state the objective back in 1–2 sentences without hedging.
+
+If one or more checks fail, ask before starting — batched, concise, with choices. If all three pass, proceed without asking. The balance rule is explicit in the skill: "The bar is 'the answer isn't obvious from context,' not 'I want to be extra sure.'"
+
+Placement: replaces the `### 0. FRAME` section. The workflow header reverts to `SCOPE → GATHER → EVALUATE → SYNTHESIZE → DELIVER`. The decision-model and audience guidance from FRAME is preserved as a pointer in SCOPE ("note who decides, by when, and how — record in Key Facts").
+
+### Files deleted
+- `.claude-plugin/hooks/dossier-framing-declared.sh`
+- `skills/dossier/references/framing-modes.md`
+
+### Files modified
+- `skills/dossier/SKILL.md` — FRAME step replaced by Preflight gate; Gates table reduced to one entry; Common Mistakes table cleaned
+- `skills/dossier/templates/dossier.md` — `framing-mode:` frontmatter removed
+- `skills/dossier/references/review-checklist.md` — item 1 swapped (framing-coherence → preflight-evidence); footer updated
+- `.claude-plugin/hooks/dossier-hook-dispatcher.sh` — framing-declared call removed; comment updated
+- `skills/ballot/SKILL.md` — hiring-panel line drops "Use `hiring` framing mode"; Gates paragraph updates "framing coherence" to "scope coherence"
+- `.changeset/20260418-181406-preflight-gate.md` — minor bump dossier, patch bump ballot
+
+### Retroactive policy
+
+Existing dossiers with `framing-mode:` frontmatter stay as-is — no retroactive rewrite. The `dossier-framing-declared.sh` hook no longer fires, so the frontmatter is inert but harmless. Forward-looking convention: new dossiers have no `framing-mode:` field.
