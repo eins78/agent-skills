@@ -4,7 +4,7 @@
 
 ### Patch Changes
 
-- [`ec71cb1`](https://github.com/eins78/agent-skills/commit/ec71cb1ee54f5d1a8966fd665ebb93625aa06916) - dossier: add commercial bias flagging guidance from @young.mete Threads post
+- [`ec71cb1`](https://github.com/eins78/agent-skills/commit/ec71cb1ee54f5d1a8966fd665ebb93625aa06916) - dossier: add commercial bias flagging guidance from [`@young.mete` Threads post](https://www.threads.com/@young.mete/post/DXPjx_JDuMR)
 
   Adds source quality heuristic: explicitly flag commercial incentives in dossier
   output rather than silently down-weighting biased sources. Updates
