@@ -11,19 +11,19 @@ Each item is structured:
 
 ---
 
-## 1. Framing coherence
+## 1. Preflight evidence
 
-**What to check.** The declared `framing-mode` in the dossier frontmatter matches the tone throughout the body — especially in §Executive Summary and §Recommendations, where framing leaks land first.
+**What to check.** Is there evidence the preflight ran? Either (a) the sessionlog or commit message states the objective back to the operator in concrete terms, or (b) the dossier's Executive Summary is crisp and specific enough that you can tell the agent understood the ask without hedging.
 
-**Why it matters.** A framing mismatch wastes reviewer attention on the wrong axis (OSS reviewers dragged into Paddle-vs-Stripe comparisons; commercial reviewers dragged into community-sustainability narratives). Catching it at review prevents a whole round of rewriting.
+**Why it matters.** Research without a clear objective produces a dossier that looks comprehensive but misses the point. The preflight is an insurance step — its cost is one clarifying turn; its benefit is avoiding an entire wasted research round.
 
-**What good looks like.** An OSS dossier's §Executive Summary talks about adoption, contribution, reputation, license choice; mentions pricing only as comparative context ("the closest commercial alternatives cost ~$X/mo"). A commercial dossier's §Recommendations leads with revenue model and customer segment; mentions donations only when they are a real revenue line. A hiring dossier keeps compensation out of the body.
+**What good looks like.** "Objective: X. Evaluated Y, Z, W per the operator's request. Excluded V because [reason]." — or a commit message that names the specific question the dossier answers. The §Executive Summary leads with what was asked, then what was found, then what is recommended.
 
 **Red flags.**
-- OSS dossier with a comparison table whose columns are price tiers.
-- Commercial dossier whose §Success Metrics are community contribution counts.
-- Hiring dossier with compensation numbers inline (compensation belongs in the offer letter; see `framing-modes.md`).
-- A dossier whose `framing-mode:` frontmatter was last edited *after* the §Executive Summary was written (check `git blame`).
+- §Executive Summary opens with scope hedging ("this dossier explores the broad space of…").
+- The dossier covers adjacent topics the operator didn't ask about, with no explanation of why.
+- No commit message or sessionlog line that confirms what the operator actually wanted.
+- §Recommendations answers a different question than the one scoped in §Key Facts.
 
 ---
 
@@ -153,4 +153,4 @@ Earlier iterations of the dossier skill shipped four grep-based audit hooks: `do
 
 Dossiers in other styles use different conventions. A hiring brief uses prose citations, not `[Xn]` refs. A vendor-selection dossier may put Glossary under an H3 subsection. An architecture decision record may have no §Sources at all. The grep hooks either miss real failures (they don't recognize the pattern) or fire spurious failures (they match something the dossier does on purpose).
 
-This checklist generalizes the *concerns* without hard-coding the *patterns*. The two hooks that remain (`dossier-framing-declared.sh` and `ballot-filename.sh`) are genuinely mechanical — a framing declaration either exists or doesn't; a ballot filename either matches the pattern or doesn't. A grep is the right tool for both.
+This checklist generalizes the *concerns* without hard-coding the *patterns*. The one hook that remains (`ballot-filename.sh`) is genuinely mechanical — a ballot filename either matches the pattern or doesn't. A grep is the right tool for that. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced was over-specific, and a judgment-capable preflight check (item 1 above) generalizes better across dossier styles.
