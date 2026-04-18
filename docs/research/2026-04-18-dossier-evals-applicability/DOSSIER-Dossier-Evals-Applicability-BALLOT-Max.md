@@ -1,7 +1,7 @@
 <!--
   Per-reviewer ballot — async single-decider case.
   Conventions: skills/ballot/SKILL.md.
-  Gates enforced on Write: ballot-filename.sh (naming).
+  Gates enforced on Write: [ballot-filename.sh](https://ballot-filename.sh) (naming).
   Judgment review: skills/ballot/references/review-checklist.md (8 items).
 -->
 
@@ -30,7 +30,7 @@
 *Recommended: (b) Yes, but in a follow-up PR — keeps PR #43 scope bounded while not foreclosing the eval harness.*
 
 - [ ] (a) Yes, in this PR — add the eval harness inside PR #43 before merge
-- [ ] (b) Yes, in a follow-up PR — ship PR #43 now, open a separate eval harness PR after merge
+- [x] (b) Yes, in a follow-up PR — ship PR #43 now, open a separate eval harness PR after merge
 - [ ] (c) No — the two review-checklists + two live hooks are the eval mechanism; no harness needed
 
 One-line rationale per option:
@@ -47,7 +47,7 @@ One-line rationale per option:
 *Recommended: (b) evalite — TS + pnpm + LLM-as-judge scorers match the repo exactly; Vitest underneath is industry-standard.*
 
 - [ ] (a) Replicate Quatico PR #12's bespoke scenario-runner — match Max's own prior art, zero framework deps <!-- justify: this is Max's proven pattern and a legitimate "reinvent-over-adopt" choice -->
-- [ ] (b) [evalite](https://www.evalite.dev/) v0.19.0 — TS-native, Vitest-based, LLM-as-judge built in
+- [x] (b) [evalite](https://www.evalite.dev/) v0.19.0 — TS-native, Vitest-based, LLM-as-judge built in
 - [ ] (c) Roll your own (Vitest + @anthropic-ai/sdk + custom scorer lib) — full control, ~500–800 LoC
 - [ ] (d) Pending on DEC-1 — do not choose a stack unless DEC-1 ≠ (c)
 
@@ -63,7 +63,7 @@ One-line rationale per option:
 
 - [ ] (a) Mechanical only — 3 scorers (framing-mode, citation-integrity, Key-Facts presence); no LLM costs
 - [ ] (b) Mechanical + 3 LLM-as-judge — adds Executive-Summary crispness, source-bias flagging, ballot async-readability
-- [ ] (c) Full coverage — every reviewer-checklist item gets a scorer (8 dossier + 8 ballot = 16)
+- [x] (c) Full coverage — every reviewer-checklist item gets a scorer (8 dossier + 8 ballot = 16)
 
 One-line rationale per option:
 - (a) Cheapest; catches structural breaks but not prose-quality drift.
@@ -79,7 +79,7 @@ One-line rationale per option:
 *Recommended: merge preflight first, then open eval-harness PR — so the eval surface is stable before eval authoring starts.*
 
 - [ ] (a) Eval harness before preflight — lets evals cover preflight when it lands
-- [ ] (b) Preflight before eval harness — eval surface stable first
+- [x] (b) Preflight before eval harness — eval surface stable first
 - [ ] (c) In parallel — merge conflicts accepted
 
 ### DEC-5 — Port Quatico's `run-scenarios.md` runbook into this repo as a template
@@ -87,7 +87,7 @@ One-line rationale per option:
 *Recommended: don't port — evalite's CLI-native flow is different enough that writing new is cheaper than translating.*
 
 - [ ] Port — keep the Quatico authoring pattern consistent across both repos
-- [ ] Don't port — let the evalite stack shape its own runbook
+- [x] Don't port — let the evalite stack shape its own runbook
 
 ---
 
@@ -95,13 +95,15 @@ One-line rationale per option:
 
 <!-- Reviewer-only comments. Not a reconciliation surface — that's the sessionlog. -->
 
+use bun if possible. 
+
 {Any notes, deferrals, or scope adjustments. Empty is fine.}
 
 ---
 
 <!--
   Post-write self-check against skills/ballot/references/review-checklist.md:
-  1. Filename: DOSSIER-Dossier-Evals-Applicability-BALLOT-Max.md ✓
+  1. Filename: [DOSSIER-Dossier-Evals-Applicability-BALLOT-Max.md](https://DOSSIER-Dossier-Evals-Applicability-BALLOT-Max.md) ✓
   2. Cover block: reviewer, role, dossier link only; no archaeology ✓
   3. Anti-options: DEC-2 (a) has a <!-- justify: ... --> comment; DEC-2 (d) is an
      explicit abstention depending on DEC-1, not an anti-option ✓
