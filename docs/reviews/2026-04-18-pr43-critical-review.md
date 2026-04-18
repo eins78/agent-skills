@@ -114,9 +114,20 @@ A user filling in the template without pruning unused placeholders ships a dossi
 
 ## AI review pass
 
-*To be filled in at step 3 of the session plan.*
+Ran via the `ai-review` skill against Gemini (free-tier OAuth). The first attempt (with `--context` and a targeted file list) exhibited the task-runner bug where a non-trivial `--context` string corrupts the diff capture — unrelated to this PR. Retried with `--branch --no-context`; completed in ~60 seconds, 204 lines output. **Verdict: APPROVE.** Three INFO-severity findings:
 
-The `/ai-review` slash command will run serial (free-tier Gemini quota). Findings will be folded into either an additional fix commit (`ai-review: address <finding>`) or annotated as "dispute" in this section. If `/ai-review` errors, the error is recorded here and the session proceeds.
+### Agreements with the self-review
+
+- **Version baseline.** Gemini flagged `skills/dossier/SKILL.md:13` as "explicitly reverted to 1.0.1 to allow the release pipeline's changeset to drive the bump to 1.1.0" — agrees with §R2 of this review. No action.
+- **Template placeholder URLs.** Gemini flagged `skills/dossier/templates/dossier.md:188–197` as a known trade-off mitigated by the review checklist — agrees with §D6. No action.
+
+### Missed issues — fixed during this review pass
+
+- **Ballot filename regex rejects hyphens in reviewer names.** `.claude-plugin/hooks/ballot-filename.sh:30` — the regex `[A-Za-z0-9_]+` for the reviewer segment does not allow hyphens, so `DOSSIER-Test-BALLOT-Max-Albrecht.md` and `DOSSIER-Test-BALLOT-Anne-Marie.md` would fail the gate even though they are legitimate reviewer names. **Fixed** in commit `9e17b37` by extending to `[A-Za-z0-9_-]+`. Empty-reviewer rejection preserved (verified with four filename probes: hyphen / simple / empty / underscore). This was a real miss in the self-review — the checklist item for filename pattern testing didn't probe hyphenated names.
+
+### Disagreements / challenges
+
+None. Gemini's three findings were all INFO and actionable; nothing overreached or missed.
 
 ---
 
