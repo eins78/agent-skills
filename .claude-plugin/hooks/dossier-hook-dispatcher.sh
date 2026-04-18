@@ -37,9 +37,9 @@ fi
 
 failures=""
 
-# Ballot files only get the filename check; full dossier audit does not apply.
+# Ballot files get the ballot-specific audits only; full dossier audit does not apply.
 if [[ "$name" == *BALLOT* ]]; then
-  if ! output=$("$here/dossier-ballot-filename.sh" "$file_path" 2>&1); then
+  if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
     failures+="$output"$'\n'
   fi
 else
