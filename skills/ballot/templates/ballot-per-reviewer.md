@@ -1,28 +1,10 @@
 <!--
   Per-reviewer ballot template.
 
-  One file per reviewer. Filename pattern: DOSSIER-<slug>-BALLOT-<Reviewer>.md.
-  Do NOT create a single-file ballot with two reviewer columns — see
-  .claude-plugin/hooks/dossier-ballot-filename.sh for the gate that enforces this.
-
-  Cover-block rule: reviewer designation, role, peer-ballot cross-reference, link
-  to the full dossier. Nothing else. No "ballot updated 2026-…" paragraph, no
-  changelog, no "since last version" notes — archaeology belongs in the commit
-  log and the sessionlog, not in the artefact a reviewer is ticking.
-
-  Recommended-but-not-pre-ticked: each DEC can name a recommendation in prose,
-  but the checkboxes stay EMPTY. The reviewer makes the mark. A pre-ticked
-  checkbox is pressure, not a recommendation.
-
-  Time-horizon rule: one DEC = one decision surface = one time-horizon. Do not
-  mix "launch day channels" with "next year's CFP commitments" in one multi-select.
-
-  Anti-option warning: if you add an option labelled "not recommended" or
-  "for completeness", either add a short justification comment OR delete the
-  option. Every anti-option costs reviewer ticking-time without changing outcomes.
-
-  Reconciliation lives in the sessionlog, not in a third file. The ballots are
-  the durable artefact; the reconciliation is a session output.
+  Conventions and rationale: see skills/ballot/SKILL.md (§Conventions).
+  Gates: ballot-filename.sh (naming), ballot-anti-option.sh (option quality),
+  ballot-cover-archaeology.sh (clean cover block). Full detail:
+  skills/ballot/references/ballot-conventions.md.
 -->
 
 # Ballot — {Dossier Title}
@@ -103,14 +85,14 @@
 ---
 
 <!--
-  Checks before delivering this ballot to the reviewer:
+  Delivery checklist — the hooks in .claude-plugin/hooks/ballot-*.sh enforce
+  the first three; the last two are agent discipline:
 
-  1. Filename matches DOSSIER-<slug>-BALLOT-<Reviewer>.md.
-     bash .claude-plugin/hooks/dossier-ballot-filename.sh <this-file>
-  2. Every DEC heading has exactly one decision surface and one time-horizon.
-  3. No option is labelled "not recommended" or "for completeness" without a
-     justification OR removal.
-  4. No checkbox is pre-ticked.
-  5. Cover block contains only: reviewer, role, peer-ballot link, dossier link.
-     No "updated" / "changes since" / "previous version" paragraph.
+  1. Filename matches DOSSIER-<slug>-BALLOT-<Reviewer>.md (ballot-filename.sh).
+  2. No anti-options ("not recommended", "for completeness", etc.) without a
+     <!- - justify: ... - -> comment (ballot-anti-option.sh).
+  3. Cover block is clean — no "updated YYYY-MM-DD" / "changes since" /
+     "previous version" paragraph (ballot-cover-archaeology.sh).
+  4. Every DEC heading: one decision surface, one time-horizon.
+  5. No checkbox is pre-ticked.
 -->
