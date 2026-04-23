@@ -188,6 +188,8 @@ bumps:
 
 If two changesets bump the same skill differently, the highest bump wins (major > minor > patch). The `bumps:` block is extensible — `agents:` can be added alongside `skills:` in the future.
 
+**Exception — a brand-new pre-release skill is not listed.** A skill added for the first time with a pre-release `metadata.version` (e.g. `0.1.0-alpha.1`) ships at that authored version, so its changeset leaves it out of `skills:` (an empty list is fine). Listing it would strip the suffix on release — `increment_semver` supports only major/minor/patch, so `0.1.0-alpha.1` + minor becomes `0.2.0`. The exception covers the first release only; later changes list the skill as usual.
+
 **Do NOT manually edit version numbers** in `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, or `.cursor-plugin/plugin.json`. These are managed by `pnpm run version` which syncs all files automatically. Skill versions in SKILL.md are bumped automatically from the `bumps:` block — do not manually edit those either.
 
 ## Releasing
