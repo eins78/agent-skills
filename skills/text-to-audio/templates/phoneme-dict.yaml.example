@@ -1,0 +1,16 @@
+# Kokoro phoneme dictionary — project-specific proper nouns
+# Format: term → ipa string (used as [term](/IPA/) Markdown-link)
+#
+# ⚠️ Do NOT add entries where default G2P already produces the correct
+#    pronunciation — misaki will voice the word twice ("Letta Letta").
+#    Test with --verify before committing new entries.
+
+terms:
+  # Example: tech compound whose default G2P splits incorrectly
+  MyProduct:
+    ipa: "mˈaɪ pɹˈɒdʌkt"
+    notes: "Default G2P stresses wrong syllable"
+  # Example: spelled-out domain
+  example.com:
+    ipa: "ɪɡzˈæmpəl dˈɒt kˈɒm"
+    notes: "Spoken URL form"
