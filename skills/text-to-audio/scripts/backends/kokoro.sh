@@ -18,7 +18,6 @@ LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/lib" && pwd)"
 # ---------- defaults ----------
 VOICE="am_puck"
 SPEED="0.92"
-SKILL_DIR=""
 SKIP_LAYER=0
 VERIFY=0
 INPUT_FILE=""
@@ -31,7 +30,7 @@ while [[ $# -gt 0 ]]; do
         --output)     OUTPUT_FILE="$2"; shift 2 ;;
         --voice)      [[ -n "$2" ]] && VOICE="$2";   shift 2 ;;
         --speed)      [[ -n "$2" ]] && SPEED="$2";   shift 2 ;;
-        --skill-dir)  SKILL_DIR="$2";   shift 2 ;;
+        --skill-dir)  shift 2 ;;  # accepted but unused — backend computes own path
         --skip-layer) SKIP_LAYER="$2";  shift 2 ;;
         --verify)     VERIFY=1;         shift   ;;
         *) echo "error: unknown option: $1" >&2; exit 1 ;;
