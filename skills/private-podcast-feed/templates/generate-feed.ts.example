@@ -1,0 +1,52 @@
+// generate-feed.ts.example — generic RSS feed skeleton for private-podcast-feed
+// Copy to generate-feed.ts and adapt to your project.
+//
+// Dependencies: pnpm add podcast
+// Run: pnpm tsx generate-feed.ts > public/p/<token>/feed.xml
+
+import { podcast } from "podcast";  // named, NOT default export — R3 gotcha
+
+interface FeedItem {
+  title: string;
+  url: string;
+  pubDate: Date;
+  durationSeconds?: number;
+}
+
+function buildFeed(items: FeedItem[], feedUrl: string): string {
+  const feed = new podcast({
+    title: "My Private Feed",
+    description: "Private audio notes",
+    feedUrl,
+    siteUrl: new URL(feedUrl).origin,
+    customElements: [{ "itunes:block": "Yes" }],  // keeps feed out of public indexes
+    // Note: typed FeedITunes interface omits itunesBlock — customElements is
+    // the only correct path for itunes:block
+  });
+
+  for (const item of items) {
+    feed.addItem({
+      title: item.title,
+      url: item.url,
+      date: item.pubDate,
+      enclosure: { url: item.url, type: "audio/mpeg" },
+      ...(item.durationSeconds ? { itunesSubtitle: `${item.durationSeconds}s` } : {}),
+    });
+  }
+
+  return feed.buildXml();
+}
+
+// Example usage — replace with your actual items and host
+const FEED_PREFIX = `https://your-host.com/p/${process.env.FEED_TOKEN}/`;
+
+const items: FeedItem[] = [
+  {
+    title: "Episode 1",
+    url: `${FEED_PREFIX}episode-1.mp3`,
+    pubDate: new Date("2026-04-01"),
+    durationSeconds: 1200,
+  },
+];
+
+process.stdout.write(buildFeed(items, `${FEED_PREFIX}feed.xml`));
