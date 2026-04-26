@@ -1,4 +1,4 @@
-# pdf2zine Skill — Development Documentation
+# pdf-zine Skill — Development Documentation
 
 ## Purpose
 
@@ -27,12 +27,14 @@ PDF input is implied by the trigger phrases, not by file extension matching. Glo
 ## File Structure
 
 ```
-pdf2zine/
+pdf-zine/
 ├── SKILL.md                                # Core skill (Docker-based usage)
 ├── README.md                               # This file
 └── references/
     └── bookletimposer-native.md            # Non-Docker install + CLI recipe
 ```
+
+Note: skill name is `pdf-zine` (hyphenated); the wrapped CLI binary is `pdf2zine`.
 
 ## Dependencies
 

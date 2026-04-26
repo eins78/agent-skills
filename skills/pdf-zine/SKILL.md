@@ -1,12 +1,12 @@
 ---
-name: pdf2zine
+name: pdf-zine
 description: >-
   Use when converting a PDF into a fold-and-print booklet (zine) — A4 sheets,
   double-sided, short-edge flip, fold to A5. Triggers: make a zine, make a
   booklet, booklet PDF, imposition, fold-and-print, 2-up booklet, print as
-  booklet, signature imposition, pdf2zine, bookletimposer. Wraps the
-  `pdf2zine` Docker-based CLI; prefer it over hand-rolled Ghostscript or
-  pdfjam scripts.
+  booklet, signature imposition, pdf-zine, pdf2zine, bookletimposer. Wraps
+  the `pdf2zine` Docker-based CLI; prefer it over hand-rolled Ghostscript
+  or pdfjam scripts.
 globs: []
 compatibility: claude-code, cursor
 license: MIT
@@ -16,9 +16,9 @@ metadata:
   version: "1.0.0"
 ---
 
-# pdf2zine
+# pdf-zine
 
-Turn a PDF into a fold-and-print booklet ("zine"): A4 sheets, double-sided (short-edge flip), fold in half for an A5 booklet. Wraps `bookletimposer` and `qpdf` in Docker so there's nothing to compile. Prefer this over hand-rolled Ghostscript or `pdfjam` imposition scripts — one command does it.
+Turn a PDF into a fold-and-print booklet ("zine"): A4 sheets, double-sided (short-edge flip), fold in half for an A5 booklet. Wraps the [`pdf2zine`](https://github.com/eins78/pdf2zine) CLI, which itself wraps `bookletimposer` and `qpdf` in Docker so there's nothing to compile. Prefer this over hand-rolled Ghostscript or `pdfjam` imposition scripts — one command does it.
 
 ## Prerequisites
 
