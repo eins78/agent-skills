@@ -1,5 +1,5 @@
 ---
-name: text-to-audio
+name: text-to-speech
 description: >-
   Use when you need to convert a text document to an audio file via a local TTS
   pipeline. Outputs MP3. Handles narrative rewrite, text normalization, prosody
@@ -15,7 +15,7 @@ metadata:
   version: "1.0.0-beta.1"
 ---
 
-# text-to-audio
+# text-to-speech
 
 Converts a text document to an MP3 audio file via a local TTS pipeline. The skill ships a wrapper script (`synth-audio.sh`) with a clean `text → audio-file` interface. The current backend is Kokoro-82M; swapping backends is a config change.
 

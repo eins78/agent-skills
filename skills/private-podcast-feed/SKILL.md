@@ -66,7 +66,7 @@ access control** — the URL is the only barrier. Do not store sensitive content
 Inject chapters post-ffmpeg via mutagen so Overcast shows skippable chapters:
 
 ```python
-# inject_chapters.py (bundled in text-to-audio skill)
+# inject_chapters.py (bundled in text-to-speech skill)
 inject(mp3_path, [
     {"start_ms": 0,       "title": "Introduction"},
     {"start_ms": 125000,  "title": "Section Two"},
@@ -76,7 +76,7 @@ inject(mp3_path, [
 Chapters must be strictly increasing by `start_ms`. End time of chapter N is
 set to start time of N+1; last chapter ends at the MP3's total duration.
 
-If using the `text-to-audio` skill, chapters are injected automatically during
+If using the `text-to-speech` skill, chapters are injected automatically during
 render when `chapters.json` is present.
 
 ## 5. Static-Hosting Pattern

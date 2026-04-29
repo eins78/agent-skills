@@ -2,9 +2,9 @@
 "@eins78/agent-skills": minor
 ---
 
-Add `text-to-audio` and `private-podcast-feed` skills from tts-shootout R4–R5
+Add `text-to-speech` and `private-podcast-feed` skills from tts-shootout R4–R5
 
-`text-to-audio`: wrapper script (`synth-audio.sh`) that takes a text document and
+`text-to-speech`: wrapper script (`synth-audio.sh`) that takes a text document and
 outputs MP3. Currently backed by Kokoro-82M; backend is config-swappable. Includes
 Kokoro-specific prosody config (stress hints, phoneme dict, em-dash chunking, list
 prosody). Bundled Python pipeline extracted from experiments/tts-shootout.
@@ -19,6 +19,6 @@ Extracted from `eins78/home-workspace` experiments/tts-shootout (Rounds 4–5, 2
 <!--
 bumps:
   skills:
-    text-to-audio: minor
+    text-to-speech: minor
     private-podcast-feed: minor
 -->
