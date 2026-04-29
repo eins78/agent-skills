@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.4.1",
+      "version": "2.5.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -48,7 +48,7 @@
     },
     {
       "name": "ballot",
-      "description": "Use when decisions happen async — reviewer(s) look at it over chat, on a PR, on a train, or any time outside the agent session. Triggers: async decision, PR review, pull request, remote reviewer, handoff, away-from-keyboard, decision ballot, architecture call, ADR, hiring panel, vendor selection, household decision, reconcile, per-reviewer, ballot.",
+      "description": "Use when decisions happen async — reviewer(s) look at it over chat, on a PR, on a train, or any time outside the agent session. Triggers: async decision, PR review, pull request, remote reviewer, h...",
       "version": "1.0.0",
       "source": "./skills/ballot",
       "author": {
@@ -79,7 +79,7 @@
     {
       "name": "dossier",
       "description": "Use when asked to research, compare, evaluate, or investigate any topic. Triggers: research this, compare options, evaluate alternatives, investigate, find the best, product comparison, technology ...",
-      "version": "1.0.3",
+      "version": "1.1.0",
       "source": "./skills/dossier",
       "author": {
         "name": "Max Albrecht",
@@ -101,6 +101,16 @@
       "description": "Use when converting documents between formats — HTML, Markdown, DOCX, PDF, LaTeX, EPUB, reStructuredText, Org, JIRA, CSV, Jupyter notebooks, slides, and 60+ others. Triggers: convert file, export t...",
       "version": "1.1.0",
       "source": "./skills/pandoc",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "pdf-zine",
+      "description": "Use when converting a PDF into a fold-and-print booklet (zine) — A4 sheets, double-sided, short-edge flip, fold to A5. Triggers: make a zine, make a booklet, booklet PDF, imposition, fold-and-print...",
+      "version": "1.1.0",
+      "source": "./skills/pdf-zine",
       "author": {
         "name": "Max Albrecht",
         "email": "1@178.is"

@@ -17,6 +17,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
 | [lab-notes](skills/lab-notes/) | Experiment management — hypothesis, append-only running log, verdict. Rigorous + Lite modes. |
 | [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |
+| [pdf-zine](skills/pdf-zine/) | Convert a PDF into a fold-and-print booklet (zine) — A4 sheets, 2-up, fold to A5, via the `pdf2zine` Docker CLI |
 | [private-podcast-feed](skills/private-podcast-feed/) | Private MP3+RSS feed for self-subscription — itunes:block, token URLs, ID3 chapters, Overcast ping |
 | [text-to-speech](skills/text-to-speech/) | Convert a text document to an audio MP3 file via a local TTS pipeline (backend-configurable) |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
