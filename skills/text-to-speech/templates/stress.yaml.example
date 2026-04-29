@@ -1,0 +1,16 @@
+# Kokoro stress hints — tune for your content
+
+emphasize:
+  - not      # contrast word — tested across R4–R5, reliable
+  - only     # scope limiter — tested, reliable
+  - critical # domain emphasis — add your own content-specific terms
+
+deemphasize: []
+# ⚠️ MUST stay empty.
+# R4 regression: ~650 (-1) wraps on articles/pronouns/linking verbs
+# produced a "timid, reserved" cadence (per listener review).
+# Known-unsafe — do NOT re-add:
+#   articles: the, a, an
+#   pronouns: I, you, it, they, we
+#   be-forms: is, are, was, were, be, been
+#   filler adverbs: just, really, very, quite

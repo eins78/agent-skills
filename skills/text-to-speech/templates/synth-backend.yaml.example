@@ -1,0 +1,11 @@
+# Backend configuration for synth-audio.sh
+# Copy to synth-backend.yaml in your project root
+
+backend: kokoro            # current: kokoro | future: orpheus | ...
+
+kokoro:
+  voice: am_puck           # validated: am_puck (R5, 5-round iteration)
+  speed: 0.92              # empirical: 0.92 avoids "Zik's" / "Six" slur at higher speeds
+  # model_path: ~/models/kokoro-v1.0/  # optional: override default model location
+  phoneme_dict: ./phoneme-dict.yaml    # project-specific IPA overrides (optional)
+  stress_hints: ./stress.yaml          # project-specific emphasis (optional)
