@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.5.0",
+      "version": "2.6.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -111,6 +111,26 @@
       "description": "Use when converting a PDF into a fold-and-print booklet (zine) — A4 sheets, double-sided, short-edge flip, fold to A5. Triggers: make a zine, make a booklet, booklet PDF, imposition, fold-and-print...",
       "version": "1.1.0",
       "source": "./skills/pdf-zine",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "private-podcast-feed",
+      "description": "Use when publishing a private MP3+RSS feed for self-subscription. Covers itunes:block, token-prefixed URLs, ID3 CHAP/CTOC chapters for Overcast skip-ahead, and the Overcast refresh ping. Triggers: ...",
+      "version": "1.1.0",
+      "source": "./skills/private-podcast-feed",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "text-to-speech",
+      "description": "Use when you need to convert a text document to an audio file via a local TTS pipeline. Outputs MP3. Handles narrative rewrite, text normalization, prosody prep, and audio render. Backend is config...",
+      "version": "1.1.0",
+      "source": "./skills/text-to-speech",
       "author": {
         "name": "Max Albrecht",
         "email": "1@178.is"

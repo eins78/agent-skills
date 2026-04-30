@@ -12,7 +12,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.0.0-beta.1"
+  version: "1.1.0"
 ---
 
 # text-to-speech
