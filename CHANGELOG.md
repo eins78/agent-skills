@@ -1,5 +1,17 @@
 # @eins78/agent-skills
 
+## 2.7.0
+
+### Minor Changes
+
+- [#51](https://github.com/eins78/agent-skills/pull/51) [`b48aaf1`](https://github.com/eins78/agent-skills/commit/b48aaf1fd42f32d1cde402b7083f4d1ac0a51b53) - chrome-browser: v1.3.0 — surface tool-selection rules (`browser_tabs` not `page.close()`, sequential calls, local-CDP verification), page-handling gotchas (`innerText` for SPAs, batch crawling inside `browser_run_code`, no `require('fs')`, Cloudflare patience, rate-limit guidance), an expanded "running but hung" troubleshooting checklist, and a stable `~/.local/bin/launch-chrome-cdp` symlink installed by `install-cft.sh` so cold sessions don't have to guess paths. Two pre-existing shellcheck warnings (SC2115, SC2054) also fixed.
+
+  <!--
+  bumps:
+    skills:
+      chrome-browser: minor
+  -->
+
 ## 2.6.0
 
 ### Minor Changes
