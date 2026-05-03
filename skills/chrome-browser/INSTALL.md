@@ -19,6 +19,8 @@ ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147
 
 CfT installs to `~/.local/Applications/Google Chrome for Testing.app`. It has its own bundle ID (`com.google.chrome.for.testing`) and a distinctive "TEST" badge icon — macOS treats it as a separate app in the Dock.
 
+The script also creates a stable launcher entry point at `~/.local/bin/launch-chrome-cdp` (symlink → `scripts/launch-chrome-cdp.sh`). If `~/.local/bin` is on your `$PATH`, future sessions can simply call `launch-chrome-cdp` without knowing the skill's installation path.
+
 ## 2. Create a launchd plist
 
 Use `com.example.chrome-cdp.plist` as a template. Customize:
@@ -55,6 +57,10 @@ launchctl list | grep chrome-cdp
 
 # CfT installed
 ls ~/.local/Applications/Google\ Chrome\ for\ Testing.app/
+
+# Launcher symlink on PATH
+which launch-chrome-cdp     # → ~/.local/bin/launch-chrome-cdp
+readlink "$(which launch-chrome-cdp)"  # points into the skill scripts/ directory
 
 # After restarting Claude Code, test Playwright MCP tools:
 # browser_navigate, browser_snapshot, browser_tabs should all work

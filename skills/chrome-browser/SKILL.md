@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Dedicated Chrome Browser
@@ -39,13 +39,44 @@ curl -s http://127.0.0.1:9222/json/version
 # Configure Playwright MCP (user-scope, one-time)
 claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://127.0.0.1:9222
 
-# Manual launch (if not using launchd)
-${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh
+# Manual launch — prefer the PATH symlink (created by install-cft.sh)
+launch-chrome-cdp                                    # ~/.local/bin/launch-chrome-cdp
 
-# Install / update Chrome for Testing
+# Install / update Chrome for Testing (also (re)creates the launcher symlink)
 ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh          # latest stable
 ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 ```
+
+### Finding the scripts when `${CLAUDE_SKILL_DIR}` isn't set
+
+Cold sessions or one-shot bash calls may not have `${CLAUDE_SKILL_DIR}`. After `install-cft.sh` has run once, the canonical entry point is on `$PATH`:
+
+```bash
+launch-chrome-cdp     # symlink in ~/.local/bin → skills/chrome-browser/scripts/launch-chrome-cdp.sh
+```
+
+If that's missing, locate the skill directory directly. **Do NOT guess** paths like `~/.cache/launch-chrome-cdp.sh`, and **do NOT fall back** to launching `/Applications/Google Chrome.app` manually — you'd bypass Chrome for Testing and the curated flag set:
+
+```bash
+SKILL_DIR="$(dirname "$(find ~/.claude/skills ~/.claude/plugins ~/CODE \
+  -path '*/chrome-browser/scripts/launch-chrome-cdp.sh' 2>/dev/null | head -1)")"
+"${SKILL_DIR}/launch-chrome-cdp.sh"
+```
+
+## Using the browser via Playwright MCP
+
+- **Close tabs:** use the `browser_tabs` tool (close action). Playwright `page.close()` does NOT work over CDP — it fails silently.
+- **One tab at a time:** close each tab when done. If 10+ tabs accumulate, close all and start fresh.
+- **Sequential, not parallel:** browser tool calls in parallel race the same Chrome instance. Wait for the previous call to settle before issuing the next.
+- **Verify you're talking to the local CDP:** `curl -s http://127.0.0.1:9222/json/version | jq .webSocketDebuggerUrl` should return a `ws://127.0.0.1:9222/...` URL. If it points at another host, the MCP config has been pointed at a remote CDP — fix it before doing anything else.
+
+## Working with pages
+
+- **React / SPA text extraction:** use `innerText`, not `textContent`. React's virtual DOM may leave text nodes empty while `innerText` reflects rendered visual output.
+- **Batch crawling:** `page.goto()` works inside `browser_run_code` for multi-page work without an MCP round-trip per page. Add 1–2 s between navigations to avoid rate limiting.
+- **No filesystem inside `browser_run_code`:** `require('fs')` is unavailable in the Playwright MCP sandbox. Return data as the function's return value, or POST it to a local HTTP server.
+- **Cloudflare:** if a site shows a challenge / waiting page, just wait — the browser MCP usually handles it. Real blocks are rare. Don't retry in a tight loop, and don't open a second tab to the same site.
+- **Rate limits:** sites like Galaxus / Digitec block after ~100+ rapid requests. Crawl slowly (1–2 s/page); expect a ~5 min cool-off after a block.
 
 ## Key Decisions
 
@@ -65,10 +96,26 @@ ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 
 ## Troubleshooting
 
-- **Cloudflare challenges:** If a site shows a Cloudflare challenge/waiting page, just wait — the browser MCP can usually handle it. We are very rarely actually blocked.
-- **CDP not responding:** Run `${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh` to start or check status.
-- **Profile conflicts:** If Chrome complains about profile lock, check for zombie Chrome processes: `ps aux | grep chrome-cdp-profile`
-- **CfT update:** Run `${CLAUDE_SKILL_DIR}/scripts/install-cft.sh` to download and install the latest stable version.
+**CDP unreachable** (`curl -s http://127.0.0.1:9222/json/version` is empty or errors):
+
+1. `launchctl list | grep chrome-cdp` — is the launchd agent loaded?
+2. `pgrep -f chrome-cdp-profile` — is a Chrome process actually running?
+3. **Process exists but CDP is dead** (the "running but hung" case): `pkill -f chrome-cdp-profile`, wait 2 s, then `launch-chrome-cdp` (or `${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh`).
+4. **Launchd shows non-zero exit** in `launchctl list`: check the stdout/stderr paths defined in your plist.
+
+**CDP reaches the wrong machine:**
+
+```bash
+curl -s http://127.0.0.1:9222/json/version | jq .webSocketDebuggerUrl
+```
+
+The URL must start with `ws://127.0.0.1:9222/`. If it points at a different host, the Playwright MCP `--cdp-endpoint` is wrong — re-run the `claude mcp add` line in Quick Reference.
+
+**Profile lock errors:** zombie Chrome holding `~/.cache/chrome-cdp-profile`. `pkill -f chrome-cdp-profile`, wait 2 s, relaunch.
+
+**Cloudflare challenges:** wait, don't retry. Real blocks are very rare; they need a fresh IP, not another browser restart.
+
+**CfT update:** run `${CLAUDE_SKILL_DIR}/scripts/install-cft.sh` to download/install the latest stable version (it also refreshes the `launch-chrome-cdp` symlink).
 
 ## Setup
 

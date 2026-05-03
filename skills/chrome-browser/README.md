@@ -38,6 +38,7 @@ chrome-browser/
 | qubert | 2026-02-25 | Working (launchd, multi-session tested) |
 | lima | 2026-03-07 | Working (launchd, Playwright MCP verified) |
 | lima | 2026-03-30 | v1.1.0: Chrome for Testing + ergonomic flags |
+| mac-zrh | 2026-05-03 | v1.3.0: tool-selection + page gotchas docs, `~/.local/bin/launch-chrome-cdp` symlink, expanded troubleshooting |
 
 ## Dependencies
 

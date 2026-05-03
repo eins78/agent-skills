@@ -12,6 +12,7 @@ USER_DATA_DIR="$HOME/.cache/chrome-cdp-profile"
 CFT_BIN="$HOME/.local/Applications/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 CHROME_BIN="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
+# shellcheck disable=SC2054  # commas inside --disable-features=... value are intentional Chrome syntax
 CHROME_FLAGS=(
   # Core CDP / Profile
   --remote-debugging-port="${PORT}"

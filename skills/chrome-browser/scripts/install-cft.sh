@@ -12,8 +12,13 @@ set -euo pipefail
 #   install-cft.sh 147.0.7727.24  Install exact version
 
 INSTALL_DIR="$HOME/.local/Applications"
+BIN_DIR="$HOME/.local/bin"
 APP_NAME="Google Chrome for Testing.app"
 VERSION="${1:-stable}"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LAUNCHER_SRC="${SCRIPT_DIR}/launch-chrome-cdp.sh"
+LAUNCHER_DEST="${BIN_DIR}/launch-chrome-cdp"
 
 if ! command -v npx &>/dev/null; then
   echo "Error: npx not found. Install Node.js first." >&2
@@ -41,7 +46,7 @@ CfT_VERSION="$("${APP_PATH}/Contents/MacOS/Google Chrome for Testing" --version 
 mkdir -p "${INSTALL_DIR}"
 if [[ -d "${INSTALL_DIR}/${APP_NAME}" ]]; then
   echo "Replacing existing CfT installation..."
-  rm -rf "${INSTALL_DIR}/${APP_NAME}"
+  rm -rf "${INSTALL_DIR:?}/${APP_NAME}"
 fi
 cp -R "${APP_PATH}" "${INSTALL_DIR}/"
 
@@ -54,4 +59,18 @@ echo "  ${INSTALL_DIR}/${APP_NAME}"
 echo ""
 echo "Binary: ${INSTALL_DIR}/${APP_NAME}/Contents/MacOS/Google Chrome for Testing"
 echo ""
-echo "Next: update your launchd plist and reload, or run launch-chrome-cdp.sh"
+
+# Create / refresh the launcher symlink so cold sessions can find it on PATH.
+if [[ -x "${LAUNCHER_SRC}" ]]; then
+  mkdir -p "${BIN_DIR}"
+  ln -sf "${LAUNCHER_SRC}" "${LAUNCHER_DEST}"
+  echo "Launcher symlink: ${LAUNCHER_DEST} -> ${LAUNCHER_SRC}"
+  if ! echo ":${PATH}:" | grep -q ":${BIN_DIR}:"; then
+    echo "  Note: ${BIN_DIR} is not on \$PATH. Add it to your shell rc to use 'launch-chrome-cdp' directly."
+  fi
+else
+  echo "Warning: launcher script not found at ${LAUNCHER_SRC} — symlink not created." >&2
+fi
+
+echo ""
+echo "Next: update your launchd plist and reload, or run 'launch-chrome-cdp' (or ${LAUNCHER_SRC})"
