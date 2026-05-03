@@ -14,8 +14,6 @@ Reusable setup guide for a dedicated Chrome for Testing (CfT) instance with CDP 
 
 Developed for qubert-config ([sessionlog](https://github.com/eins78/qubert-config/blob/main/docs/sessionlogs/2026-02-25-browser-automation-playwright-cdp.md)), then replicated on lima (home-workspace). Both setups validated and working.
 
-Lives in `eins78/skills` (formerly `eins78/agent-skills`).
-
 ## Key Insight
 
 Chrome enforces a single-instance lock per user-data-dir. When the user's daily Chrome is running, CDP can't bind to the default profile. The solution is a **dedicated `~/.cache/chrome-cdp-profile`** with Chrome for Testing — which also has its own `CFBundleIdentifier` (`com.google.chrome.for.testing`), giving it a distinct icon in the Dock without any hacks.
