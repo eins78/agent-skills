@@ -1,0 +1,35 @@
+/* Compact A4 print theme — Marked 2 GitHub/Swiss-style look, with full
+   Unicode coverage (Japanese, Korean, emoji) via Apple system font fallback.
+   Designed for headless Chrome --print-to-pdf. */
+
+@page { size: A4; margin: 22pt 22pt 18pt 22pt; }
+html { font-size: 9pt; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
+               "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Apple SD Gothic Neo",
+               "Apple Color Emoji", sans-serif;
+  font-size: 9pt; line-height: 1.35; color: #222; margin: 0; padding: 0;
+}
+h1, h2, h3, h4, h5, h6 { font-weight: 700; line-height: 1.15; page-break-after: avoid; }
+h1 { font-size: 22pt; margin: 0 0 0.4em; border-bottom: 1px solid #ccc; padding-bottom: 5pt; }
+h2 { font-size: 16pt; margin: 1.4em 0 0.35em; border-bottom: 1px solid #e5e5e5; padding-bottom: 3pt; }
+h3 { font-size: 13pt; margin: 1.1em 0 0.3em; }
+h4 { font-size: 11pt; margin: 0.9em 0 0.25em; }
+p { margin: 0.25em 0; }
+ul, ol { margin: 0.25em 0; padding-left: 1.4em; }
+li { margin: 0; } li > p { margin: 0; }
+hr { border: 0; border-top: 1px solid #ddd; margin: 0.5em 0; }
+table { border-collapse: collapse; width: 100%; margin: 0.35em 0; font-size: 9pt; page-break-inside: auto; }
+thead { display: table-header-group; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #ddd; padding: 2.5pt 5pt; text-align: left; vertical-align: top; word-wrap: break-word; line-height: 1.25; }
+th { background: #f5f5f5; font-weight: 600; }
+tr:nth-child(2n) td { background: #fafafa; }
+code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 90%; background: #f4f4f4; padding: 0.5pt 2.5pt; border-radius: 2pt; }
+pre { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8pt; line-height: 1.2;
+      background: #f6f8fa; padding: 6pt 8pt; border-radius: 3pt; white-space: pre;
+      overflow: visible; page-break-inside: avoid; margin: 0.4em 0; }
+pre code { background: transparent; padding: 0; font-size: inherit; }
+a { color: #0366d6; text-decoration: none; word-break: break-all; }
+blockquote { margin: 0.4em 0; padding: 0 10pt; border-left: 3pt solid #ddd; color: #555; }
+strong { font-weight: 600; }

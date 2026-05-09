@@ -13,7 +13,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Pandoc
@@ -81,6 +81,40 @@ pandoc --pdf-engine=xelatex -o output.pdf input.md      # Unicode/custom fonts
 pandoc --pdf-engine=typst -o output.pdf input.md        # lightweight, no LaTeX
 pandoc --pdf-engine=weasyprint -t html -o output.pdf input.md  # via HTML/CSS
 ```
+
+### Compact A4 print PDF (Marked-style, with Japanese + emoji)
+
+For printable docs that match the look of Marked 2's GitHub/Swiss styles —
+9pt body, bold heading hierarchy, tight A4 margins, full Unicode + emoji
+support via Apple system font fallback. Uses pandoc → HTML → headless Chrome;
+no LaTeX needed.
+
+```bash
+"${CLAUDE_SKILL_DIR}/scripts/md2pdf-print.sh" input.md output.pdf
+```
+
+The wrapper:
+
+1. Pipes markdown through pandoc with `--embed-resources` and the bundled
+   `themes/marked-print.css`.
+2. Renders with `chrome --headless=new --print-to-pdf`.
+
+Why not pandoc's own PDF engines? `xelatex`/`typst`/`weasyprint` all need
+extra fonts to render Japanese + emoji together. Headless Chrome already
+has Apple's full font stack and emoji color font available, so glyph
+fallback "just works" for any script.
+
+Why not Marked 2's own PDF export? On macOS 26.3.1, Marked's "Export PDF"
+clips ~5–10pt off the left edge of every page in all styles. This pipeline
+bypasses the underlying Quartz PDFContext bug entirely.
+
+Trade-off: output PDFs are ~4× larger than LaTeX output because Chrome
+embeds font subsets. Acceptable for one-shot print; not ideal for
+distribution-sized PDFs. Page count and density match Marked 2 closely,
+so it works well for booklet folding (e.g., A4 fold-to-A5).
+
+Pandoc 3.9 does **not** support Chrome as a `--pdf-engine`. The shell
+wrapper is the canonical pattern.
 
 ### Jupyter Notebook ↔ Markdown
 
@@ -182,3 +216,8 @@ Consult for deep dives — these are loaded on demand, not auto-included:
 - `${CLAUDE_SKILL_DIR}/references/pandoc-manual.md` — Curated option reference, templates, extensions
 - `${CLAUDE_SKILL_DIR}/references/pandoc-install.md` — Installation on macOS, Linux, Docker + PDF engines
 - `${CLAUDE_SKILL_DIR}/references/pandoc-advanced.md` — Lua filters, citations, slides, custom writers, EPUB
+
+## Bundled Assets
+
+- `${CLAUDE_SKILL_DIR}/themes/marked-print.css` — Compact A4 print stylesheet (9pt body, GitHub-like headings, Japanese + emoji)
+- `${CLAUDE_SKILL_DIR}/scripts/md2pdf-print.sh` — Markdown → A4 print PDF via pandoc + headless Chrome

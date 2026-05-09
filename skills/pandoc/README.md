@@ -20,9 +20,9 @@ Pandoc handles 60+ input formats. File-type-based triggering would be either too
 
 The pandoc man page is 5200+ lines. The curated version in `references/` keeps the most useful sections (options, common variables, extensions overview) and cuts exhaustive per-format details. Agents can always run `man pandoc` or `pandoc --help` for the complete reference.
 
-### No scripts bundled
+### Mostly recipes, one bundled wrapper
 
-Unlike `chrome-browser` or `tmux-control`, pandoc needs no wrapper scripts. The CLI is already the right interface. The skill provides recipes (copy-paste commands) rather than scripts.
+Pandoc's CLI is already the right interface for most conversions, so the skill is recipe-first. The one exception is the **compact A4 print** recipe (`scripts/md2pdf-print.sh` + `themes/marked-print.css`): it composes pandoc with headless Chrome to get Marked-2-style print output with full Japanese + emoji support, which no single pandoc PDF engine handles cleanly out of the box. Bundled because the composition is the value — agents would otherwise reinvent the wrapper each time.
 
 ## File Structure
 
@@ -30,6 +30,10 @@ Unlike `chrome-browser` or `tmux-control`, pandoc needs no wrapper scripts. The 
 pandoc/
 ├── SKILL.md                          # Core skill (recipes, patterns, when-to-use)
 ├── README.md                         # This file
+├── scripts/
+│   └── md2pdf-print.sh               # Markdown → A4 print PDF (pandoc + headless Chrome)
+├── themes/
+│   └── marked-print.css              # Compact A4 print stylesheet for the wrapper
 └── references/
     ├── pandoc-manual.md              # Curated pandoc manual (~690 lines)
     ├── pandoc-install.md             # Installation guide
@@ -40,6 +44,7 @@ pandoc/
 
 - pandoc 3.x+ (tested with 3.9.0.2)
 - For PDF output: a LaTeX distribution (texlive, mactex, tectonic) or weasyprint/typst
+- For the **compact A4 print** recipe: macOS with Google Chrome installed (the wrapper assumes `/Applications/Google Chrome.app`; override with `CHROME=...`). No LaTeX needed.
 - No other dependencies
 
 ## Testing
@@ -49,6 +54,7 @@ pandoc/
 3. **Anti-pattern test:** Ask to "write a script to convert DOCX to markdown" — agent should use pandoc instead
 4. **Format detection test:** Verify pandoc auto-detects from file extensions
 5. **Reference test:** Ask about Lua filters or citations — agent should consult `references/pandoc-advanced.md`
+6. **Compact A4 print test:** Run `scripts/md2pdf-print.sh` against a markdown file containing Japanese characters and emoji. Verify: page size A4, no left-edge clipping, Japanese glyphs render via Hiragino fallback, emoji render via Apple Color Emoji. Validated 2026-05-09 against an 8 KB Japan-trip itinerary (3 pages, all glyphs preserved).
 
 ## Provenance
 
