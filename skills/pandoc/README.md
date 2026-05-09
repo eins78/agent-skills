@@ -34,6 +34,10 @@ pandoc/
 │   └── md2pdf-print.sh               # Markdown → A4 print PDF (pandoc + headless Chrome)
 ├── themes/
 │   └── marked-print.css              # Compact A4 print stylesheet for the wrapper
+├── tests/
+│   ├── test-md2pdf-print.sh          # Regression test for the print recipe
+│   └── fixtures/
+│       └── print-test.md             # Fixture: English + Japanese + emoji
 └── references/
     ├── pandoc-manual.md              # Curated pandoc manual (~690 lines)
     ├── pandoc-install.md             # Installation guide
@@ -45,6 +49,7 @@ pandoc/
 - pandoc 3.x+ (tested with 3.9.0.2)
 - For PDF output: a LaTeX distribution (texlive, mactex, tectonic) or weasyprint/typst
 - For the **compact A4 print** recipe: macOS with Google Chrome installed (the wrapper assumes `/Applications/Google Chrome.app`; override with `CHROME=...`). No LaTeX needed.
+- For running `tests/test-md2pdf-print.sh`: poppler (`brew install poppler`) for `pdfinfo` + `pdftotext`. The test skips cleanly if any tool is missing — it never fails CI on a machine that can't run it.
 - No other dependencies
 
 ## Testing
@@ -54,7 +59,20 @@ pandoc/
 3. **Anti-pattern test:** Ask to "write a script to convert DOCX to markdown" — agent should use pandoc instead
 4. **Format detection test:** Verify pandoc auto-detects from file extensions
 5. **Reference test:** Ask about Lua filters or citations — agent should consult `references/pandoc-advanced.md`
-6. **Compact A4 print test:** Run `scripts/md2pdf-print.sh` against a markdown file containing Japanese characters and emoji. Verify: page size A4, no left-edge clipping, Japanese glyphs render via Hiragino fallback, emoji render via Apple Color Emoji. Validated 2026-05-09 against an 8 KB Japan-trip itinerary (3 pages, all glyphs preserved).
+6. **Compact A4 print test (automated):** Run
+
+   ```bash
+   skills/pandoc/tests/test-md2pdf-print.sh
+   ```
+
+   This runs `scripts/md2pdf-print.sh` against the in-repo fixture
+   `tests/fixtures/print-test.md` (English + Japanese + emoji), then asserts:
+   PDF is produced, page size is A4 (595 × 842 pt), page count ≥ 1, Japanese
+   string `香川県高松市浜ノ町` survives the round-trip via `pdftotext`, and
+   emoji `🎟` survives. The script skips cleanly (exit 0) if Chrome,
+   pandoc, or poppler are not installed — so it's safe to wire into CI.
+
+   Override Chrome path with `CHROME=/path/to/chrome tests/test-md2pdf-print.sh`.
 
 ## Provenance
 
