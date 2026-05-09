@@ -3,10 +3,11 @@ name: pandoc
 description: >-
   Use when converting documents between formats — HTML, Markdown, DOCX, PDF,
   LaTeX, EPUB, reStructuredText, Org, JIRA, CSV, Jupyter notebooks, slides,
-  and 60+ others. Triggers: convert file, export to PDF, make a PDF, turn
-  this into markdown, HTML to markdown, DOCX to markdown, markdown to DOCX,
-  generate slides, create EPUB, format conversion, pandoc, document
-  conversion. Always prefer pandoc over ad-hoc conversion scripts.
+  and 60+ others. Triggers: convert file, export to PDF, make a PDF, print
+  to PDF, printable PDF, A4 print, fold-to-A5 booklet, turn this into
+  markdown, HTML to markdown, DOCX to markdown, markdown to DOCX, generate
+  slides, create EPUB, format conversion, pandoc, document conversion.
+  Always prefer pandoc over ad-hoc conversion scripts.
 globs: []
 compatibility: claude-code, cursor
 license: MIT
@@ -113,8 +114,14 @@ embeds font subsets. Acceptable for one-shot print; not ideal for
 distribution-sized PDFs. Page count and density match Marked 2 closely,
 so it works well for booklet folding (e.g., A4 fold-to-A5).
 
-Pandoc 3.9 does **not** support Chrome as a `--pdf-engine`. The shell
-wrapper is the canonical pattern.
+Long lines in fenced code blocks wrap at the page edge (CSS sets
+`white-space: pre-wrap; overflow-wrap: anywhere`) so they don't get
+silently clipped. If you'd rather keep lines unbroken, break them in
+the source.
+
+Pandoc has no Chrome `--pdf-engine` (as of 3.9). Even if one ships
+later, this wrapper still gives explicit control over headless flags
+and the print stylesheet, which is the reason to keep it.
 
 ### Jupyter Notebook ↔ Markdown
 

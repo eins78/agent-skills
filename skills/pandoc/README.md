@@ -48,7 +48,7 @@ pandoc/
 
 - pandoc 3.x+ (tested with 3.9.0.2)
 - For PDF output: a LaTeX distribution (texlive, mactex, tectonic) or weasyprint/typst
-- For the **compact A4 print** recipe: macOS with Google Chrome installed (the wrapper assumes `/Applications/Google Chrome.app`; override with `CHROME=...`). No LaTeX needed.
+- For the **compact A4 print** recipe: Google Chrome (or Chromium). The wrapper defaults to the macOS app-bundle path (`/Applications/Google Chrome.app`); on Linux/Windows or non-default install locations, override with `CHROME=/path/to/chrome`. No LaTeX needed. Glyph fallback for Japanese + emoji is best on macOS where Apple's system font stack is available; other platforms work but the exact look depends on installed fonts.
 - For running `tests/test-md2pdf-print.sh`: poppler (`brew install poppler`) for `pdfinfo` + `pdftotext`. The test skips cleanly if any tool is missing — it never fails CI on a machine that can't run it.
 - No other dependencies
 
@@ -62,17 +62,22 @@ pandoc/
 6. **Compact A4 print test (automated):** Run
 
    ```bash
+   pnpm test:print                              # convenience script
+   # or, equivalently:
    skills/pandoc/tests/test-md2pdf-print.sh
    ```
 
    This runs `scripts/md2pdf-print.sh` against the in-repo fixture
    `tests/fixtures/print-test.md` (English + Japanese + emoji), then asserts:
-   PDF is produced, page size is A4 (595 × 842 pt), page count ≥ 1, Japanese
-   string `香川県高松市浜ノ町` survives the round-trip via `pdftotext`, and
-   emoji `🎟` survives. The script skips cleanly (exit 0) if Chrome,
-   pandoc, or poppler are not installed — so it's safe to wire into CI.
+   PDF is produced, page size is A4 (595 × 842 pt), page count is 1–3
+   (catches layout regressions that explode the page count), Japanese
+   string `香川県高松市浜ノ町` survives the round-trip via `pdftotext`,
+   emoji `🎟` survives, and no `?` substitutions appear in the extracted
+   text (a tofu-glyph negative check). The script skips cleanly (exit 0)
+   if Chrome, pandoc, or poppler are not installed — so it's safe to wire
+   into CI on machines where one or more aren't available.
 
-   Override Chrome path with `CHROME=/path/to/chrome tests/test-md2pdf-print.sh`.
+   Override Chrome path with `CHROME=/path/to/chrome pnpm test:print`.
 
 ## Provenance
 
