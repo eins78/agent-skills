@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.example.chrome-cdp</string>
+    <string>is.ars.chrome-cdp</string>
 
     <!-- Install CfT first: scripts/install-cft.sh -->
     <key>ProgramArguments</key>
