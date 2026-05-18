@@ -25,10 +25,13 @@ chrome-browser/
 ├── SKILL.md                      # Lean overview, architecture, decisions
 ├── README.md                     # This file
 ├── INSTALL.md                    # Full setup checklist
-├── com.example.chrome-cdp.plist  # Template launchd plist
+├── is.ars.chrome-cdp.plist       # launchd plist (label hardcoded — copy as-is)
 └── scripts/
     ├── launch-chrome-cdp.sh      # Idempotent launch script (prefers CfT, falls back to Chrome)
-    └── install-cft.sh            # Downloads and installs Chrome for Testing
+    ├── chrome-cdp-health.sh      # Liveness + endpoint check (exit 0/1/2)
+    ├── chrome-cdp-restart.sh     # Kickstart launchd-managed Chrome
+    ├── chrome-cdp-tabs.sh        # Read-only tab listing
+    └── install-cft.sh            # Downloads CfT + symlinks helpers onto $PATH
 ```
 
 ## Validated On
@@ -39,6 +42,7 @@ chrome-browser/
 | lima | 2026-03-07 | Working (launchd, Playwright MCP verified) |
 | lima | 2026-03-30 | v1.1.0: Chrome for Testing + ergonomic flags |
 | mac-zrh | 2026-05-03 | v1.3.0: tool-selection + page gotchas docs, `~/.local/bin/launch-chrome-cdp` symlink, expanded troubleshooting |
+| katoz | 2026-05-09 | v1.4.0: hardcoded launchd label, helper scripts (`chrome-cdp-{health,tabs,restart}`), `--symlinks-only`, on-activation preflight |
 
 ## Dependencies
 

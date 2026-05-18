@@ -5,20 +5,72 @@ set -euo pipefail
 # CfT has its own bundle ID (com.google.chrome.for.testing) and a distinctive
 # icon with a "TEST" badge, so it appears as a separate app in the Dock.
 #
-# Requires: npx (Node.js)
+# Requires: npx (Node.js) — only when downloading; --symlinks-only does not need it.
 # Usage:
-#   install-cft.sh              Install latest stable
-#   install-cft.sh 147          Install specific milestone
-#   install-cft.sh 147.0.7727.24  Install exact version
+#   install-cft.sh                  Install latest stable + refresh helper symlinks
+#   install-cft.sh 147              Install specific milestone + refresh symlinks
+#   install-cft.sh 147.0.7727.24    Install exact version + refresh symlinks
+#   install-cft.sh --symlinks-only  Refresh helper symlinks only (no download)
 
 INSTALL_DIR="$HOME/.local/Applications"
 BIN_DIR="$HOME/.local/bin"
 APP_NAME="Google Chrome for Testing.app"
-VERSION="${1:-stable}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LAUNCHER_SRC="${SCRIPT_DIR}/launch-chrome-cdp.sh"
-LAUNCHER_DEST="${BIN_DIR}/launch-chrome-cdp"
+
+# Helpers to symlink onto $PATH. Each pair is "<source-script>:<bin-name>".
+HELPERS=(
+  "launch-chrome-cdp.sh:launch-chrome-cdp"
+  "chrome-cdp-health.sh:chrome-cdp-health"
+  "chrome-cdp-restart.sh:chrome-cdp-restart"
+  "chrome-cdp-tabs.sh:chrome-cdp-tabs"
+)
+
+install_helper_symlinks() {
+  mkdir -p "${BIN_DIR}"
+  for entry in "${HELPERS[@]}"; do
+    local src="${SCRIPT_DIR}/${entry%%:*}"
+    local dest="${BIN_DIR}/${entry##*:}"
+    if [[ -x "${src}" ]]; then
+      ln -sf "${src}" "${dest}"
+      echo "  ${dest} -> ${src}"
+    else
+      echo "  Warning: ${src} not found or not executable — symlink not created." >&2
+    fi
+  done
+
+  if ! echo ":${PATH}:" | grep -q ":${BIN_DIR}:"; then
+    echo ""
+    echo "Note: ${BIN_DIR} is not on \$PATH. Add it to your shell rc to use the helpers directly."
+  fi
+}
+
+# Parse args
+SYMLINKS_ONLY=false
+VERSION="stable"
+case "${1:-}" in
+  --symlinks-only)
+    SYMLINKS_ONLY=true
+    ;;
+  -h|--help)
+    sed -n '/^# Download/,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^#$//;s/^# //;/^$/d'
+    exit 0
+    ;;
+  -*)
+    echo "Unknown flag: $1" >&2
+    echo "Usage: install-cft.sh [VERSION | --symlinks-only | -h | --help]" >&2
+    exit 2
+    ;;
+  *)
+    VERSION="${1:-stable}"
+    ;;
+esac
+
+if [[ "${SYMLINKS_ONLY}" == true ]]; then
+  echo "Refreshing helper symlinks only (no CfT download)..."
+  install_helper_symlinks
+  exit 0
+fi
 
 if ! command -v npx &>/dev/null; then
   echo "Error: npx not found. Install Node.js first." >&2
@@ -60,17 +112,8 @@ echo ""
 echo "Binary: ${INSTALL_DIR}/${APP_NAME}/Contents/MacOS/Google Chrome for Testing"
 echo ""
 
-# Create / refresh the launcher symlink so cold sessions can find it on PATH.
-if [[ -x "${LAUNCHER_SRC}" ]]; then
-  mkdir -p "${BIN_DIR}"
-  ln -sf "${LAUNCHER_SRC}" "${LAUNCHER_DEST}"
-  echo "Launcher symlink: ${LAUNCHER_DEST} -> ${LAUNCHER_SRC}"
-  if ! echo ":${PATH}:" | grep -q ":${BIN_DIR}:"; then
-    echo "  Note: ${BIN_DIR} is not on \$PATH. Add it to your shell rc to use 'launch-chrome-cdp' directly."
-  fi
-else
-  echo "Warning: launcher script not found at ${LAUNCHER_SRC} — symlink not created." >&2
-fi
+# Create / refresh helper symlinks so cold sessions can find them on $PATH.
+install_helper_symlinks
 
 echo ""
-echo "Next: update your launchd plist and reload, or run 'launch-chrome-cdp' (or ${LAUNCHER_SRC})"
+echo "Next: install the launchd plist (see INSTALL.md), or run 'launch-chrome-cdp' for a one-shot session."
