@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Regression test for the `md2pdf-print.sh` recipe.
+#
+# Asserts:
+#   1. Wrapper produces a non-empty PDF without erroring.
+#   2. PDF is A4-sized (595 x 842 pt, +/-1pt slop).
+#   3. Page count is within the expected range for the fixture (1-3).
+#      A loose ">= 1" check would mask layout regressions that paginate the
+#      fixture across many pages because of bad margins or font metrics.
+#   4. Japanese text from the fixture survives the pdf round-trip.
+#   5. Emoji text from the fixture survives the pdf round-trip.
+#   6. No '?' in extracted text — the fixture contains none, so any '?' is
+#      a tofu/missing-glyph substitution from a font fallback failure.
+#
+# Skips cleanly (exit 0) if Chrome / pandoc / pdfinfo / pdftotext are absent —
+# this is a macOS-first recipe and CI may not have all four tools.
+#
+# Usage: tests/test-md2pdf-print.sh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+WRAPPER="$SKILL_DIR/scripts/md2pdf-print.sh"
+FIXTURE="$SCRIPT_DIR/fixtures/print-test.md"
+CHROME_DEFAULT="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME="${CHROME:-$CHROME_DEFAULT}"
+
+skip() { echo "SKIP: $1"; exit 0; }
+fail() { echo "FAIL: $1" >&2; exit 1; }
+pass() { echo "PASS: $1"; }
+
+# Preconditions
+[[ -x "$WRAPPER" ]] || fail "wrapper not executable: $WRAPPER"
+[[ -f "$FIXTURE" ]] || fail "fixture missing: $FIXTURE"
+command -v pandoc >/dev/null || skip "pandoc not installed"
+command -v pdfinfo >/dev/null || skip "pdfinfo not installed (brew install poppler)"
+command -v pdftotext >/dev/null || skip "pdftotext not installed (brew install poppler)"
+[[ -x "$CHROME" ]] || skip "Chrome not at $CHROME (set CHROME=... to override)"
+
+# Single tempdir + trap rm -rf so we don't leak files (mktemp -t with appended
+# suffix leaves the bare mktemp file behind on disk).
+WORKDIR="$(mktemp -d -t md2pdf-test)"
+OUT="$WORKDIR/out.pdf"
+trap 'rm -rf "$WORKDIR"' EXIT
+
+# 1. Wrapper runs without error and produces non-empty output
+"$WRAPPER" "$FIXTURE" "$OUT" >/dev/null || fail "wrapper exited non-zero"
+[[ -s "$OUT" ]] || fail "wrapper produced empty PDF"
+pass "wrapper produced PDF ($(wc -c < "$OUT") bytes)"
+
+# 2. A4 page size — pdfinfo reports A4 as 595 x 842 pt (allow 1pt slop)
+PAGE_SIZE="$(pdfinfo "$OUT" | grep '^Page size:' | awk '{print $3, $5}')"
+if [[ "$PAGE_SIZE" =~ ^59[45](\.[0-9]+)?\ 84[12](\.[0-9]+)?$ ]]; then
+  pass "page size is A4 ($PAGE_SIZE pt)"
+else
+  fail "page size not A4: got '$PAGE_SIZE'"
+fi
+
+# 3. Page count: fixture is small enough to render in 1-3 pages. Catches
+# layout regressions that would explode the page count.
+PAGES="$(pdfinfo "$OUT" | awk '/^Pages:/ {print $2}')"
+if (( PAGES >= 1 && PAGES <= 3 )); then
+  pass "page count: $PAGES (within 1-3 expected)"
+else
+  fail "page count out of expected range (1-3): $PAGES"
+fi
+
+# 4 + 5. Glyph survival via pdftotext
+TEXT="$(pdftotext "$OUT" - 2>/dev/null)"
+echo "$TEXT" | grep -q '香川県高松市浜ノ町' || fail "Japanese string missing from extracted text"
+pass "Japanese preserved (香川県高松市浜ノ町)"
+echo "$TEXT" | grep -q '🎟' || fail "emoji 🎟 missing from extracted text"
+pass "emoji preserved (🎟)"
+
+# 6. Negative tofu check: the fixture contains no '?' literals, so any '?' in
+# extracted text is a missing-glyph substitution. A positive grep ("does the
+# Japanese survive") can pass even when adjacent codepoints fell back to '?',
+# so this complementary check tightens the assertion.
+if echo "$TEXT" | grep -q '?'; then
+  fail "extracted text contains '?' — likely missing-glyph substitution"
+fi
+pass "no missing-glyph substitutions"
+
+echo
+echo "All checks passed."
