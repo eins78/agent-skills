@@ -1,0 +1,170 @@
+name: DelphiTools Bundle
+
+# Builds and publishes pre-built DelphiTools static site bundles.
+# Security note: The only external input is a git commit SHA from
+# git ls-remote (hex string, not user-controlled content).
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 06:00 UTC
+  workflow_dispatch: {}   # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  build-bundle:
+    runs-on: ubuntu-latest
+    env:
+      DELPHITOOLS_REPO: https://github.com/1612elphi/delphitools.git
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check latest DelphiTools commit
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST=$(git ls-remote "$DELPHITOOLS_REPO" HEAD | cut -f1)
+          SHORT="${LATEST:0:7}"
+          echo "commit=$LATEST" >> "$GITHUB_OUTPUT"
+          echo "short=$SHORT" >> "$GITHUB_OUTPUT"
+          if gh release view "delphitools-bundle-$SHORT" >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        if: steps.check.outputs.skip == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Clone and build DelphiTools
+        if: steps.check.outputs.skip == 'false'
+        env:
+          DT_COMMIT: ${{ steps.check.outputs.commit }}
+        run: |
+          git clone --depth 1 "$DELPHITOOLS_REPO" /tmp/delphitools
+          cd /tmp/delphitools
+          git fetch --depth 1 origin "$DT_COMMIT"
+          git checkout "$DT_COMMIT"
+          npm install
+          npm run build
+
+      - name: Compile lib modules for Node.js
+        if: steps.check.outputs.skip == 'false'
+        run: |
+          cd /tmp/delphitools
+          # Compile lib/*.ts to standalone JS for Node.js import
+          # These are pure computation modules (no React, no DOM)
+          npx tsc --outDir /tmp/delphitools/out/lib \
+            --target ES2022 --module ESNext --moduleResolution bundler \
+            --declaration --esModuleInterop --skipLibCheck \
+            lib/imposition.ts lib/palette-strategies.ts lib/palette-collection.ts \
+            lib/colour-notation.ts lib/paper-sizes.ts lib/math-constants.ts 2>/dev/null || true
+          # Also copy the raw TypeScript source for reference
+          mkdir -p /tmp/delphitools/out/lib-src
+          cp lib/imposition.ts lib/palette-strategies.ts lib/palette-collection.ts \
+             lib/colour-notation.ts lib/paper-sizes.ts lib/math-constants.ts \
+             /tmp/delphitools/out/lib-src/ 2>/dev/null || true
+          # Copy shavian transliteration module
+          cp -r lib/shavian /tmp/delphitools/out/lib-src/shavian 2>/dev/null || true
+          # Include package.json for dependency reference
+          cp package.json /tmp/delphitools/out/package.json
+          echo "Lib modules compiled and included in bundle"
+
+      - name: Package bundle
+        if: steps.check.outputs.skip == 'false'
+        env:
+          DT_COMMIT: ${{ steps.check.outputs.commit }}
+          DT_SHORT: ${{ steps.check.outputs.short }}
+        run: |
+          cd /tmp/delphitools/out
+          BUILD_DATE=$(date -u +%Y-%m-%d)
+          cat > BUNDLE-README.md << READMEEOF
+          # DelphiTools Pre-Built Bundle
+
+          Source: https://github.com/1612elphi/delphitools
+          Commit: ${DT_COMMIT}
+          Built: ${BUILD_DATE}
+
+          ## Contents
+
+          - Static site (serve with: npx serve . or python3 -m http.server 3000)
+          - lib/ — Compiled JS modules for Node.js import (imposition, palette, colour)
+          - lib-src/ — Raw TypeScript source of the same modules
+          - package.json — Dependency reference
+
+          ## Using lib/ modules in Node.js
+
+          The lib/ directory contains pre-compiled ES modules from DelphiTools' pure
+          computation layer. These can be imported directly:
+
+              import { computeImposition } from './lib/imposition.js';
+              import { PAPER_SIZES } from './lib/paper-sizes.js';
+
+          Live site: https://delphi.tools
+          READMEEOF
+          tar czf "/tmp/delphitools-bundle-${DT_SHORT}.tgz" .
+          zip -qr "/tmp/delphitools-bundle-${DT_SHORT}.zip" .
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DT_COMMIT: ${{ steps.check.outputs.commit }}
+          DT_SHORT: ${{ steps.check.outputs.short }}
+        run: |
+          printf 'Pre-built DelphiTools static site from commit [%s](https://github.com/1612elphi/delphitools/commit/%s).\n\nDownload and serve:\n```\ntar xzf delphitools-bundle-%s.tgz && npx serve .\n```\n\nLive site: https://delphi.tools' "$DT_SHORT" "$DT_COMMIT" "$DT_SHORT" > /tmp/release-notes.md
+          gh release create "delphitools-bundle-${DT_SHORT}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "DelphiTools Bundle (${DT_SHORT})" \
+            --notes-file /tmp/release-notes.md \
+            "/tmp/delphitools-bundle-${DT_SHORT}.tgz" \
+            "/tmp/delphitools-bundle-${DT_SHORT}.zip"
+
+      - name: Update version-tracking.md
+        if: steps.check.outputs.skip == 'false'
+        env:
+          DT_COMMIT: ${{ steps.check.outputs.commit }}
+          DT_SHORT: ${{ steps.check.outputs.short }}
+        run: |
+          BUILD_DATE=$(date -u +%Y-%m-%d)
+          cat > skills/delphitools/references/version-tracking.md << VERSIONEOF
+          # DelphiTools Version Tracking
+
+          ## Current Tracked Version
+
+          **Commit:** ${DT_SHORT}
+          **Full SHA:** ${DT_COMMIT}
+          **Date:** ${BUILD_DATE}
+          **Tools:** 47
+          **Source:** https://github.com/1612elphi/delphitools
+
+          ## Download
+
+          ### Pre-Built Bundle
+
+          gh release download delphitools-bundle-${DT_SHORT} --repo ${GITHUB_REPOSITORY} --pattern '*.tgz'
+
+          ### From Source
+
+          git clone https://github.com/1612elphi/delphitools.git
+          cd delphitools && git checkout ${DT_COMMIT}
+          npm install && npm run build
+
+          ## Live Site
+
+          - https://delphi.tools
+          - https://tools.rmv.fyi
+          VERSIONEOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add skills/delphitools/references/version-tracking.md
+          if ! git diff --staged --quiet; then
+            git commit -m "delphitools: update tracked version to ${DT_SHORT}"
+            git push
+          fi

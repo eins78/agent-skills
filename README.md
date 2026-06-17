@@ -14,6 +14,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [ballot](skills/ballot/) | Durable decision artefact for async decisions — reviewed over chat, on a PR, on a train, after the session ends. Must/Should/Could tiers, empty checkboxes, reconciliation in sessionlog. Single async decider or multi-reviewer panel; pairs with `dossier` or stands alone (ADRs, PR review, hiring, vendor, household) |
 | [bye](skills/bye/) | Session wrap-up — reconstructs history, creates sessionlog, commits, summarizes next steps |
 | [chrome-browser](skills/chrome-browser/) | Dedicated Chrome with CDP for Playwright MCP — persistent sessions, launchd-managed, Cloudflare tips |
+| [delphitools](skills/delphitools/) | 47 browser-based design tools — SVG optimisation, QR codes, PDF imposition, colour utilities, image conversion, and more |
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
 | [lab-notes](skills/lab-notes/) | Experiment management — hypothesis, append-only running log, verdict. Rigorous + Lite modes. |
 | [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |

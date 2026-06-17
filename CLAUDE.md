@@ -77,7 +77,7 @@ When writing skills that include critical workflows (session teardown, credentia
 4. **One level deep** — Reference files directly from SKILL.md, avoid nesting
 5. **Use `${CLAUDE_SKILL_DIR}` for bundled files** — Never use relative paths (`./scripts/`, `./file.md`) in SKILL.md. Use `${CLAUDE_SKILL_DIR}/scripts/foo.sh` so agents can find scripts regardless of their working directory.
 6. **Use checklists** — Multi-step workflows benefit from copy-paste checklists
-7. **Test across models** — Haiku may need more guidance than Opus
+7. **Write for smaller models** — All instructions must be actionable by Sonnet/Haiku. Explicit tool names, URLs, and file paths (never "the usual" or "as before"). Concrete browser actions ("click the Upload button"), not abstract descriptions. Copy-pasteable commands, not conceptual explanations. If Haiku can't follow the steps, rewrite them.
 
 ## Skill Composition
 
