@@ -17,6 +17,16 @@
       }
     },
     {
+      "name": "agent-workspace",
+      "description": "Use when entering, bootstrapping, or working inside a shared repo organized as an agent-workspace — a pattern for human + AI collaboration with conventions for story tracking, session logs, skills, and CLAUDE.md routing.",
+      "version": "0.1.0-alpha.1",
+      "source": "./skills/agent-workspace",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
       "name": "ai-review",
       "description": "Get AI code review from a second model (Gemini/OpenAI) mid-session via CLI. Use when asked to review code, get a second opinion, check quality, or verify implementation — especially in unfamiliar s...",
       "version": "0.0.3",
