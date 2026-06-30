@@ -147,6 +147,22 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ---
 
+## 9. Single current version (no edit history in the body)
+
+**What to check.** The dossier reads as one current version. No "Revision note" block at the top, no `rev. YYYY-MM-DD` suffix on the date line, no inline phrasing that narrates the document's editing history ("first draft framed…", "corrected after feedback", "earlier version over-weighted…"). Corrections received mid-session have been folded back into the body as plain present-tense facts.
+
+**Why it matters.** A reader who wasn't in the authoring session does not care how the conclusion was reached edit-by-edit; they want the current facts and reasoning. Edit-history narration looks thorough but it is just noise — it makes the dossier longer, harder to scan, and signals that the author hasn't yet decided what the final version is. Document history belongs in version control (commit messages) and the sessionlog, not in the dossier body.
+
+**What good looks like.** When a load-bearing point was added late, it is phrased as `X was considered because Y` — the *reasoning* — not `edited to also consider X because Y was later raised as a critical constraint` — the *editing history*. The dossier could be handed to a fresh reader who would never know it had been revised. (This applies to unpublished / in-progress dossiers only. A deliberate dated addendum on an already-published dossier is a different case and out of scope.)
+
+**Red flags.**
+- A "Revision note" / "Changelog" / "Edits" block at the top of the dossier (or any H2 with that role).
+- A `rev. YYYY-MM-DD` suffix appended to the Date line, or a "(updated to…)" parenthetical.
+- Body phrases like "first draft framed", "earlier version", "corrected after feedback", "previously we said", "originally we recommended", "this dossier was updated to also consider…".
+- A new section whose only justification in prose is "added after reviewer feedback".
+
+---
+
 ## Why this replaced the old grep hooks
 
 Earlier iterations of the dossier skill shipped four grep-based audit hooks: `dossier-citation-audit.sh`, `dossier-forbidden-words.sh`, `dossier-section-order.sh`, and `dossier-dated-claim-scan.sh`. Each encoded a specific failure pattern from the a11y-extension Chrome-Web-Store session: the `[Xn]` citation convention, the OSS-mode forbidden-word list, H2-level glossary headings, and ISO-date patterns.

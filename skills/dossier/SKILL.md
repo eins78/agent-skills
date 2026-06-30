@@ -73,6 +73,7 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 - **Cite factual claims** with clickable reference-link syntax: `claim [S1][ref-S1]` where each citation token (`S1`, `G6`, `R1`, `O3` — pick a consistent category-prefix scheme) has a matching `[ref-S1]: https://...` definition at the end of §Sources. The raw markdown preserves the `[S1]` bracket token for anyone reading the file directly; the rendered link reads as `S1` and clicks through to the URL. Inline `([text](url))` also works for one-off sources. Bar: "could someone verify this?". If your target renderer supports them, the footnote form `[^S1]` is lighter — see `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (citation-integrity) for the portability trade-off.
 - **Source categories** adapt to domain (see template).
 - **Template-order rule.** Glossary stays at the top; Sources stay at the end. The asymmetry is deliberate — glossary is read-support (before), sources are trust-support (after). Do not move glossary to the appendix by analogy with sources.
+- **Anti-revision rule.** An in-progress / unpublished dossier reads as a single current version. No "Revision note" block, no `rev. <date>` suffix on the date line, no "first draft framed X / corrected after feedback" phrasing in the body. When you receive corrections mid-session, **rewrite** the affected lines as plain present-tense facts — don't append a changelog. Keep a point if it is load-bearing for the conclusion, but state *why it matters* (`X was considered because Y`), not *that it was added later* (`edited to also consider X because Y was raised`). Document history belongs in commit messages and the sessionlog. (Deliberate dated addenda on already-published dossiers are a different case and out of scope here.) Reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (single-current-version item).
 
 **Ballot** (when decisions happen async — reviewed over chat, on a PR, after the session ends): use the `ballot` skill. Works for multi-reviewer panels and single async deciders alike. Template at `skills/ballot/templates/ballot-per-reviewer.md`; conventions at `skills/ballot/SKILL.md`.
 
@@ -119,6 +120,7 @@ Everything else is reviewed by checklist, not by grep. Earlier iterations shippe
 | Generic recommendations | Tailor to THIS user's context and infrastructure |
 | Bare product names without URLs | Hyperlink every entity on first mention |
 | Same source categories every time | Adapt to domain (see `references/sources-by-domain.md`) |
+| Narrating edit history in the body | Collapse to one current version; recast research-driven points as facts, not as a changelog. Reviewed in the checklist (single-current-version item) |
 | Ending or re-starting session after delivery | Stay open — auto-compact handles context |
 
 For ballot-specific mistakes (anti-options, pre-ticked checkboxes, cover-block archaeology, single-file two-column ballots, reconciliation placement), see `skills/ballot/SKILL.md` §Common Mistakes.

@@ -37,7 +37,7 @@ dossier/
 ├── README.md                         # This file
 ├── references/
 │   ├── sources-by-domain.md          # Domain → source mapping (13 domains)
-│   └── review-checklist.md           # Reviewer audit checklist (8 items)
+│   └── review-checklist.md           # Reviewer audit checklist (9 items)
 └── templates/
     └── dossier.md                    # Report template with REQUIRED/OPTIONAL sections
                                       # (ballot template moved to skills/ballot/)
@@ -61,7 +61,7 @@ To verify the skill works:
 2. **Preflight test:** Give an ambiguous request ("look into the AI space") — the skill should ask for clarification before starting research
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
 4. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
-5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 8 items should be actionable against the finished dossier.
+5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 9 items should be actionable against the finished dossier.
 6. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
 7. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
 
