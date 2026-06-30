@@ -2,6 +2,12 @@
   Section-order rule (reviewed in references/review-checklist.md):
   Glossary stays at top (read-support); Sources stays at end (trust-support).
   See skills/dossier/SKILL.md §SYNTHESIZE for the asymmetry rationale.
+
+  Anti-revision rule (reviewed in references/review-checklist.md item 9):
+  One current version. No "Revision note" block, no `rev. <date>` suffix on
+  the Date line, no edit-history narration in the body. When corrections
+  come in mid-session, rewrite the affected lines as plain present-tense
+  facts; do not append a changelog. See skills/dossier/SKILL.md §SYNTHESIZE.
 -->
 
 # {Title}
