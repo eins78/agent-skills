@@ -1,5 +1,26 @@
 # @eins78/agent-skills
 
+## 2.7.1
+
+### Patch Changes
+
+- [#57](https://github.com/eins78/agent-skills/pull/57) [`6267f10`](https://github.com/eins78/agent-skills/commit/6267f10c4d9a04648de95fc58614c04e1e6f4529) - dossier: collapse unpublished dossiers to a single current version ([#56](https://github.com/eins78/agent-skills/issues/56))
+
+  When a user gives mid-session corrections, the agent previously accumulated document history in the dossier body — "Revision note" blocks, `rev. <date>` date suffixes, and inline "first draft framed X / corrected after feedback" phrasing. That edit history is noise to any reader who wasn't in the authoring session.
+
+  - SKILL.md §SYNTHESIZE gains an "Anti-revision rule" bullet: rewrite corrections as present-tense facts; state _why a point matters_ rather than _that it was added later_; document history lives in commit messages and the sessionlog.
+  - Common Mistakes table gains a "narrating edit history" row.
+  - review-checklist.md gains item [#9](https://github.com/eins78/agent-skills/issues/9) ("Single current version") with red-flag patterns.
+  - The dossier template's header comment block now names the anti-revision rule alongside the section-order rule.
+
+  Out of scope: deliberate dated addenda on already-published dossiers.
+
+  <!--
+  bumps:
+    skills:
+      dossier: patch
+  -->
+
 ## 2.7.0
 
 ### Minor Changes
