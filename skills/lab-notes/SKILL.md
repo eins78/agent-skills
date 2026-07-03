@@ -179,7 +179,7 @@ Commit conventions:
 | **Dossier skill** | Complementary: dossier = one-shot research deliverable; lab-notes = multi-session exploration. A dossier may feed into an experiment; an experiment may produce a dossier. |
 | **commit-notation** | `D:` for experiment docs, `R:` for graduation moves, `E:` for experiment work (code, scripts, eval harnesses). |
 | **system-maintenance** | Overdue timeboxes flagged as health check items. |
-| **tracer-bullets** | Different purpose: tracer-bullets proves architecture works (vertical slice); lab-notes documents what was learned exploring. An experiment might USE a tracer bullet as its method. |
+| **tracer-bullets** (in [eins78/plot](https://github.com/eins78/plot)) | Different purpose: tracer-bullets proves architecture works (vertical slice); lab-notes documents what was learned exploring. An experiment might USE a tracer bullet as its method. |
 
 ## Common Mistakes
 

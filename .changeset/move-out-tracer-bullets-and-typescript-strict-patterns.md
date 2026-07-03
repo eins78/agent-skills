@@ -1,0 +1,11 @@
+---
+"@eins78/agent-skills": major
+---
+
+Remove two skills that moved to their proper homes: `tracer-bullets` → [eins78/plot](https://github.com/eins78/plot) (it's Plot's designed companion — /plot-approve, the plan template, and the quickstart reference it) and `typescript-strict-patterns` → [quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills) (generic team-wide TypeScript guidance, belongs in the company pool). Major: breaking for anyone installing these skills from this marketplace — reinstall from the new homes.
+
+<!--
+bumps:
+  skills:
+    lab-notes: patch
+-->

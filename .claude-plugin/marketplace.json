@@ -145,26 +145,6 @@
         "name": "Max Albrecht",
         "email": "1@178.is"
       }
-    },
-    {
-      "name": "tracer-bullets",
-      "description": "Use when facing technical uncertainty, unproven architecture, or building a large feature where agents or humans risk getting lost in details before confirming the architecture works. Prevents hori...",
-      "version": "1.0.0-beta.1",
-      "source": "./skills/tracer-bullets",
-      "author": {
-        "name": "Max Albrecht",
-        "email": "1@178.is"
-      }
-    },
-    {
-      "name": "typescript-strict-patterns",
-      "description": "Use when writing or reviewing any TypeScript code. Covers discriminated unions, branded types, Zod at boundaries, const arrays over enums, and safe access patterns.",
-      "version": "1.0.0",
-      "source": "./skills/typescript-strict-patterns",
-      "author": {
-        "name": "Max Albrecht",
-        "email": "1@178.is"
-      }
     }
   ]
 }
