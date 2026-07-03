@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "2.7.1",
+      "version": "3.0.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -89,7 +89,7 @@
     {
       "name": "lab-notes",
       "description": "Use when starting experiments, planning features with hypothesis-first approach, checking experiment status, logging observations, or wrapping up trials. Triggers: start an experiment, new trial, b...",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "source": "./skills/lab-notes",
       "author": {
         "name": "Max Albrecht",
