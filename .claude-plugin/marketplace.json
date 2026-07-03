@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -69,7 +69,7 @@
     {
       "name": "chrome-browser",
       "description": "Use when setting up a dedicated Chrome browser for Playwright MCP with session persistence, or when encountering Cloudflare challenges during browser automation. Covers CDP setup, launchd auto-star...",
-      "version": "1.4.0",
+      "version": "1.5.0",
       "source": "./skills/chrome-browser",
       "author": {
         "name": "Max Albrecht",
@@ -99,7 +99,7 @@
     {
       "name": "pandoc",
       "description": "Use when converting documents between formats — HTML, Markdown, DOCX, PDF, LaTeX, EPUB, reStructuredText, Org, JIRA, CSV, Jupyter notebooks, slides, and 60+ others. Triggers: convert file, export t...",
-      "version": "1.1.0",
+      "version": "1.3.0",
       "source": "./skills/pandoc",
       "author": {
         "name": "Max Albrecht",
