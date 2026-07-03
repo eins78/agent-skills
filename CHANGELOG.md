@@ -1,5 +1,17 @@
 # @eins78/agent-skills
 
+## 3.0.0
+
+### Major Changes
+
+- [#59](https://github.com/eins78/agent-skills/pull/59) [`1f82c67`](https://github.com/eins78/agent-skills/commit/1f82c6721d906cecf23b05f03d37552eb0a79318) - Remove two skills that moved to their proper homes: `tracer-bullets` → [plot-pm/plot](https://github.com/plot-pm/plot) (it's Plot's designed companion — /plot-approve, the plan template, and the quickstart reference it) and `typescript-strict-patterns` → [quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills) (generic team-wide TypeScript guidance, belongs in the company pool). Major: breaking for anyone installing these skills from this marketplace — reinstall from the new homes.
+
+  <!--
+  bumps:
+    skills:
+      lab-notes: patch
+  -->
+
 ## 2.7.1
 
 ### Patch Changes
