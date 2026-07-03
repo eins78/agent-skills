@@ -19,6 +19,33 @@ A dedicated headed Chrome for Testing (CfT) instance with CDP for Playwright MCP
 - Headed so the user can log into sites manually; Playwright shares the session
 - launchd auto-starts on login, restarts on crash
 
+## Tool Selection
+
+This skill drives Chrome **only** through Playwright MCP attached to `127.0.0.1:9222`.
+
+**Do NOT use these lookalike MCPs even if they are loaded in the session:**
+
+- `mcp__chrome-devtools__*` — different MCP. Using it mixes tool surfaces and breaks the single-source-of-truth model this skill relies on. Typical failure: agent silently switches MCPs after a transient Playwright error and continues against an unrelated browser context.
+- `mcp__claude-in-chrome__*` — **deprecated predecessor; this skill replaces it.** If it shows up loaded somewhere, the config is stale — ignore it and use Playwright against `127.0.0.1:9222`.
+
+If Playwright MCP isn't loaded, **stop and tell the user** — do not silently switch to a sibling MCP, and do not drive the browser via raw `curl`/CDP-WebSocket (see "Working with pages").
+
+The Playwright MCP tools may be exposed under either namespace depending on how it was installed:
+
+- `mcp__playwright__browser_*` — when added via `claude mcp add playwright …` (the INSTALL.md flow).
+- `mcp__plugin_<plugin>_playwright__browser_*` — when loaded as part of a Claude Code plugin.
+
+Either is fine; both attach to the same `127.0.0.1:9222` CDP. The preflight below checks whichever variant is present.
+
+## On activation
+
+Before the first browser action in a session, run a 2-check preflight:
+
+1. **Browser ready:** `chrome-cdp-health` (exit 0). On exit 1 → CDP unreachable, run `launch-chrome-cdp`. On exit 2 → endpoint reachable but `webSocketDebuggerUrl` is not local; the Playwright MCP `--cdp-endpoint` is misconfigured.
+2. **Playwright MCP loaded:** at least one `mcp__*playwright*__browser_*` tool is available (either `mcp__playwright__*` or the plugin-namespaced `mcp__plugin_<plugin>_playwright__*`). If neither is present, stop and tell the user — see Tool Selection.
+
+If either check fails, stop and surface the issue. Do not improvise an alternative.
+
 ## Architecture
 
 ```
@@ -33,16 +60,18 @@ Chrome for Testing (CfT, ~/.local/Applications/)
 ## Quick Reference
 
 ```bash
-# Check CDP
-curl -s http://127.0.0.1:9222/json/version
+# Health / inspect / restart helpers (~/.local/bin/, installed by install-cft.sh)
+chrome-cdp-health         # exit 0 alive, 1 unreachable, 2 endpoint wrong host
+chrome-cdp-tabs           # list open tabs — read-only
+chrome-cdp-restart        # kickstart launchd-managed Chrome (use when CDP hangs)
 
 # Configure Playwright MCP (user-scope, one-time)
 claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://127.0.0.1:9222
 
-# Manual launch — prefer the PATH symlink (created by install-cft.sh)
+# Start / ensure Chrome CDP is running (one-shot, idempotent)
 launch-chrome-cdp                                    # ~/.local/bin/launch-chrome-cdp
 
-# Install / update Chrome for Testing (also (re)creates the launcher symlink)
+# Install / update Chrome for Testing (also (re)creates the helper symlinks)
 ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh          # latest stable
 ${CLAUDE_SKILL_DIR}/scripts/install-cft.sh 147      # specific milestone
 ```
@@ -65,10 +94,21 @@ SKILL_DIR="$(dirname "$(find ~/.claude/skills ~/.claude/plugins ~/CODE \
 
 ## Using the browser via Playwright MCP
 
-- **Close tabs:** use the `browser_tabs` tool (close action). Playwright `page.close()` does NOT work over CDP — it fails silently.
+- **Inspect and close tabs:** use the `browser_tabs` tool (no action = list; `close` action = close). Playwright `page.close()` does NOT work over CDP — it fails silently.
 - **One tab at a time:** close each tab when done. If 10+ tabs accumulate, close all and start fresh.
 - **Sequential, not parallel:** browser tool calls in parallel race the same Chrome instance. Wait for the previous call to settle before issuing the next.
-- **Verify you're talking to the local CDP:** `curl -s http://127.0.0.1:9222/json/version | jq .webSocketDebuggerUrl` should return a `ws://127.0.0.1:9222/...` URL. If it points at another host, the MCP config has been pointed at a remote CDP — fix it before doing anything else.
+- **Verify you're talking to the local CDP:** run `chrome-cdp-health`. Exit 0 = alive on `127.0.0.1:9222`; exit 2 = endpoint reachable but `webSocketDebuggerUrl` points elsewhere (the MCP `--cdp-endpoint` is pointed at a remote host — fix it before doing anything else).
+- **Never drive the browser via raw HTTP/WebSocket against `:9222/json/*`.** Those endpoints are for diagnostics only. For read-only inspection use `chrome-cdp-tabs` or `chrome-cdp-health`. Tab manipulation, navigation, snapshots, and any action go through Playwright MCP — direct CDP calls bypass Playwright's state tracking and break subsequent MCP calls.
+
+### When Playwright MCP errors but CDP is alive
+
+If `mcp__playwright__browser_*` errors but `chrome-cdp-health` returns 0, CDP is healthy and Playwright is the problem. Restart launchd-managed Chrome and retry the same Playwright call:
+
+```bash
+chrome-cdp-restart
+```
+
+**Never** switch to `mcp__chrome-devtools__*` or `mcp__claude-in-chrome__*` as a workaround. The fix is always to restore CDP, not to change MCPs. If CDP itself is dead, see Troubleshooting → "CDP unreachable" below.
 
 ## Working with pages
 
@@ -96,26 +136,22 @@ SKILL_DIR="$(dirname "$(find ~/.claude/skills ~/.claude/plugins ~/CODE \
 
 ## Troubleshooting
 
-**CDP unreachable** (`curl -s http://127.0.0.1:9222/json/version` is empty or errors):
+**CDP unreachable** (`chrome-cdp-health` exit 1):
 
 1. `launchctl list | grep chrome-cdp` — is the launchd agent loaded?
 2. `pgrep -f chrome-cdp-profile` — is a Chrome process actually running?
-3. **Process exists but CDP is dead** (the "running but hung" case): `pkill -f chrome-cdp-profile`, wait 2 s, then `launch-chrome-cdp` (or `${CLAUDE_SKILL_DIR}/scripts/launch-chrome-cdp.sh`).
+3. **Process exists but CDP is dead** (the "running but hung" case): `chrome-cdp-restart` (when launchd-loaded), or `pkill -f chrome-cdp-profile` + `launch-chrome-cdp` if the launchd agent isn't loaded.
 4. **Launchd shows non-zero exit** in `launchctl list`: check the stdout/stderr paths defined in your plist.
 
-**CDP reaches the wrong machine:**
-
-```bash
-curl -s http://127.0.0.1:9222/json/version | jq .webSocketDebuggerUrl
-```
-
-The URL must start with `ws://127.0.0.1:9222/`. If it points at a different host, the Playwright MCP `--cdp-endpoint` is wrong — re-run the `claude mcp add` line in Quick Reference.
+**CDP reaches the wrong machine** (`chrome-cdp-health` exit 2): `webSocketDebuggerUrl` does not start with `ws://127.0.0.1:9222/`. The Playwright MCP `--cdp-endpoint` has been pointed at a remote host — re-run the `claude mcp add` line in Quick Reference.
 
 **Profile lock errors:** zombie Chrome holding `~/.cache/chrome-cdp-profile`. `pkill -f chrome-cdp-profile`, wait 2 s, relaunch.
 
 **Cloudflare challenges:** wait, don't retry. Real blocks are very rare; they need a fresh IP, not another browser restart.
 
 **CfT update:** run `${CLAUDE_SKILL_DIR}/scripts/install-cft.sh` to download/install the latest stable version (it also refreshes the `launch-chrome-cdp` symlink).
+
+**Lost session after CfT update:** the persistent profile at `~/.cache/chrome-cdp-profile` may lose stored cookies/logins after a Chrome for Testing version bump. This is one-time per upgrade — re-login manually in the headed browser, no profile reset needed. Warn the user before any destructive `pkill`/profile-clear, since they may need the existing tab state for re-auth.
 
 ## Setup
 
