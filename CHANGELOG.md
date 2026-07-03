@@ -1,5 +1,36 @@
 # @eins78/agent-skills
 
+## 3.1.0
+
+### Minor Changes
+
+- [#55](https://github.com/eins78/agent-skills/pull/55) [`8796c22`](https://github.com/eins78/agent-skills/commit/8796c229b25c687ee13571c9bc3d36a33abaafd4) - chrome-browser: harden tool selection and cold-start behaviour, and ship recovery/diagnostic helpers as official scripts.
+
+  - Name the lookalike browser MCPs (`mcp__chrome-devtools__*`, `mcp__claude-in-chrome__*`) explicitly as forbidden so cold agents don't silently switch to them when Playwright errors transiently.
+  - Add an "On activation" preflight (CDP alive, Playwright MCP loaded) since the audit showed all real failures cluster in the first ~30–60 s after skill load.
+  - Forbid raw `curl`/CDP-WebSocket browser driving; clarify `browser_tabs` lists tabs (no action arg) as well as closing them.
+  - Document one-time session loss after Chrome for Testing version bumps.
+  - Hardcode the launchd label as `is.ars.chrome-cdp` (renamed plist `com.example.chrome-cdp.plist` → `is.ars.chrome-cdp.plist`) so troubleshooting commands work without machine-specific lookups. **Upgraders from v1.3 must unload and remove the old plist first** — see INSTALL.md §2.
+  - Ship three new helper scripts on PATH (symlinked by `install-cft.sh`):
+    - `chrome-cdp-health` — liveness + endpoint check (exit 0/1/2).
+    - `chrome-cdp-restart` — kickstart launchd-managed Chrome when Playwright keeps erroring but CDP is alive.
+    - `chrome-cdp-tabs` — read-only tab listing; sanctioned alternative to ad-hoc `curl :9222/json` for out-of-band inspection. Action helpers (goto/click/eval) intentionally NOT shipped — those would compete with Playwright MCP and re-create the tool-selection problem.
+  - Add `install-cft.sh --symlinks-only` to refresh helper symlinks without re-downloading CfT (and `-h`/`--help`). Lets users on existing CfT installs adopt the new helpers without the heavy npx download.
+
+  <!--
+  bumps:
+    skills:
+      chrome-browser: minor
+  -->
+
+- [#54](https://github.com/eins78/agent-skills/pull/54) [`93d9673`](https://github.com/eins78/agent-skills/commit/93d967323973f840c4cb9bdbf0cb559b4496896a) - pandoc: v1.2.0 — add "compact A4 print" recipe with bundled `themes/marked-print.css` (9pt body, GitHub-like headings, full Unicode + emoji via Apple system font fallback) and `scripts/md2pdf-print.sh` wrapper that pipes markdown through pandoc into headless Chrome `--print-to-pdf`. Replaces Marked 2's broken PDF export pipeline on macOS 26.x (which clips ~5–10pt off the left edge in all styles) and avoids the LaTeX-vs-Japanese-vs-emoji font dance. Pandoc has no Chrome `--pdf-engine` (as of 3.9), so the shell wrapper is the canonical pattern. The wrapper captures Chrome's stderr and verifies a non-empty PDF before exiting, so silent failures surface instead of producing 0-byte output. The print stylesheet wraps long lines in fenced code blocks (`white-space: pre-wrap; overflow-wrap: anywhere`) so they don't get clipped at the page edge. Includes an in-repo fixture (`tests/fixtures/print-test.md`) and a regression test (`tests/test-md2pdf-print.sh`, run via `pnpm test:print`) that asserts page size, page count is within an expected range, Japanese and emoji survive the round-trip, and no `?` tofu substitutions appear in the extracted text — runnable on any contributor machine.
+
+  <!--
+  bumps:
+    skills:
+      pandoc: minor
+  -->
+
 ## 3.0.0
 
 ### Major Changes
