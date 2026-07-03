@@ -2,9 +2,9 @@
 
 Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compatible AI coding agents.
 
-> **Looking for Plot?** The git-native planning workflow has moved to its own repo: **[eins78/plot](https://github.com/eins78/plot)**
+> **Looking for Plot?** The git-native planning workflow has moved to its own repo: **[plot-pm/plot](https://github.com/plot-pm/plot)**
 >
-> **Moved skills:** `tracer-bullets` now ships with **[eins78/plot](https://github.com/eins78/plot)** (it's Plot's companion skill); `typescript-strict-patterns` moved to **[quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills)**
+> **Moved skills:** `tracer-bullets` now ships with **[plot-pm/plot](https://github.com/plot-pm/plot)** (it's Plot's companion skill); `typescript-strict-patterns` moved to **[quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills)**
 
 ## Skills
 
