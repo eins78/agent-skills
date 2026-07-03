@@ -14,6 +14,13 @@ skills/<skill-name>/
 └── README.md     # Development documentation (REQUIRED)
 ```
 
+Skills may also bundle additional directories as needed:
+
+- `scripts/` — executable wrappers referenced from SKILL.md via `${CLAUDE_SKILL_DIR}/scripts/...`
+- `themes/` / `assets/` — stylesheets, templates, or other static files used by scripts
+- `references/` — deep-dive docs loaded on demand, not auto-included
+- `tests/` — optional post-install smoke tests (not run by `pnpm test`; provide a manual command in the skill's README so contributors and post-install users can verify the setup works)
+
 ### SKILL.md
 
 YAML frontmatter followed by markdown instructions:

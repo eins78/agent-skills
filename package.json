@@ -11,6 +11,7 @@
   },
   "scripts": {
     "test": "skills add . --list",
+    "test:print": "bash skills/pandoc/tests/test-md2pdf-print.sh",
     "postinstall": "skills add . --global --skill '*' --agent claude-code -y < /dev/null",
     "changeset": "cp .changeset/_template \".changeset/$(date +%Y%m%d-%H%M%S).md\" && echo 'Created changeset — edit it now'",
     "version": "bash .dev/scripts/bump-skill-versions.sh && changeset version && bash .dev/scripts/sync-versions.sh",
