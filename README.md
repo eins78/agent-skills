@@ -2,7 +2,9 @@
 
 Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compatible AI coding agents.
 
-> **Looking for Plot?** The git-native planning workflow has moved to its own repo: **[eins78/plot](https://github.com/eins78/plot)**
+> **Looking for Plot?** The git-native planning workflow has moved to its own repo: **[plot-pm/plot](https://github.com/plot-pm/plot)**
+>
+> **Moved skills:** `tracer-bullets` now ships with **[plot-pm/plot](https://github.com/plot-pm/plot)** (it's Plot's companion skill); `typescript-strict-patterns` moved to **[quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills)**
 
 ## Skills
 
@@ -21,8 +23,6 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [private-podcast-feed](skills/private-podcast-feed/) | Private MP3+RSS feed for self-subscription — itunes:block, token URLs, ID3 chapters, Overcast ping |
 | [text-to-speech](skills/text-to-speech/) | Convert a text document to an audio MP3 file via a local TTS pipeline (backend-configurable) |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
-| [tracer-bullets](skills/tracer-bullets/) | Thin vertical slice before widening — reduce uncertainty by building end-to-end first |
-| [typescript-strict-patterns](skills/typescript-strict-patterns/) | TypeScript patterns — tsconfig, ESLint strict, Zod, discriminated unions, branded types |
 
 ## Installation
 
@@ -55,10 +55,10 @@ Individual skills are listed in the marketplace and can be installed by name:
 
 ```bash
 # Symlink a single skill
-ln -s ~/CODE/agent-skills/skills/typescript-strict-patterns ~/.claude/skills/typescript-strict-patterns
+ln -s ~/CODE/agent-skills/skills/tmux-control ~/.claude/skills/tmux-control
 
 # Or copy it
-cp -r ~/CODE/agent-skills/skills/typescript-strict-patterns ~/.claude/skills/
+cp -r ~/CODE/agent-skills/skills/tmux-control ~/.claude/skills/
 ```
 
 Skills are picked up automatically by Claude Code based on their `globs` frontmatter.
