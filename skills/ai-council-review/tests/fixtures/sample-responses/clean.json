@@ -1,0 +1,15 @@
+{
+  "verdict": "request_changes",
+  "summary": "One real bug: the guard clause assigns instead of comparing.",
+  "findings": [
+    {
+      "location": { "file": "src/greet.js", "lines": [2, 2] },
+      "severity": "major",
+      "category": "correctness",
+      "title": "Assignment in condition: name = \"\" always falsy-assigns",
+      "description": "`if (name = \"\")` assigns the empty string to name and the branch never runs; every caller now gets Hello, .",
+      "suggestion": "Use === and consider nullish input: if (!name) return ...",
+      "confidence": "high"
+    }
+  ]
+}

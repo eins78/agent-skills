@@ -1,0 +1,18 @@
+Here is my review as requested:
+
+```json
+{
+  "verdict": "comment",
+  "summary": "Minor concerns only.",
+  "findings": [
+    {
+      "location": { "file": "src/greet.js", "lines": [3, 3] },
+      "severity": "minor",
+      "category": "maintainability",
+      "title": "Template literal change is fine but untested",
+      "description": "No test covers the new template-literal path.",
+      "confidence": "medium"
+    }
+  ]
+}
+```

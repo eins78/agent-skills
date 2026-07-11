@@ -12,6 +12,8 @@
   "scripts": {
     "test": "skills add . --list",
     "test:print": "bash skills/pandoc/tests/test-md2pdf-print.sh",
+    "test:council": "node --test skills/ai-council-review/tests/*.test.mjs",
+    "typecheck:council": "tsc -p skills/ai-council-review/jsconfig.json",
     "postinstall": "skills add . --global --skill '*' --agent claude-code -y < /dev/null",
     "changeset": "cp .changeset/_template \".changeset/$(date +%Y%m%d-%H%M%S).md\" && echo 'Created changeset — edit it now'",
     "version": "bash .dev/scripts/bump-skill-versions.sh && changeset version && bash .dev/scripts/sync-versions.sh",
@@ -22,6 +24,8 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
-    "skills": "^1.4.9"
+    "@types/node": "^20.19.0",
+    "skills": "^1.4.9",
+    "typescript": "^5.9.0"
   }
 }
