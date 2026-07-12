@@ -64,7 +64,11 @@ For each merged finding record:
 
 For **every finding of severity major or blocker, and every contested
 finding** (cap at the ~10–12 most consequential): open the actual files and
-check whether the issue exists as described. Mark each:
+check whether the issue exists as described. **Unanimity grants no
+exemption** — a 4/4 blocker gets the same verification as a 1/4 blocker.
+Models err *together*: when two models are both wrong they often produce
+the same wrong answer, so unanimous-and-wrong is a normal failure mode,
+not a paranoid edge case. Mark each:
 
 - `verified` — you confirmed it in the code/document. Quote the confirming lines.
 - `refuted` — the code does not do what the finding claims. State the
@@ -81,10 +85,23 @@ silently dropped, so the human can spot-check your refutations too.
 - A **1/M finding is a minority report, not noise.** Verify minority majors
   and blockers with the same rigor; a verified 1/M blocker outranks a 4/4
   style nit by construction of the ranking key.
+- **Triage the minority position before trusting the majority.** Ask: does
+  the dissenter introduce **evidence the majority never engaged with** (a
+  code path, an input class, a constraint)? Then the majority's headcount
+  means little — verify the minority claim first. If instead everyone
+  argued from the same evidence and merely concluded differently, the
+  majority is usually right. (Disagreement-structure research: minority
+  novelty predicts majority error better than vote margins do.)
 - **Direct contradictions** (member A: "this is a bug"; member B: "this is
   clearly intentional") become **contested items**: present both positions
   in their strongest form, then adjudicate from the repository evidence.
   Your adjudication is one more opinion unless you verified — say which it is.
+- **Adjudication hygiene (position bias)**: form your own view from the
+  repository evidence *before* weighing the two write-ups against each
+  other — LLM judges measurably flip verdicts based on presentation order
+  alone. On a close call, re-argue it with the positions swapped; if your
+  verdict flips with the order, it is not a verdict — mark the item
+  contested/uncertain rather than adjudicated.
 
 ## Step 6 — Rank (anti-false-consensus rules)
 
