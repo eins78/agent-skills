@@ -96,9 +96,23 @@ initial changeset to still release at 0.1.0).
 - **Outcome archive keyed by model slug, never labels** — labels are
   run-scoped by design.
 
+## Dossier upgrade (same day, follow-up)
+
+`research/council-prior-art.md` upgraded to a proper dossier (per the
+`dossier` skill): Key Facts box + glossary added, every substantive claim
+now carries a linked citation token (`[G#]`/`[P#]`/`[W#]` for the 21
+fetched sources, `[C#]` for 13 verifier-cited corroborating references),
+full bibliography with real titles/authors. All 34 URLs verified live
+(HTTP 200) and all arXiv titles fetched from the arXiv API before citing —
+including pinning two previously vague attributions (the cascade
+break-even formula → the "Triage" paper, arXiv:2604.07494; the
+single-agent-matches-debate result → Wang et al., ACL 2024). Citation
+integrity checked mechanically (no orphan tokens, no unused definitions).
+File path kept (PR comment, README provenance, and changeset link to it).
+
 ## Pending
 
-- [ ] Max reviews PR #62 (research + implementation) and merges
+- [ ] Max reviews PR #62 (research + implementation + dossier) and merges
 - [ ] Dogfood a real council run against the hardened flow (anonymized
       synthesis end-to-end, outcomes recording)
 - [ ] Open questions that only usage data can answer: agreement↔correctness
