@@ -127,7 +127,9 @@ dissent is preserved as contested items and minority reports; ranking is
 
 Write `report.md` into the run dir per
 `${CLAUDE_SKILL_DIR}/references/report-template.md`; give the user the
-condensed version in chat with actual vs estimated cost.
+condensed version in chat with actual vs estimated cost. Then record the
+verification outcomes (`outcomes record`, synthesis protocol step 8) — the
+archive is what makes future rosters evidence-based.
 
 ### 6. Optional: post to the PR
 

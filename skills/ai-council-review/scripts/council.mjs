@@ -11,6 +11,8 @@
  *                      [--out DIR] [--context "..."] [--plan PATH]
  *                      [--no-context] [--no-cache] [--personas]
  *   council.mjs models [--preset NAME | --models a,b,c] [--verify slug,...]
+ *   council.mjs outcomes record --run RUN_DIR --json '{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}, ...}'
+ *   council.mjs outcomes show
  *
  * Exit codes:
  *   0  success (quorum met; possibly degraded — see manifest.json)
@@ -41,6 +43,7 @@ import { gatherInput, fitPayload, UsageError } from "./lib/input.mjs";
 import { buildMessages, loadRubric, assembleUserPayload } from "./lib/prompts.mjs";
 import { RESPONSE_FORMAT, extractJson, validateReview } from "./lib/schema.mjs";
 import { clusterFindings } from "./lib/cluster.mjs";
+import { recordOutcomes, aggregateOutcomes } from "./lib/outcomes.mjs";
 
 const EXIT = { OK: 0, USAGE: 1, QUORUM: 2, BUDGET: 3, AUTH: 4 };
 
@@ -141,6 +144,8 @@ async function main() {
       "no-cache": { type: "boolean" },
       personas: { type: "boolean" },
       verify: { type: "string" },
+      run: { type: "string" },
+      json: { type: "string" },
       quorum: { type: "string" },
       "confirm-threshold": { type: "string" },
       "max-output-tokens": { type: "string" },
@@ -148,12 +153,46 @@ async function main() {
   });
 
   const [command, ...positionals] = rawPositionals;
-  if (command !== "review" && command !== "models") {
-    throw new UsageError(`Unknown command "${command ?? ""}". Use: council.mjs review|models (see file header for flags).`);
+  if (command !== "review" && command !== "models" && command !== "outcomes") {
+    throw new UsageError(`Unknown command "${command ?? ""}". Use: council.mjs review|models|outcomes (see file header for flags).`);
   }
 
   const env = process.env;
   const cwd = process.cwd();
+
+  // ---- outcomes (offline: no config resolution, no catalog, no network) ----
+  if (command === "outcomes") {
+    const sub = positionals[0];
+    if (sub === "record") {
+      if (!flags.run || !flags.json) {
+        throw new UsageError('outcomes record needs --run RUN_DIR and --json \'{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}}\'');
+      }
+      /** @type {Record<string, import("./lib/outcomes.mjs").Tally>} */
+      let verdictsByLabel;
+      try {
+        verdictsByLabel = JSON.parse(String(flags.json));
+      } catch (e) {
+        throw new UsageError(`--json is not valid JSON: ${e instanceof Error ? e.message : String(e)}`);
+      }
+      const record = recordOutcomes({ runDir: String(flags.run), stateDir: stateRoot(env), verdictsByLabel });
+      console.log(`Recorded outcomes for ${Object.keys(record.models).length} member(s) → ${join(stateRoot(env), "outcomes.jsonl")}`);
+      process.exit(EXIT.OK);
+    }
+    if (sub === "show") {
+      const rows = aggregateOutcomes(stateRoot(env));
+      if (rows.length === 0) {
+        console.log(`No outcomes recorded yet (${join(stateRoot(env), "outcomes.jsonl")}).`);
+        process.exit(EXIT.OK);
+      }
+      console.table(rows.map((r) => ({ ...r, precision: r.precision === null ? "—" : r.precision.toFixed(2) })));
+      console.log(
+        "precision = verified / (verified + refuted), from your own synthesis verdicts — " +
+          "small samples mislead; treat as a trend, not a score.",
+      );
+      process.exit(EXIT.OK);
+    }
+    throw new UsageError(`Unknown outcomes subcommand "${sub ?? ""}". Use: outcomes record|show.`);
+  }
   const config = resolveConfig({ flags, env, cwd });
   const catalog = await getModelsCatalog({
     baseUrl: config.baseUrl,

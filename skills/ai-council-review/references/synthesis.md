@@ -120,3 +120,22 @@ Write `report.md` into `RUN_DIR` following
 condensed version in chat: overall verdict, the verified top findings,
 contested items, and actual vs estimated cost. Link the run directory for
 the full record.
+
+## Step 8 — Record outcomes
+
+Your step-4 verdicts are labeled ground truth about each member's precision
+— the only data that can ever answer whether agreement tracks correctness
+for this council. Don't discard it with the report. Tally per member (a
+verified cluster counts `verified` for every member that raised it; same
+for refuted/uncertain; findings you did not check in step 4 are not
+counted) and record:
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/council.mjs outcomes record --run RUN_DIR \
+  --json '{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}, ...}'
+```
+
+Use the member **labels** — the script translates to model slugs via
+`roster-key.json` (you already opened it in step 7, so this leaks nothing).
+`outcomes show` prints the per-model archive; after enough runs it informs
+roster tuning with evidence instead of vibes.
