@@ -81,9 +81,16 @@ path — never a relative `./scripts/...`).
 | Any other document/files | `<file...>` or `--input-file <f>` | `--rubric doc` |
 
 Preset: `code` rubric → `--preset code`; otherwise the default preset is
-already right. `--models a,b,c` overrides for custom councils. `--personas`
-(experimental) gives members different focus lenses — it invalidates
-agreement counting; the synthesis protocol switches to coverage mode.
+already right. `--models a,b,c` overrides for custom councils.
+
+`--personas` runs the council in **coverage mode**: each member gets a
+distinct focus lens (correctness, security, design, testing, operations)
+on top of the shared rubric. This trades consensus signal for breadth —
+agreement counting is invalid across different assignments, and the
+synthesis protocol switches to coverage mode. Prefer it for broad material
+(a large plan, a many-concern diff); prefer the identical-rubric default
+when the question is "is this correct?" and agreement should mean
+something.
 
 ### 2. Estimate (spend-free)
 
@@ -135,6 +142,21 @@ archive is what makes future rosters evidence-based.
 
 Only on explicit user request, post findings with `gh pr comment` (or a
 formal review via `gh api`). The script never posts anywhere.
+
+## Cost pattern: two-stage triage (optional)
+
+A suggestion for material that may not need a frontier council — nothing
+enforces it:
+
+1. Run `--preset budget` (3 cheaper members) first.
+2. Escalate to `default`/`max` **only if** the budget run produced
+   majors/blockers or contested clusters — objective properties of
+   `clusters.json`, not a feeling.
+3. A clean budget run (approvals + nits) is a result: report it and stop.
+
+Each stage passes the same estimate and consent gates; escalation is a
+second run with its own estimate. Prior art: cascade cost controls
+(cheap-first with objective escalation triggers).
 
 ## Re-reviewing after fixes
 
