@@ -116,11 +116,12 @@ its last line.
 ### 4. Synthesize
 
 Follow `${CLAUDE_SKILL_DIR}/references/synthesis.md` step by step. Core
-moves: agreement is counted over delivered members; parse-failed members'
-raw text is read and included; top findings are **verified against the
-actual repo** before being reported; dissent is preserved as contested items
-and minority reports; ranking is `verified > severity > agreement >
-confidence`.
+moves: members are **anonymized** (`member-A`…) — do not open
+`roster-key.json` until the report step; agreement is counted over
+delivered members; parse-failed members' raw text is read and included; top
+findings are **verified against the actual repo** before being reported;
+dissent is preserved as contested items and minority reports; ranking is
+`verified > severity > agreement > confidence`.
 
 ### 5. Report
 

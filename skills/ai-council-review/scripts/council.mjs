@@ -68,7 +68,14 @@ function makeRunDir(cwd, env, /** @type {string|undefined} */ override) {
   const slug = basename(gitToplevel(cwd) ?? cwd).replace(/[^a-zA-Z0-9._-]/g, "_");
   const runId = new Date().toISOString().replace(/[:.]/g, "-").replace("T", "-").slice(0, 19);
   let dir = override ?? join(stateRoot(env), slug, runId);
-  if (!override) {
+  if (override) {
+    // Same guarantee for explicit --out: never overwrite a run's spend
+    // record or roster key (request-meta.json is written pre-dispatch, so
+    // its presence means money may have been spent from this directory).
+    if (existsSync(join(dir, "request-meta.json")) || existsSync(join(dir, "manifest.json"))) {
+      throw new UsageError(`--out ${dir} already contains a council run. Refusing to overwrite its record — pick a fresh directory.`);
+    }
+  } else {
     // Never reuse a run dir — a same-second collision would overwrite the
     // spend record of the earlier run.
     for (let n = 2; existsSync(dir); n++) dir = join(stateRoot(env), slug, `${runId}-${n}`);
@@ -78,8 +85,27 @@ function makeRunDir(cwd, env, /** @type {string|undefined} */ override) {
   return dir;
 }
 
-/** @param {string} model */
-const fileSlug = (model) => model.replace(/\//g, "--");
+/**
+ * Anonymous member labels, shuffled so neither label order nor file order
+ * reveals roster position (the pre-dispatch estimate table legitimately
+ * lists models in roster order). The synthesizer is an LLM with documented
+ * brand/self-preference biases — synthesis inputs carry labels only; the
+ * label→model mapping lives in roster-key.json, to be read only after
+ * ranking (synthesis protocol step 7).
+ *
+ * @param {number} n
+ * @returns {string[]} labels[i] is the label for roster index i
+ */
+function anonymousLabels(n) {
+  const labels = Array.from({ length: n }, (_, i) =>
+    i < 26 ? `member-${String.fromCharCode(65 + i)}` : `member-${i + 1}`,
+  );
+  for (let i = labels.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [labels[i], labels[j]] = [labels[j], labels[i]];
+  }
+  return labels;
+}
 
 const USD = (/** @type {number} */ n) => `$${n.toFixed(n < 0.1 ? 4 : 2)}`;
 
@@ -173,11 +199,30 @@ async function main() {
   // ---- review ----
   const rubric = String(flags.rubric ?? "code");
   loadRubric(rubric); // preflight: unknown rubric is a usage error, not a mid-dispatch quorum failure
+  if (config.quorum > config.models.length) {
+    // A roster smaller than quorum is a guaranteed post-spend exit 2 — catch
+    // it before any money moves.
+    throw new UsageError(
+      `Quorum (${config.quorum}) exceeds the council size (${config.models.length}) — the run could never ` +
+        `synthesize. Lower it (--quorum ${config.models.length}) or add members.`,
+    );
+  }
   const input = gatherInput({ flags, positionals, cwd, env });
   const payloadRaw = assembleUserPayload(input.code, input.context);
 
-  // Fit within the smallest context window across the council (reserve 20% for output/overhead).
-  const minContext = Math.min(...config.models.map((m) => catalog.get(m)?.contextLength ?? Infinity));
+  // Fit within the smallest KNOWN context window across the council (reserve
+  // 20% for output/overhead). Catalog entries occasionally lack
+  // context_length; a zero window would reject every payload, so unknown
+  // windows are warned about and excluded instead.
+  const knownContexts = config.models
+    .map((m) => ({ m, context: catalog.get(m)?.contextLength ?? 0 }))
+    .filter(({ m, context }) => {
+      if (context > 0) return true;
+      console.error(`Warning: no context_length in the catalog for ${m} — cannot enforce its window.`);
+      return false;
+    })
+    .map(({ context }) => context);
+  const minContext = knownContexts.length > 0 ? Math.min(...knownContexts) : Infinity;
   const fitted = fitPayload(payloadRaw, Math.floor(minContext * 0.8));
   if (!fitted.fits) {
     throw new UsageError(
@@ -252,6 +297,12 @@ async function main() {
   }
 
   const runDir = makeRunDir(cwd, env, config.outDir);
+  const labels = anonymousLabels(config.models.length);
+  writeFileSync(
+    join(runDir, "roster-key.json"),
+    JSON.stringify(Object.fromEntries(labels.map((l, i) => [l, config.models[i]]).sort()), null, 2),
+    { mode: 0o600 },
+  );
   writeFileSync(join(runDir, "input.txt"), payload, { mode: 0o600 });
   writeFileSync(
     join(runDir, "request-meta.json"),
@@ -274,6 +325,11 @@ async function main() {
 
   console.log(`Dispatching to ${config.models.length} council members (${input.description}) ...`);
 
+  // Personas are assigned by LABEL rank, never roster index — a
+  // roster-indexed lens would let the synthesizer map lens → roster position
+  // → model via request-meta.json's roster list.
+  const sortedLabels = [...labels].sort();
+
   const results = await Promise.allSettled(
     config.models.map(async (model, i) => {
       const info = catalog.get(model);
@@ -285,7 +341,7 @@ async function main() {
         rubric,
         payload,
         structured,
-        persona: flags.personas ? PERSONAS[i % PERSONAS.length] : undefined,
+        persona: flags.personas ? PERSONAS[sortedLabels.indexOf(labels[i]) % PERSONAS.length] : undefined,
       });
       const res = await chatCompletion({
         baseUrl: config.baseUrl,
@@ -297,7 +353,11 @@ async function main() {
         timeoutMs: config.timeoutMs,
         maxTokens: config.maxOutputTokens, // must match the worst-case gate math
       });
-      writeFileSync(join(runDir, "raw", `${fileSlug(model)}.json`), JSON.stringify(res.raw, null, 2), { mode: 0o600 });
+      // The provider response echoes the model slug — scrub identity fields
+      // before persisting under a label-named file (raw/ is a synthesis
+      // input; roster-key.json is the only place identities live).
+      const scrubbed = { .../** @type {Record<string, unknown>} */ (res.raw), model: undefined, provider: undefined };
+      writeFileSync(join(runDir, "raw", `${labels[i]}.json`), JSON.stringify(scrubbed, null, 2), { mode: 0o600 });
       return { model, ...res };
     }),
   );
@@ -314,39 +374,67 @@ async function main() {
     estimateUsd: estimate.totalUsd,
     actualUsd: 0,
     degraded: false,
-    members: /** @type {Record<string, {status: string, costUsd?: number, error?: string, parse?: string}>} */ ({}),
+    members: /** @type {Record<string, {status: string, model?: string, costUsd?: number, error?: string, parse?: string}>} */ ({}),
     finishedAt: "",
   };
 
+  // Per-member lines are buffered and printed sorted by label — printing in
+  // roster order would de-anonymize labels by position (the estimate table
+  // above lists models in roster order). Costs are model-keyed in costs.json,
+  // never per-label: pricing differs by orders of magnitude across vendors,
+  // so a per-label cost correlated against the per-model estimate would
+  // de-anonymize just as surely as a name.
+  /** @type {{label: string, line: string, err: boolean}[]} */
+  const memberLines = [];
+  /** @type {Record<string, number>} */
+  const costsByModel = {};
   results.forEach((result, i) => {
     const model = config.models[i];
-    const slug = fileSlug(model);
+    const label = labels[i];
     if (result.status === "rejected") {
       const msg = redact(String(result.reason?.message ?? result.reason), apiKey);
-      manifest.members[model] = { status: "failed", error: msg };
-      console.error(`  ✗ ${model}: ${msg}`);
+      // Failed members delivered no opinion — naming them carries no finding
+      // bias, and the failure report needs the model to fix the roster.
+      manifest.members[label] = { status: "failed", model, error: msg };
+      memberLines.push({ label, line: `  ✗ ${model}: ${msg}`, err: true });
       return;
     }
     const { content, usage, finishReason } = result.value;
     const cost = Number(usage?.cost ?? 0);
     manifest.actualUsd += cost;
+    costsByModel[model] = cost;
 
     const extractedJson = extractJson(content);
     const validated = extractedJson.ok ? validateReview(extractedJson.value) : undefined;
     if (extractedJson.ok && validated?.ok) {
-      writeFileSync(join(runDir, "reviews", `${slug}.json`), JSON.stringify(validated.review, null, 2), { mode: 0o600 });
-      parsed.push({ model, review: validated.review });
-      manifest.members[model] = { status: "ok", costUsd: cost };
-      console.log(`  ✓ ${model}: ${validated.review.findings.length} findings, verdict ${validated.review.verdict} (${USD(cost)})`);
+      writeFileSync(join(runDir, "reviews", `${label}.json`), JSON.stringify(validated.review, null, 2), { mode: 0o600 });
+      parsed.push({ model: label, review: validated.review });
+      manifest.members[label] = { status: "ok" };
+      memberLines.push({ label, line: `  ✓ ${label}: ${validated.review.findings.length} findings, verdict ${validated.review.verdict}`, err: false });
     } else {
       // The opinion is never discarded: keep the raw text for the synthesizer.
-      writeFileSync(join(runDir, "reviews", `${slug}.json`), JSON.stringify({ unstructured: content }, null, 2), { mode: 0o600 });
+      writeFileSync(join(runDir, "reviews", `${label}.json`), JSON.stringify({ unstructured: content }, null, 2), { mode: 0o600 });
       let why = extractedJson.ok ? (validated && !validated.ok ? validated.error : "invalid review") : extractedJson.error;
       if (finishReason === "length") why += "; response truncated at max_tokens";
-      manifest.members[model] = { status: "parse_failed", costUsd: cost, parse: why };
-      console.error(`  ⚠ ${model}: response kept as unstructured text (${why})`);
+      manifest.members[label] = { status: "parse_failed", parse: why };
+      memberLines.push({ label, line: `  ⚠ ${label}: response kept as unstructured text (${why})`, err: true });
     }
   });
+  manifest.members = Object.fromEntries(
+    Object.entries(manifest.members).sort(([a], [b]) => a.localeCompare(b)),
+  );
+  for (const { line, err } of memberLines.sort((a, b) => a.label.localeCompare(b.label))) {
+    (err ? console.error : console.log)(line);
+  }
+
+  // A 401 on every member is one broken key, not N flaky models — route it
+  // to the documented auth exit so agents ask for a key fix instead of
+  // falling back to a single-model review.
+  const failures = Object.values(manifest.members).filter((m) => m.status === "failed");
+  if (failures.length === results.length && failures.every((m) => /HTTP 401/.test(String(m.error)))) {
+    console.error("OPENROUTER_API_KEY was rejected (HTTP 401 from every member). Nothing usable was returned — ask your human partner to check the key.");
+    process.exit(EXIT.AUTH);
+  }
 
   // parse_failed members still delivered an opinion — they count toward quorum.
   const delivered = Object.values(manifest.members).filter((m) => m.status !== "failed").length;
@@ -354,8 +442,13 @@ async function main() {
   manifest.finishedAt = new Date().toISOString();
 
   if (parsed.length > 0) {
+    // Cluster in label order, not roster order — insertion order survives
+    // into clusters.json member lists, and roster order is public knowledge
+    // (request-meta.json), so preserving it would de-anonymize by position.
+    parsed.sort((a, b) => a.model.localeCompare(b.model));
     writeFileSync(join(runDir, "clusters.json"), JSON.stringify(clusterFindings(parsed), null, 2), { mode: 0o600 });
   }
+  writeFileSync(join(runDir, "costs.json"), JSON.stringify(costsByModel, null, 2), { mode: 0o600 });
   writeFileSync(join(runDir, "manifest.json"), JSON.stringify(manifest, null, 2), { mode: 0o600 });
 
   console.log(

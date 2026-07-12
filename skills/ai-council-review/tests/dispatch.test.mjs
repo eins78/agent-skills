@@ -72,6 +72,13 @@ before(async () => {
               pricing: { prompt: "0", completion: "0" },
               supported_parameters: ["temperature"],
             },
+            // catalog entry without context metadata (happens on OpenRouter)
+            {
+              id: "mock/nolimit",
+              context_length: 0,
+              pricing: { prompt: "0.000001", completion: "0.000002" },
+              supported_parameters: ["temperature"],
+            },
           ],
         }),
       );
@@ -95,9 +102,13 @@ before(async () => {
             return;
           }
           res.writeHead(200, { "content-type": "application/json" });
+          // Echo model/provider like the real OpenRouter API — the response
+          // body itself is an anonymization-leak vector the tests must cover.
           res.end(
             JSON.stringify({
               id: "gen-mock",
+              model,
+              provider: "MockCloud",
               choices: [{ message: { role: "assistant", content: b.content ?? REVIEW_JSON } }],
               usage: { prompt_tokens: 100, completion_tokens: 50, cost: b.cost ?? 0.01 },
             }),
@@ -162,6 +173,20 @@ function runCli(args, envOverrides = {}, cwd) {
 
 const REVIEW_ARGS = ["review", "--input-file", DIFF, "--no-context", "--models", MOCK_MODELS.join(",")];
 
+/**
+ * Read the anonymization key written by dispatch: label → model slug.
+ * @param {string} runDir
+ * @returns {Record<string, string>}
+ */
+const rosterKey = (runDir) => JSON.parse(readFileSync(join(runDir, "roster-key.json"), "utf8"));
+
+/** @param {string} runDir @param {string} model */
+function labelOf(runDir, model) {
+  const entry = Object.entries(rosterKey(runDir)).find(([, m]) => m === model);
+  assert.ok(entry, `roster-key.json must map a label to ${model}`);
+  return entry[0];
+}
+
 test("happy path: 4/4 deliver, cost aggregated, clusters written, exit 0", async () => {
   behavior = () => ({});
   completionHits = new Map();
@@ -173,7 +198,141 @@ test("happy path: 4/4 deliver, cost aggregated, clusters written, exit 0", async
   assert.ok(Math.abs(manifest.actualUsd - 0.04) < 1e-9, "usage.cost summed across members");
   assert.equal(manifest.degraded, false);
   assert.ok(existsSync(join(String(r.runDir), "clusters.json")));
-  assert.ok(existsSync(join(String(r.runDir), "raw", "mock--alpha.json")));
+  assert.ok(existsSync(join(String(r.runDir), "raw", `${labelOf(String(r.runDir), "mock/alpha")}.json`)));
+  r.cleanup();
+});
+
+test("anonymization: synthesis inputs carry member labels, identities only in roster-key.json", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+
+  // roster-key.json maps labels to exactly the dispatched roster.
+  const key = rosterKey(runDir);
+  assert.deepEqual(Object.values(key).sort(), [...MOCK_MODELS].sort());
+  assert.ok(Object.keys(key).every((l) => /^member-[A-Z]$/.test(l)), `labels look anonymous: ${Object.keys(key)}`);
+
+  // The synthesis inputs (manifest members, reviews/, clusters.json) must not
+  // name models — an LLM synthesizer with brand/self-preference bias reads these.
+  const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
+  for (const label of Object.keys(manifest.members)) assert.match(label, /^member-[A-Z]$/);
+  assert.ok(!JSON.stringify(manifest.members).includes("mock/"), "delivered manifest entries must not leak model slugs");
+  assert.ok(!readFileSync(join(runDir, "clusters.json"), "utf8").includes("mock/"), "clusters.json must not leak model slugs");
+  const { readdirSync } = await import("node:fs");
+  for (const f of readdirSync(join(runDir, "reviews"))) assert.match(f, /^member-[A-Z]\.json$/);
+
+  // raw/ responses come verbatim from the provider and echo the model slug —
+  // identity fields must be scrubbed before writing label-named files.
+  for (const f of readdirSync(join(runDir, "raw"))) {
+    assert.match(f, /^member-[A-Z]\.json$/);
+    assert.ok(!readFileSync(join(runDir, "raw", f), "utf8").includes("mock/"), `raw/${f} must not leak the model slug`);
+  }
+
+  // Per-label cost correlates with the per-model estimate (pricing differs
+  // by orders of magnitude across vendors) — manifest members must not carry
+  // it; per-model actuals live model-keyed in costs.json (no labels → no leak).
+  assert.ok(!JSON.stringify(manifest.members).includes("costUsd"), "per-label cost is a de-anonymization correlator");
+  const costs = JSON.parse(readFileSync(join(runDir, "costs.json"), "utf8"));
+  assert.deepEqual(Object.keys(costs).sort(), [...MOCK_MODELS].sort());
+  assert.ok(Math.abs(Object.values(costs).reduce((a, b) => a + b, 0) - manifest.actualUsd) < 1e-9);
+
+  // clusters.json must not preserve roster order (positional de-anonymization
+  // against the roster list in request-meta.json): member lists are label-sorted.
+  const clusters = JSON.parse(readFileSync(join(runDir, "clusters.json"), "utf8"));
+  for (const c of clusters) {
+    assert.deepEqual(c.models, [...c.models].sort(), "cluster.models must be label-sorted, not roster-ordered");
+    const memberLabels = c.members.map((/** @type {any} */ m) => m.model);
+    assert.deepEqual(memberLabels, [...memberLabels].sort(), "cluster.members must be label-sorted, not roster-ordered");
+  }
+
+  // Per-member stdout lines stay anonymous for delivered members.
+  assert.match(r.stdout, /✓ member-[A-Z]:/);
+  assert.ok(!/✓ mock\//.test(r.stdout), "delivered-member success lines must not name models");
+  assert.ok(!/✓ member-[A-Z]:[^\n]*\$/.test(r.stdout), "per-member cost on stdout is the same correlator");
+  r.cleanup();
+});
+
+test("--personas assigns lenses by label order, not roster order", async () => {
+  /** @type {string[]} */
+  const sentBodies = [];
+  behavior = () => ({});
+  completionHits = new Map();
+  captureBody = (raw) => sentBodies.push(raw);
+  try {
+    const r = await runCli([...REVIEW_ARGS, "--personas"]);
+    assert.equal(r.status, 0, r.output);
+    const key = rosterKey(String(r.runDir));
+    const sortedLabels = Object.keys(key).sort();
+    // Reconstruct which persona each model received from the wire, and assert
+    // it matches the model's LABEL rank — a roster-indexed persona would let
+    // the synthesizer map lens → roster position → model (P1 x P3 leak).
+    for (const raw of sentBodies) {
+      const req = JSON.parse(raw);
+      const label = Object.entries(key).find(([, m]) => m === req.model)?.[0];
+      assert.ok(label, `roster-key maps ${req.model}`);
+      const expectedRank = sortedLabels.indexOf(String(label));
+      // Match the persona sentences exactly — the rubric itself mentions
+      // "security"/"testing", so loose needles would collide with it.
+      const system = req.messages[0].content;
+      const personaRank = ["Prioritize correctness", "Prioritize security", "Prioritize API design", "Prioritize testing", "Prioritize operational"]
+        .findIndex((needle) => system.includes(needle));
+      assert.equal(personaRank, expectedRank, `${label} (${req.model}) got persona ${personaRank}, expected label rank ${expectedRank}`);
+    }
+    r.cleanup();
+  } finally {
+    captureBody = undefined;
+  }
+});
+
+test("quorum larger than the roster is a preflight usage error — nothing is dispatched", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  // Single-member roster with the default quorum of 2: guaranteed exit 2
+  // AFTER spending unless caught before dispatch.
+  const r = await runCli(["review", "--input-file", DIFF, "--no-context", "--models", "mock/alpha"]);
+  assert.equal(r.status, 1, r.output);
+  assert.equal(completionHits.size, 0, "no money spent on a mathematically unwinnable run");
+  assert.match(r.output, /[Qq]uorum/);
+  r.cleanup();
+});
+
+test("a catalog entry without context_length does not zero the fit window", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  // mock/nolimit has context_length 0 in the catalog: the fit check must use
+  // the known windows (alpha's 100k), not min(...,0)=0 which rejects any diff.
+  const r = await runCli(["review", "--input-file", DIFF, "--no-context", "--models", "mock/alpha,mock/nolimit", "--quorum", "1"]);
+  assert.equal(r.status, 0, r.output);
+  assert.ok(!/context window \(0\)/.test(r.output), "must not abort against a zero window");
+  r.cleanup();
+});
+
+test("--out refuses to overwrite an existing run directory", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const home = mkdtempSync(join(tmpdir(), "council-out-"));
+  const out = join(home, "run");
+  const first = await runCli([...REVIEW_ARGS, "--out", out]);
+  assert.equal(first.status, 0, first.output);
+  const second = await runCli([...REVIEW_ARGS, "--out", out]);
+  assert.equal(second.status, 1, second.output);
+  assert.match(second.output, /already contains/i);
+  // The first run's spend record survives untouched.
+  assert.ok(existsSync(join(out, "manifest.json")));
+  first.cleanup();
+  second.cleanup();
+  rmSync(home, { recursive: true, force: true });
+});
+
+test("rejected API key (401 on every member) exits 4, not 2", async () => {
+  behavior = () => ({ status: 401 });
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 4, r.output);
+  assert.match(r.output, /rejected|API key/i);
+  assert.ok(!/Quorum not met/.test(r.output), "auth failure must not be misdiagnosed as quorum/model flakiness");
   r.cleanup();
 });
 
@@ -194,7 +353,10 @@ test("persistent 404 on one member: run continues 3/4, degraded, failure reporte
   assert.equal(r.status, 0, r.output);
   assert.equal(completionHits.get("mock/delta"), 1, "404 must not retry");
   const manifest = JSON.parse(readFileSync(join(String(r.runDir), "manifest.json"), "utf8"));
-  assert.equal(manifest.members["mock/delta"].status, "failed");
+  // Failed members delivered no opinion — no bias risk; their identity is
+  // kept in the manifest so the failure can be reported and the roster fixed.
+  const failed = Object.values(manifest.members).find((m) => /** @type {any} */ (m).status === "failed");
+  assert.equal(/** @type {any} */ (failed)?.model, "mock/delta");
   assert.equal(manifest.degraded, true);
   assert.match(r.output, /✗ mock\/delta/, "failure is reported, never silently dropped");
   r.cleanup();
@@ -216,8 +378,9 @@ test("timeout: slow member is aborted, others deliver, degraded exit 0", async (
   const r = await runCli(REVIEW_ARGS, { COUNCIL_TIMEOUT_MS: "400" });
   assert.equal(r.status, 0, r.output);
   const manifest = JSON.parse(readFileSync(join(String(r.runDir), "manifest.json"), "utf8"));
-  assert.equal(manifest.members["mock/gamma"].status, "failed");
-  assert.match(String(manifest.members["mock/gamma"].error), /Timeout/);
+  const failed = /** @type {any} */ (Object.values(manifest.members).find((m) => /** @type {any} */ (m).status === "failed"));
+  assert.equal(failed?.model, "mock/gamma");
+  assert.match(String(failed?.error), /Timeout/);
   r.cleanup();
 });
 
@@ -226,10 +389,11 @@ test("unparseable member response is kept as unstructured and counts toward quor
   completionHits = new Map();
   const r = await runCli(REVIEW_ARGS);
   assert.equal(r.status, 0, r.output);
-  const review = JSON.parse(readFileSync(join(String(r.runDir), "reviews", "mock--beta.json"), "utf8"));
+  const beta = labelOf(String(r.runDir), "mock/beta");
+  const review = JSON.parse(readFileSync(join(String(r.runDir), "reviews", `${beta}.json`), "utf8"));
   assert.match(review.unstructured, /simply approve/);
   const manifest = JSON.parse(readFileSync(join(String(r.runDir), "manifest.json"), "utf8"));
-  assert.equal(manifest.members["mock/beta"].status, "parse_failed");
+  assert.equal(manifest.members[beta].status, "parse_failed");
   r.cleanup();
 });
 

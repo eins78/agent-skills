@@ -9,11 +9,24 @@ verify, they opine.**
 
 From `RUN_DIR` (printed by the dispatch script):
 
-- `manifest.json` — per-member status, actual cost, `degraded`/quorum state
+- `manifest.json` — per-member status, total actual cost, `degraded`/quorum state
 - `clusters.json` — mechanically pre-clustered findings (present when ≥1 review parsed)
-- `reviews/<member>.json` — parsed findings, or `{"unstructured": "..."}` for members whose JSON could not be parsed
-- `raw/<member>.json` — full API responses (rarely needed)
+- `reviews/member-X.json` — parsed findings, or `{"unstructured": "..."}` for members whose JSON could not be parsed
+- `raw/member-X.json` — API responses with identity fields scrubbed (rarely
+  needed; parse-failed members are handled via `reviews/`, not raw). Treat
+  any identity hint you notice in a raw body exactly like `roster-key.json`
+  below: not usable before step 7.
+- `costs.json` — actual cost per **model** (model-keyed, no labels — safe to
+  read anytime; per-label costs would correlate with the per-model estimate
+  and break the blind)
 - `request-meta.json` — what was reviewed, config snapshot, cost estimate
+- `roster-key.json` — the member-label → model mapping. **Do NOT open this
+  before step 7.** Members are anonymized (`member-A`, `member-B`, …)
+  because you, the synthesizer, are an LLM with documented brand- and
+  self-preference biases; judging findings on their merits requires not
+  knowing which vendor wrote them. Failed members are the one exception:
+  the manifest names them (they contributed no findings — no bias risk —
+  and you need the name to report the failure and fix the roster).
 
 ## Step 1 — Establish M
 
@@ -82,15 +95,25 @@ Rules that override intuition:
 - Agreement is **evidence, not truth**. Frontier models share training
   corpora and fashionable opinions; four models repeating the same plausible
   claim can all be wrong, and unanimous stylistic preferences are still just
-  preferences.
-- If the council includes a member from the synthesizer's own vendor (the
-  `max` preset includes an Anthropic model and you are one), **discount
-  pairwise agreement between you and that member** when judging consensus.
+  preferences. Measured, not hypothetical: error-correlation studies find
+  that when two models both err they frequently pick the *same* wrong
+  answer, and even unanimous judge panels retain a meaningful error rate —
+  which is why `verified` outranks `agreement` in the ranking key.
+- Member identities stay anonymized through this step (see Inputs). If
+  identities are somehow known anyway (custom tooling, an old run layout),
+  apply the fallback rule: **discount pairwise agreement between you and
+  any member from your own vendor** (the `max` preset includes an Anthropic
+  model and you are one).
 - If `--personas` was used (`manifest.personas: true`), agreement counting
   is INVALID — members had different assignments. Switch to coverage mode:
   report per-lens findings without consensus framing.
 
 ## Step 7 — Write the report
+
+**Now — and only now — open `roster-key.json`** and translate member labels
+to model names for attribution. All merging, scoring, verification, and
+ranking above must already be final; de-anonymizing earlier invalidates the
+blind.
 
 Write `report.md` into `RUN_DIR` following
 `${CLAUDE_SKILL_DIR}/references/report-template.md`, then give the user a
