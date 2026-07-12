@@ -134,6 +134,20 @@ condensed version in chat with actual vs estimated cost.
 Only on explicit user request, post findings with `gh pr comment` (or a
 formal review via `gh api`). The script never posts anywhere.
 
+## Re-reviewing after fixes
+
+Each cluster in `clusters.json` has a `fingerprint` stable across runs
+(built from files + title tokens, not member labels or line numbers). When
+a council run follows an earlier run of the same material:
+
+1. Compare fingerprints against the previous run's `clusters.json`; classify
+   clusters as **new / persisting / resolved**. Fingerprints are a hint —
+   confirm matches semantically before reporting them.
+2. **Stuck rule**: if the same blocking findings (by fingerprint) survive
+   two consecutive runs, do not propose a third run — the council has said
+   what it has to say. Recommend human judgment on the persisting blockers
+   instead. (Cost/termination gate from prior art; see README provenance.)
+
 ## Configuration
 
 Precedence: flags > `AI_COUNCIL_*` env > repo `.ai-council.json` >

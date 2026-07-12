@@ -82,3 +82,45 @@ test("per-model attribution survives clustering", () => {
   assert.equal(clusters[0].members.length, 2);
   assert.ok(clusters[0].members.every((m) => typeof m.findingIndex === "number"));
 });
+
+// --- fingerprints (cross-run comparison + stuck-detection) ---
+
+const FP = /^[0-9a-f]{12}$/;
+
+test("every cluster carries a short hex fingerprint", () => {
+  const clusters = clusterFindings([
+    review("a", [finding("sql injection in query builder", { location: { file: "db.js", lines: [5, 9] } })]),
+    review("b", [finding("missing rollback plan")]),
+  ]);
+  assert.equal(clusters.length, 2);
+  for (const c of clusters) assert.match(c.fingerprint, FP);
+  assert.notEqual(clusters[0].fingerprint, clusters[1].fingerprint, "different findings, different fingerprints");
+});
+
+test("fingerprint is stable across member labels, member order, and line drift", () => {
+  // Same underlying finding as it would appear in three different runs:
+  // anonymous labels reshuffle each run (P1), members respond in any order,
+  // and line numbers drift as surrounding code changes.
+  const run1 = clusterFindings([
+    review("member-A", [finding("assignment in condition", { location: { file: "src/greet.js", lines: [2, 2] } })]),
+    review("member-B", [finding("uses = instead of ===", { location: { file: "./src/greet.js", lines: [1, 3] } })]),
+  ]);
+  const run2 = clusterFindings([
+    review("member-D", [finding("uses = instead of ===", { location: { file: "src/greet.js", lines: [4, 6] } })]),
+    review("member-C", [finding("assignment in condition", { location: { file: "b/src/greet.js", lines: [5, 5] } })]),
+  ]);
+  assert.equal(run1.length, 1);
+  assert.equal(run2.length, 1);
+  assert.equal(run1[0].fingerprint, run2[0].fingerprint);
+});
+
+test("fingerprint distinguishes same-file clusters with different problems", () => {
+  const clusters = clusterFindings([
+    review("a", [
+      finding("issue one entirely", { location: { file: "src/x.js", lines: [1, 3] } }),
+      finding("unrelated second problem", { location: { file: "src/x.js", lines: [100, 105] } }),
+    ]),
+  ]);
+  assert.equal(clusters.length, 2);
+  assert.notEqual(clusters[0].fingerprint, clusters[1].fingerprint);
+});

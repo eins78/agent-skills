@@ -19,15 +19,37 @@
 /**
  * @typedef {object} Cluster
  * @property {string} id
+ * @property {string} fingerprint  stable across runs — for cross-run comparison
  * @property {ClusterMember[]} members
- * @property {string[]} models      distinct models in this cluster
+ * @property {string[]} models      distinct members in this cluster (anonymous labels)
  * @property {string} maxSeverity
  * @property {string[]} categories
  * @property {string[]} files
  */
 
+import { createHash } from "node:crypto";
+
 const SEVERITY_RANK = { blocker: 3, major: 2, minor: 1, nit: 0 };
 const LINE_SLACK = 5;
+
+/**
+ * Stable-across-runs cluster identity, for comparing a re-review with the
+ * previous run (new / persisting / resolved) and for stuck-detection.
+ * Built from normalized file paths + the union of title tokens — never from
+ * member labels (reshuffled every run), line numbers (drift as code
+ * changes), or cluster index (ordering-dependent). Titles are model
+ * wording, so fingerprints are a strong hint, not an identity proof — the
+ * synthesizer confirms matches semantically.
+ *
+ * @param {ClusterMember[]} members
+ * @param {string[]} files normalized, from the cluster
+ */
+function fingerprint(members, files) {
+  const tokens = new Set();
+  for (const m of members) for (const t of titleTokens(m.finding.title)) tokens.add(t);
+  const basis = `${[...files].sort().join(",")}|${[...tokens].sort().join(" ")}`;
+  return createHash("sha256").update(basis).digest("hex").slice(0, 12);
+}
 
 /** @param {string} p */
 function normalizePath(p) {
@@ -109,20 +131,22 @@ export function clusterFindings(reviews) {
     const maxSeverity = severities.reduce((top, s) =>
       (SEVERITY_RANK[s] ?? 0) > (SEVERITY_RANK[top] ?? 0) ? s : top,
     );
+    const files = [
+      ...new Set(
+        members
+          .map((m) => m.finding.location?.file)
+          .filter(/** @returns {f is string} */ (f) => typeof f === "string")
+          .map(normalizePath),
+      ),
+    ];
     return /** @type {Cluster} */ ({
       id: `c${String(i + 1).padStart(3, "0")}`,
+      fingerprint: fingerprint(members, files),
       members,
       models: [...new Set(members.map((m) => m.model))],
       maxSeverity,
       categories: [...new Set(members.map((m) => m.finding.category))],
-      files: [
-        ...new Set(
-          members
-            .map((m) => m.finding.location?.file)
-            .filter(/** @returns {f is string} */ (f) => typeof f === "string")
-            .map(normalizePath),
-        ),
-      ],
+      files,
     });
   });
 
