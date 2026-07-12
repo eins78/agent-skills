@@ -26,7 +26,8 @@ ai-council-review/
 │       ├── input.mjs           # diff/PR/file gathering, auto-context, trim ladder
 │       ├── prompts.mjs         # message assembly from rubric files
 │       ├── schema.mjs          # findings JSON schema + lenient extractor
-│       └── cluster.mjs         # conservative pre-clustering
+│       ├── cluster.mjs         # conservative pre-clustering + fingerprints
+│       └── outcomes.mjs        # per-member outcome archive (record/aggregate)
 ├── references/
 │   ├── synthesis.md            # the synthesis protocol (the skill's core value)
 │   ├── report-template.md      # report.md structure
@@ -38,6 +39,7 @@ ai-council-review/
     ├── cluster.test.mjs        # offline: dedup merges, dissent preserved
     ├── budget.test.mjs         # offline: estimate math, gate arithmetic
     ├── dispatch.test.mjs       # mock OpenRouter server (node:http)
+    ├── outcomes.test.mjs       # offline: outcome archive record/show
     └── live-smoke.test.mjs     # optional live test, skips without key
 ```
 
@@ -66,6 +68,10 @@ node scripts/council.mjs review docs/plan.md --rubric plan --yes
 
 # custom council, custom cap
 node scripts/council.mjs review --pr 42 --models openai/gpt-5.5,z-ai/glm-5.2 --budget 2
+
+# record synthesis outcomes for a run; show the per-model archive
+node scripts/council.mjs outcomes record --run RUN_DIR --json '{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}}'
+node scripts/council.mjs outcomes show
 ```
 
 Exit codes: `0` ok · `1` usage/input · `2` quorum failed · `3` budget-blocked
@@ -109,13 +115,54 @@ directions.
   (`references/presets.json`), not code.
 - **Anthropic excluded from the default council** — the synthesizer is
   Claude in-session; excluding its vendor from the council maximizes
-  independent signal and avoids self-agreement bias. Opus is in the `max`
-  preset, paired with a "discount same-vendor pairwise agreement" rule in
-  the synthesis protocol.
+  independent signal and avoids self-agreement bias (self-preference bias
+  is well replicated; self-family win rates of 75–84% have been measured in
+  pairwise judging). Opus is in the `max` preset, paired with a "discount
+  same-vendor pairwise agreement" fallback rule in the synthesis protocol.
+- **Members are anonymized during synthesis** — reviews, clusters, and the
+  manifest carry shuffled `member-A`… labels; the label→model mapping lives
+  in `roster-key.json`, read only at report time. The synthesizer is an LLM
+  with documented brand/self-preference biases; anonymization is the
+  structural version of the same-vendor discount rule (prior art:
+  llm-council anonymizes its cross-review stage for exactly this reason).
+  Failed members stay named — they contribute no findings, and fixing the
+  roster needs the name.
+- **Vendor diversity is a bias control, not a recall booster** — the
+  verified benefit of a cross-vendor roster is reduced self/intra-family
+  bias and partially decorrelated errors. Claims that mixing vendors
+  improves output quality did not survive adversarial verification in our
+  research round (and Self-MoA found repeated samples of the best model
+  beat mixed ensembles on generation benchmarks). Roster rule: pick the
+  strongest available models that happen to be from different vendors —
+  never a weaker model for diversity's sake.
 - **Identical rubric for every member (no personas by default)** — agreement
   counting is only valid when the assignment was identical; vendor diversity
-  already provides the lens diversity. `--personas` exists as an
-  experimental flag and flips synthesis to coverage mode.
+  already provides lens diversity. `--personas` is a documented coverage
+  mode (distinct focus lenses, synthesis switches to per-lens coverage
+  reporting; prior art: ChatEval's ablation shows identical referee roles
+  degrade performance, and lens-per-reviewer pipelines exist). The default
+  stays identical-rubric because consensus is the default's signal.
+- **No debate round — explicit non-goal** — members never see each other's
+  reviews, and no cross-critique round is planned. Evidence: LLM judges
+  show bandwagon bias (they shift toward an embedded majority regardless of
+  correctness); multi-round deliberation measurably erases issue-critical
+  facts and homogenizes stances ("agree more while knowing less"); and
+  multi-agent debate does not reliably beat independent ensembling (ICML
+  2024). If ever revisited, the only defensible shape is llm-council-style
+  anonymized cross-critique starting from committed independent findings —
+  currently unproven. See `research/council-prior-art.md` (P8).
+- **Outcome archive over vibes** — synthesis verdicts (verified/refuted/
+  uncertain per member) are recorded to an XDG-state `outcomes.jsonl` via
+  `outcomes record`; `outcomes show` aggregates per model. This is the only
+  data that can answer whether cross-model agreement tracks correctness for
+  this council (open question in the literature) and makes future roster
+  changes evidence-based.
+- **Cluster fingerprints for re-review** — stable across runs (files +
+  title tokens; never labels or line numbers), enabling
+  new/persisting/resolved classification and the stuck rule: identical
+  blocking fingerprints two runs running → recommend human judgment, not a
+  third run (prior art: fingerprint stuck-detection in a multi-model review
+  pipeline).
 - **In-session synthesis over a synthesis API call** — the synthesizer can
   open the repo and verify findings (the hallucination kill-switch); an
   API-side synthesizer cannot. Also: no fifth model's bias, no extra cost.
@@ -158,6 +205,12 @@ as of `@eins78/agent-skills` v3.1.0. Grok was removed from the default
 preset by maintainer decision (2026-07-11); `z-ai/glm-5.2` backfills to keep
 a 4-member council (quorum unchanged at 2).
 
+Hardened 2026-07-12 from a deep-research round on council/ensemble prior
+art (`research/council-prior-art.md`, PR #62): synthesis anonymization
+(P1), correlated-error and position-bias guardrails (P2/P4), personas
+coverage mode (P3), triage pattern docs (P5), cluster fingerprints (P6),
+outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
+
 ## Known Gaps
 
 - **Model churn**: roster slugs and pricing go stale. Dispatch preflights
@@ -175,8 +228,22 @@ a 4-member council (quorum unchanged at 2).
   `council.mjs .* --yes` is possible future work.
 - Data residency depends on OpenRouter's downstream routing; no per-provider
   ZDR enforcement in v0.
-- `--personas` is experimental and unvalidated.
+- `--personas` coverage mode has no efficacy evaluation yet (prior art
+  supports lens diversity, but nothing here measures it).
+- Anonymization is a soft blind: `roster-key.json` sits readable in the run
+  dir (the protocol forbids reading it before the report; the filesystem
+  does not). The known correlators are closed structurally — raw responses
+  are identity-scrubbed, costs are model-keyed only (`costs.json`), cluster
+  member lists and manifest entries are label-sorted, personas are assigned
+  by label rank — but response *style* can still hint at identities. A hard
+  blind would need the mapping held outside the synthesizer's reach.
+- The outcome archive trusts the synthesizer's own verdicts; a member could
+  look artificially bad if the synthesizer's refutations are wrong. Spot-
+  check refutations (the report keeps them in the appendix for this reason).
 
 ## Changelog
 
-- 0.1.0 (2026-07-11): initial release.
+- 0.1.0 (2026-07-11, hardened 2026-07-12): initial release, plus the
+  prior-art hardening round — anonymized synthesis, cluster fingerprints,
+  outcome archive, synthesis guardrails, personas coverage mode, triage
+  pattern (research/council-prior-art.md P1–P8).
