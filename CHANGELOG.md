@@ -1,5 +1,64 @@
 # @eins78/agent-skills
 
+## 3.2.0
+
+### Minor Changes
+
+- [#62](https://github.com/eins78/agent-skills/pull/62) [`8008cbc`](https://github.com/eins78/agent-skills/commit/8008cbc53eff19bbebf7147ad2a30a86dfadf893) - Add `ai-council-review` skill — convene a council of ~4 frontier models via
+  the OpenRouter API for independent parallel reviews of a PR, plan doc, or
+  files, with in-session synthesis of agreements and dissents (verified against
+  the actual repository before reporting). Ships zero-runtime-dependency
+  Node (>= 20) `.mjs` scripts (`// @ts-check` + JSDoc — first Node-based skill
+  scripts in this repo) with per-model retry/timeout handling, live-pricing
+  cost estimates, and a two-tier budget gate: expected cost above the
+  confirmation threshold requires an explicit `--yes`, and worst-case cost
+  (all members exhausting `max_tokens`) above the budget cap refuses outright —
+  nothing is sent in either case. Council
+  rosters are data (`references/presets.json`); the default council is
+  gpt-5.5, gemini-3.1-pro-preview, deepseek-v4-pro, and glm-5.2 (vendor-diverse,
+  Anthropic deliberately excluded — the synthesizer is Claude). Requires
+  `OPENROUTER_API_KEY`; SKILL.md carries an explicit consent note because
+  reviewed content leaves the machine for third-party model providers. Tests:
+  offline unit suite (JSON extraction, clustering, budget math) plus a mock
+  OpenRouter server covering retry, timeout, quorum, budget-blocks-before-HTTP,
+  and key-redaction paths via `node:test`, and an optional live smoke test
+  against `deepseek/deepseek-v4-flash` (< $0.01) that skips cleanly without a
+  key. Root conveniences: `pnpm run test:council`, `pnpm run typecheck:council`.
+
+  Ships effectively at v0.1.0 (frontmatter committed at 0.0.0; the minor bump
+  below lands the release at 0.1.0).
+
+  <!--
+  bumps:
+    skills:
+      ai-council-review: minor
+  -->
+
+- [#62](https://github.com/eins78/agent-skills/pull/62) [`ab95045`](https://github.com/eins78/agent-skills/commit/ab950457075eab57c477a9470356adc8a9ec9dd8) - `ai-council-review`: prior-art hardening round (research-backed, PR [#62](https://github.com/eins78/agent-skills/issues/62) —
+  see `research/council-prior-art.md` for evidence and citations). Member
+  identities are now anonymized during synthesis: reviews, clusters, and the
+  manifest carry shuffled `member-A`… labels, with the label→model mapping in
+  `roster-key.json` read only at report time (counters LLM brand/self-
+  preference bias; failed members stay named). The synthesis protocol gains
+  correlated-error guardrails (unanimity grants no verification exemption;
+  minority-new-evidence triage for contested items) and position-bias
+  adjudication hygiene (repo-evidence view first, order-swap check on close
+  calls). Clusters carry a stable `fingerprint` for re-review comparison with
+  a documented stuck rule (same blocking fingerprints two runs running →
+  recommend human judgment). New offline `outcomes record|show` subcommand
+  archives per-member verified/refuted/uncertain tallies per run to XDG state
+  for evidence-based roster tuning. `--personas` graduates from experimental
+  to a documented coverage mode; an optional two-stage budget→default triage
+  pattern is documented (suggestion only, not enforced); and the README
+  records "no debate round" as an explicit non-goal plus the corrected
+  diversity rationale (bias control, not recall booster).
+
+  <!--
+  bumps:
+    skills:
+      ai-council-review: minor
+  -->
+
 ## 3.1.0
 
 ### Minor Changes
