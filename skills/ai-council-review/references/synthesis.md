@@ -145,7 +145,11 @@ Your step-4 verdicts are labeled ground truth about each member's precision
 for this council. Don't discard it with the report. Tally per member (a
 verified cluster counts `verified` for every member that raised it; same
 for refuted/uncertain; findings you did not check in step 4 are not
-counted) and record:
+counted). For **contested** clusters, credit follows the *position*, not
+membership: members whose side your verification confirmed count
+`verified`, members whose side it refuted count `refuted` — a member that
+called a real bug "fine" was wrong, even though it commented on the right
+lines. Then record:
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/council.mjs outcomes record --run RUN_DIR \

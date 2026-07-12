@@ -1,8 +1,8 @@
-# ai-council-review — prior-art deep-research round (PR #62)
+# ai-council-review — prior-art deep-research round + implementation (PR #62)
 
 **Date:** 2026-07-12
 **Source:** Claude Code (Fable 5)
-**Session:** No compactions · research-only round on the PR #62 worktree — no skill behavior changed, nothing merged
+**Session:** Research round (morning), then maintainer-approved implementation of all 8 proposals (same day, same session/worktree) — nothing merged
 
 ## Summary
 
@@ -56,11 +56,52 @@ verified/refuted outcome archive (future calibration data) · P8 record
 - **Research file lives in `research/`, not the skill directory** — it is
   repo-level context for the PR discussion, not skill content.
 
+## Implementation round (same day, Max approved all 8)
+
+All proposals implemented TDD-style (RED tests first for code changes;
+full offline suite 55/55, typecheck clean, `pnpm test`/`validate` green;
+subagent comprehension test on the revised synthesis protocol):
+
+- **P1** — dispatch anonymizes members (shuffled `member-A`… labels in
+  reviews/, raw/, manifest, clusters; mapping in `roster-key.json`, read at
+  report time; per-member output re-sorted by label so roster position
+  can't de-anonymize; failed members stay named). Protocol updated.
+- **P2/P4** — synthesis.md: unanimity grants no verification exemption
+  (correlated errors); minority-new-evidence triage for contested items;
+  adjudication hygiene (evidence-first, order-swap check).
+- **P3** — `--personas` promoted to documented coverage mode with tradeoff
+  guidance. **P5** — optional budget→default triage pattern documented
+  (suggestion only, per Max's instruction — NOT enforced).
+- **P6** — stable cluster `fingerprint` (files + title tokens; never labels
+  or lines) + re-review protocol with the two-runs stuck rule.
+- **P7** — new offline `outcomes record|show` subcommand: per-member
+  verified/refuted/uncertain tallies per run to XDG-state `outcomes.jsonl`
+  (dedupe by run dir, labels translated via roster-key); synthesis step 8.
+- **P8** — README: no-debate-round explicit non-goal with evidence;
+  diversity rationale corrected to bias-control; new known gaps (soft
+  blind, outcome-archive trust).
+
+Commits: one per proposal theme (P1, P6, P7, P2+P4, P3+P5, P8) + changeset
+(`20260712-ai-council-review-hardening.md`, minor — combines with the
+initial changeset to still release at 0.1.0).
+
+## Decisions (implementation)
+
+- **Failed members are named, delivered members are not** — no findings, no
+  bias risk, and roster repair needs the model name.
+- **Label shuffle + label-sorted output** — without both, roster position
+  (known from the estimate table) would de-anonymize labels.
+- **No `--compare` flag for fingerprints** — the agent diffs two
+  `clusters.json` files itself; a flag would be automation without need.
+- **Outcome archive keyed by model slug, never labels** — labels are
+  run-scoped by design.
+
 ## Pending
 
-- [ ] Max reviews the proposals; pick which to implement (P1/P2/P8 are the
-      cheap high-evidence ones)
+- [ ] Max reviews PR #62 (research + implementation) and merges
+- [ ] Dogfood a real council run against the hardened flow (anonymized
+      synthesis end-to-end, outcomes recording)
 - [ ] Open questions that only usage data can answer: agreement↔correctness
-      in code review (P7 outcome archive would measure this), optimal
-      council size, Self-MoA transfer to review tasks (A/B-able via
-      `--models` with the same slug ×4)
+      in code review (the P7 archive now measures this), optimal council
+      size, Self-MoA transfer to review tasks (A/B-able via `--models` with
+      the same slug ×4)
