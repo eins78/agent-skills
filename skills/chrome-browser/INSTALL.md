@@ -54,6 +54,38 @@ claude mcp add -s user playwright -- npx @playwright/mcp --cdp-endpoint http://1
 
 Restart Claude Code to pick up the new MCP server.
 
+> [!IMPORTANT]
+> **Conflict with the official `claude-plugins-official/playwright` plugin**
+>
+> If you have the official `playwright` plugin enabled (from Anthropic's marketplace), it registers `npx @playwright/mcp@latest` **without `--cdp-endpoint`**. That makes Playwright spawn its own bundled Chromium for every tool call, ignoring your CfT instance entirely — you'll see two Chromes open and your CfT login session won't be used.
+>
+> Pick one of these to resolve:
+>
+> 1. **Disable the plugin** (cleanest). In `~/.claude/settings.json`, set the plugin entry to `false`:
+>    ```jsonc
+>    {
+>      "enabledPlugins": {
+>        "playwright@claude-plugins-official": false
+>      }
+>    }
+>    ```
+>    Then restart Claude Code. The user-scope MCP from step 3 above remains active and uses CfT.
+>
+> 2. **Patch the plugin's bundled `.mcp.json`** (quick, but reverted on plugin re-sync). Edit
+>    `~/.claude/plugins/cache/claude-plugins-official/playwright/<ver>/.mcp.json` (and the matching file under
+>    `~/.claude/plugins/marketplaces/...`) to add the flag:
+>    ```json
+>    {
+>      "playwright": {
+>        "command": "npx",
+>        "args": ["@playwright/mcp@latest", "--cdp-endpoint", "http://127.0.0.1:9222"]
+>      }
+>    }
+>    ```
+>    Restart Claude Code. Note: a future plugin update may revert this file.
+>
+> Verify: only one Chrome window opens after a Playwright tool call, and `curl -s http://127.0.0.1:9222/json | jq '.[].url'` shows the URL you just navigated to.
+
 ## 4. Verify
 
 ```bash
