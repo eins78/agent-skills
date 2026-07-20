@@ -12,7 +12,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.1.0"
+  version: "2.0.0"
 ---
 
 # text-to-speech
@@ -21,10 +21,23 @@ Converts a text document to an MP3 audio file via a local TTS pipeline. The skil
 
 > **Does NOT install any TTS backend.** See [Backend Dependencies](#backend-dependencies).
 
+> **v2.0.0 breaking change:** the narrative rewrite (L1) no longer runs
+> automatically inside `synth-audio.sh`. If you're a driving Claude Code
+> agent, dispatch a rewrite subagent first — see [L1 Narrative Rewrite](#l1-narrative-rewrite--dispatch-a-subagent-do-this-first)
+> below — this is the normal way to use the skill now, not an edge case.
+> A bare `synth-audio.sh input.md output.mp3` with no existing
+> `narrative.txt` now fails loudly instead of silently shelling out to
+> `claude --print` (that nested call could inherit your session's output
+> style/CLAUDE.md and leak meta-commentary into the audio — see
+> [L1 Narrative Rewrite](#l1-narrative-rewrite--dispatch-a-subagent-do-this-first)
+> for why). For headless/standalone use, pass `--allow-inline-llm-rewrite`.
+
 ## Quick Start
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/synth-audio.sh input.md output.mp3
+${CLAUDE_SKILL_DIR}/scripts/synth-audio.sh input.md output.mp3 --skip-layer 1
+# ^ requires <output.mp3>.workdir/narrative.txt to already exist — see
+#   "L1 Narrative Rewrite" below for how to produce it (subagent dispatch)
 ```
 
 Copy and configure backend settings (optional):
@@ -54,6 +67,52 @@ See `${CLAUDE_SKILL_DIR}/templates/synth-backend.yaml.example` for annotated def
 
 When `--backend kokoro` (default), the pipeline runs four layers:
 **L1** narrative rewrite (LLM) → **L2** normalization → **L3** prosody prep → **render**
+
+### L1 Narrative Rewrite — dispatch a subagent (do this first)
+
+**If you are the driving Claude Code agent, do this before calling `synth-audio.sh`.**
+Do NOT let `synth-audio.sh`/`pipeline.py` shell out to `claude --print` for you —
+a nested `claude --print` launched from inside your own session inherits your
+active output style, project `CLAUDE.md`, and any other session framing, and
+can return meta-commentary instead of a rewrite (observed failure: a literal
+`★ Insight` block rendered into the audio). Dispatching a subagent via the
+`Agent`/Task tool gives a genuinely isolated context instead.
+
+1. Determine `<workdir>` = `<output.mp3 path with .mp3 stripped>.workdir` and
+   `mkdir -p` it (this matches the directory the backend itself creates).
+2. Dispatch **one subagent** (general-purpose) with a self-contained prompt:
+   - Read `${CLAUDE_SKILL_DIR}/scripts/backends/prompts/narrative-chapter-focused.md`
+     and follow it exactly as the rewrite rules.
+   - Read the input document.
+   - Output ONLY the rewritten prose with `[[CHAPTER: ...]]` markers — no
+     preamble, no explanation, no markdown fences, no commentary about the
+     task itself.
+   - Instruct it to **write the result directly to `<workdir>/narrative.txt`**
+     (via Write) and return only a short status line — don't have it return
+     multi-thousand-word prose through the tool result.
+   - For documents >5000 words, either let the subagent chunk internally by
+     H2, or dispatch one subagent per H2 section in parallel and concatenate
+     — this replaces `chunk_and_rewrite.py`'s own `claude --print` calls when
+     you're running inside a session.
+3. Run:
+   ```bash
+   ${CLAUDE_SKILL_DIR}/scripts/synth-audio.sh input.md output.mp3 --skip-layer 1 [other flags]
+   ```
+   `pipeline.py` validates `narrative.txt` (chapter markers present, word
+   count plausible vs. the source, no known contamination patterns) before
+   continuing to L2/L3/render — if validation fails it exits loudly rather
+   than rendering audio from a bad narrative. Re-dispatch the subagent and
+   retry.
+
+**Standalone / headless (no driving agent present):** pass
+`--allow-inline-llm-rewrite` to `synth-audio.sh`. This falls back to an
+isolated inline `claude --print --safe-mode` call inside the pipeline
+(`--safe-mode` disables CLAUDE.md auto-discovery, output styles, hooks,
+plugins, and custom agents/commands). It's a weaker guarantee than subagent
+dispatch — there's no independent process boundary confirming isolation
+beyond the flag itself — so `validate_narrative()` still runs as the
+backstop either way. Prefer subagent dispatch whenever a driving agent is
+available.
 
 ### Voice and Speed
 
@@ -115,6 +174,24 @@ ${CLAUDE_SKILL_DIR}/scripts/synth-audio.sh input.md output.mp3 --verify
 
 After render, transcribes the MP3 with Whisper and reports IPA regressions, missing ordinal patterns, and unexpected artefacts. Requires `mlx-whisper` (Apple Silicon; `uv pip install mlx-whisper`).
 
+## ID3 Lyrics (USLT) — narrative debug artefact
+
+The backend embeds the final `narrative.txt` (chapter markers stripped to
+plain title lines) into the rendered MP3's ID3 `USLT` (lyrics) frame by
+default — the spoken text travels inside the file, so you can compare it
+against the source without a separate artefact. Pass `--no-lyrics` to
+`synth-audio.sh` to skip it. Read it back with:
+
+```bash
+uv run --with mutagen --no-project python -c "
+from mutagen.id3 import ID3
+id3 = ID3('output.mp3')
+for k, f in id3.items():
+    if k.startswith('USLT'):
+        print(str(f.text))
+"
+```
+
 ## Backend Dependencies
 
 The skill does NOT install or configure backend software. Caller must provide:
@@ -122,7 +199,23 @@ The skill does NOT install or configure backend software. Caller must provide:
 - **Kokoro-82M:** `uv pip install kokoro` (hexgrad/kokoro)
 - **Python 3.11+** with `uv`
 - **ffmpeg:** `brew install ffmpeg`
-- **mutagen:** `uv pip install mutagen` (for ID3 chapter injection)
+- **espeak-ng:** `brew install espeak-ng` — **hard dependency**, not optional.
+  Kokoro's `misaki` G2P depends on `espeakng_loader`, whose bundled
+  `libespeak-ng.dylib` has a compiled-in CI build data path
+  (`/Users/runner/work/espeakng-loader/...`) that doesn't exist on user
+  machines and hard-aborts before Python can flush stdout. `kokoro.sh` runs
+  an idempotent preflight (macOS) that symlinks the loader's dylibs to your
+  Homebrew `espeak-ng` build automatically — but the brew package itself
+  must be installed. If TTS aborts with an `espeak-ng-data` path error,
+  this is why.
+- **`VIRTUAL_ENV` must be set** in the calling environment. `misaki`
+  auto-installs the `en-core-web-sm` spaCy model via `uv pip install` on
+  first use; under `uv run --no-project` with no active `VIRTUAL_ENV` this
+  fails with an unhelpful "No virtual environment found" (exit 2, no
+  traceback). `kokoro.sh` checks this upfront and fails loudly with the fix
+  (`export VIRTUAL_ENV=/path/to/your/venv`) rather than letting the render
+  fail deep inside misaki.
+- **mutagen:** `uv pip install mutagen` (for ID3 chapter + lyrics injection)
 - **mlx-whisper** (optional, for `--verify`): `uv pip install mlx-whisper`
 
 ## Known Kokoro Limitations

@@ -43,6 +43,7 @@ from kokoro import KPipeline
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from inject_chapters import inject as inject_chapters  # noqa: E402
+from inject_chapters import strip_chapter_markers  # noqa: E402
 
 
 SAMPLE_RATE = 24000
@@ -103,6 +104,7 @@ def synth_full(
     wav_path: Path,
     mp3_path: Path,
     chapters_path: Path,
+    lyrics: str | None = None,
 ) -> dict:
     parts = split_on_chapters(kokoro_text, titles)
     print(f"[r5]   text split into {len(parts)} chunks with chapter markers")
@@ -136,7 +138,7 @@ def synth_full(
     rtf = elapsed / duration_s if duration_s else float("inf")
     chapters_path.write_text(json.dumps(chapters_ms, indent=2) + "\n")
     if chapters_ms:
-        inject_chapters(mp3_path, chapters_ms)
+        inject_chapters(mp3_path, chapters_ms, lyrics=lyrics)
 
     return {
         "voice": voice,
@@ -198,6 +200,12 @@ def main() -> int:
         "--stable-passage",
         action="store_true",
         help="each source arg is a raw kokoro.txt path (no chapter handling)",
+    )
+    ap.add_argument(
+        "--no-lyrics",
+        action="store_true",
+        help="skip embedding narrative.txt as an ID3 USLT lyrics frame "
+        "(default: embed it when present alongside the pipeline output)",
     )
     ap.add_argument(
         "sources",
@@ -265,9 +273,15 @@ def main() -> int:
                 text = kokoro_txt.read_text()
                 titles = [c["title"] for c in json.loads(chapters_stub.read_text())]
                 chapters_path = out_dir / f"{stem}.mp3.chapters.json"
+                lyrics: str | None = None
+                if not args.no_lyrics:
+                    narrative_path = src_path / "narrative.txt"
+                    if narrative_path.exists():
+                        lyrics = strip_chapter_markers(narrative_path.read_text())
                 print(f"[r5] voice={args.voice} speed={speed} slug={slug} input_words={len(text.split())} titles={len(titles)}")
                 stats = synth_full(
-                    pipeline, text, args.voice, speed, titles, wav_path, mp3_path, chapters_path
+                    pipeline, text, args.voice, speed, titles, wav_path, mp3_path, chapters_path,
+                    lyrics=lyrics,
                 )
 
             stats["slug"] = slug
