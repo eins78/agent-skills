@@ -199,15 +199,18 @@ The skill does NOT install or configure backend software. Caller must provide:
 - **Kokoro-82M:** `uv pip install kokoro` (hexgrad/kokoro)
 - **Python 3.11+** with `uv`
 - **ffmpeg:** `brew install ffmpeg`
-- **espeak-ng:** `brew install espeak-ng` — **hard dependency**, not optional.
-  Kokoro's `misaki` G2P depends on `espeakng_loader`, whose bundled
-  `libespeak-ng.dylib` has a compiled-in CI build data path
-  (`/Users/runner/work/espeakng-loader/...`) that doesn't exist on user
-  machines and hard-aborts before Python can flush stdout. `kokoro.sh` runs
-  an idempotent preflight (macOS) that symlinks the loader's dylibs to your
-  Homebrew `espeak-ng` build automatically — but the brew package itself
-  must be installed. If TTS aborts with an `espeak-ng-data` path error,
-  this is why.
+- **espeak-ng:** conditional dependency — `brew install espeak-ng` as a
+  fallback. Kokoro's `misaki` G2P depends on `espeakng_loader`, whose
+  bundled `libespeak-ng.dylib` data-path resolution is not reliably correct
+  on every install (observed: byte-identical dylib+data works fine from a
+  normally-located venv, hard-aborts before Python can flush stdout from a
+  venv nested under a long path — it's install-dependent, not universal).
+  `kokoro.sh` runs a probe-first preflight (macOS): it actually exercises
+  `misaki`'s G2P once, and only if that fails does it symlink the loader's
+  dylibs to a Homebrew `espeak-ng` build — silent and a no-op when the
+  bundled path already works. If TTS aborts with an `espeak-ng-data` path
+  error and you don't have `espeak-ng` installed via Homebrew, that's the
+  fallback you need.
 - **`VIRTUAL_ENV` must be set** in the calling environment. `misaki`
   auto-installs the `en-core-web-sm` spaCy model via `uv pip install` on
   first use; under `uv run --no-project` with no active `VIRTUAL_ENV` this

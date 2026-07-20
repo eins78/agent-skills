@@ -42,7 +42,15 @@ from mutagen.id3 import ID3NoHeaderError
 from mutagen.mp3 import MP3
 
 
-_CHAPTER_MARKER_RE = re.compile(r"^\s*\[\[CHAPTER:\s*(.+?)\s*\]\]\s*$", re.MULTILINE)
+# NOTE: unlike pipeline.py/kokoro_round5.py's CHAPTER_MARKER_RE (which only
+# needs match.start()/group(1) for detection, so leading/trailing \s greed
+# is harmless), this copy is used for in-place substitution in
+# strip_chapter_markers(). \s matches \n, so a plain `\s*$`/`^\s*` here
+# would eat the blank line separating two back-to-back markers (e.g. the
+# H1-title marker immediately followed by the first H2 marker) and mash
+# adjacent titles together with no separator at all. [ \t]* keeps the
+# strip scoped to horizontal whitespace on the marker's own line.
+_CHAPTER_MARKER_RE = re.compile(r"^[ \t]*\[\[CHAPTER:\s*(.+?)\s*\]\][ \t]*$", re.MULTILINE)
 
 
 def strip_chapter_markers(narrative: str) -> str:
@@ -180,12 +188,33 @@ def self_test() -> int:
             {"start_ms": 7000, "title": "Conclusion"},
         ]
         (mp3.with_suffix(mp3.suffix + ".chapters.json")).write_text(json.dumps(chapters))
+        # Back-to-back markers with no body between them (e.g. the
+        # H1-title marker immediately followed by the first H2 marker,
+        # per narrative-chapter-focused.md's convention) is the real
+        # pattern that broke a `\s`-greedy version of this regex in
+        # production — assert against a hand-written expected string,
+        # not just round-trip consistency with strip_chapter_markers'
+        # own output, or a regression here won't be caught.
         narrative = (
+            "[[CHAPTER: Doc Title]]\n\n"
             "[[CHAPTER: Intro]]\n\nWelcome.\n\n"
             "[[CHAPTER: Middle bit]]\n\nThe middle.\n\n"
             "[[CHAPTER: Conclusion]]\n\nThe end."
         )
         lyrics = strip_chapter_markers(narrative)
+        expected_lyrics = (
+            "Doc Title\n\n"
+            "Intro\n\nWelcome.\n\n"
+            "Middle bit\n\nThe middle.\n\n"
+            "Conclusion\n\nThe end."
+        )
+        if lyrics != expected_lyrics:
+            print(
+                f"FAIL: strip_chapter_markers produced {lyrics!r}, "
+                f"expected {expected_lyrics!r}",
+                file=sys.stderr,
+            )
+            return 1
         inject(mp3, chapters, lyrics=lyrics)
         got = read_back(mp3)
         print(f"[self-test] wrote + read back {len(got)} chapters:")

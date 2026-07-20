@@ -32,11 +32,13 @@ five issues; four were fixes, one a requested feature.
 - Fixed `synth-audio.sh` always passing `--verify` to the backend regardless
   of whether the flag was given (`${VERIFY:+--verify}` treated the default
   `VERIFY=0` as non-empty; now gated on value).
-- `kokoro.sh` now runs an idempotent espeak-ng data-path preflight (macOS):
-  Kokoro's bundled `espeakng_loader` dylib has a compiled-in CI build path
-  that hard-aborts on user machines; the preflight symlinks it to a Homebrew
-  `espeak-ng` build (`$(brew --prefix espeak-ng)`) automatically. Documented
-  `brew install espeak-ng` as a hard dependency.
+- `kokoro.sh` now runs a probe-first espeak-ng data-path preflight (macOS):
+  it actually exercises `misaki`'s G2P once and only symlinks the bundled
+  `espeakng_loader` dylib to a Homebrew `espeak-ng` build
+  (`$(brew --prefix espeak-ng)`) when that probe fails — verified
+  empirically (byte-identical dylib+data) that the bundled path is not
+  reliably broken everywhere, so the preflight no longer assumes it always
+  is and stays silent when nothing needs fixing.
 - `kokoro.sh` now requires `VIRTUAL_ENV` to be set and fails loudly with the
   fix instead of letting misaki's background `en-core-web-sm` auto-install
   fail deep with an unhelpful "No virtual environment found".
@@ -44,6 +46,14 @@ five issues; four were fixes, one a requested feature.
   `narrative.txt` (chapter markers stripped to plain title lines) by
   default — the spoken text travels inside the file for comparison against
   the source without a separate artefact. `--no-lyrics` opts out.
+- Fixed two bugs a real end-to-end render surfaced (not reachable from
+  isolated component tests): `kokoro_round5.py` was creating a
+  zero-duration chapter for the H1-title-only marker that precedes the
+  first H2 marker with no body of its own, which `inject_chapters.py`'s
+  own duration check correctly rejected; and
+  `inject_chapters.py`'s marker-stripping regex was mashing back-to-back
+  marker titles together with no separator when converting narrative.txt
+  to USLT lyrics text.
 
 <!--
 bumps:

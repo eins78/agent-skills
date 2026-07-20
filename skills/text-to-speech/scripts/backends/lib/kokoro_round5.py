@@ -116,12 +116,20 @@ def synth_full(
     total_segments = 0
 
     for title, body in parts:
+        body = body.strip()
+        if not body:
+            # A part with no body contributes no audio, so it can't anchor
+            # a chapter start — e.g. the H1-title-only marker that
+            # immediately precedes the first H2 marker with no body of its
+            # own (per narrative-chapter-focused.md's "first marker = the
+            # dossier's H1 title" convention). Appending a chapter entry
+            # here would pin it at the same cumulative_samples position as
+            # the next real chapter, producing a zero-duration chapter that
+            # inject_chapters.py correctly rejects.
+            continue
         if title is not None:
             start_ms = int(cumulative_samples / SAMPLE_RATE * 1000)
             chapters_ms.append({"start_ms": start_ms, "title": title})
-        body = body.strip()
-        if not body:
-            continue
         for _, _, audio in pipeline(body, voice=voice, speed=speed):
             all_audio.append(audio)
             cumulative_samples += len(audio)

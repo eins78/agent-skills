@@ -13,14 +13,20 @@ The current backend is Kokoro-82M; future backends swap in via config.
 - **Kokoro-82M:** `uv pip install kokoro` (hexgrad/kokoro, Apache-2.0)
 - **Python 3.11+** with `uv` (`brew install uv`)
 - **ffmpeg:** `brew install ffmpeg`
-- **espeak-ng:** `brew install espeak-ng` — hard dependency of `misaki`'s
-  G2P. The bundled `espeakng_loader` dylib has a compiled-in CI build data
-  path that doesn't exist on user machines and hard-aborts before Python
-  can flush stdout. `kokoro.sh` runs an idempotent preflight (macOS) that
-  symlinks the loader's dylibs to your Homebrew `espeak-ng` build
-  (`$(brew --prefix espeak-ng)`) automatically — but the brew package
-  itself must be installed first. Manual fallback, if the preflight can't
-  find your loader's site-packages dir:
+- **espeak-ng:** conditional dependency — `brew install espeak-ng` as a
+  fallback, not always required. `misaki`'s G2P depends on
+  `espeakng_loader`'s bundled `libespeak-ng.dylib`, whose data-path
+  resolution is not reliably correct on every install — verified this is
+  install-dependent, not universal: a byte-identical dylib+data (same
+  `espeakng_loader` version, confirmed via `shasum`) worked fine from a
+  normally-located venv and hard-aborted from one nested under an unusually
+  long path, on the same machine. `kokoro.sh` runs a probe-first preflight
+  (macOS): it actually exercises `misaki`'s G2P once; if that already
+  works, it does nothing and prints nothing. Only if the probe fails does
+  it symlink the loader's dylibs to a Homebrew `espeak-ng` build
+  (`$(brew --prefix espeak-ng)`) — and only then is the brew package
+  actually required. Manual fallback, if the preflight can't find your
+  loader's site-packages dir or you want to fix it ahead of time:
   ```bash
   SP=<venv>/lib/python3.12/site-packages/espeakng_loader
   for d in libespeak-ng.dylib libespeak-ng.1.dylib libespeak-ng.1.52.0.dylib; do
@@ -116,7 +122,22 @@ across `pipeline.py`, `chunk_and_rewrite.py`, and `kokoro.sh`. Also fixed
 the `--verify` always-on bug in `synth-audio.sh`, added an espeak-ng
 preflight + `VIRTUAL_ENV` precondition in `kokoro.sh`, and added ID3 USLT
 lyrics embedding (narrative.txt travels inside the rendered MP3 for
-debugging). See `docs/sessionlogs/` for the full session record.
+debugging).
+
+A real end-to-end render (not just isolated component tests) surfaced two
+more pre-existing bugs, both fixed: (1) `kokoro_round5.py` was creating a
+zero-duration chapter for the H1-title-only marker that precedes the first
+H2 marker with no body of its own — a part with no audio can no longer
+anchor a chapter entry; (2) the espeak-ng preflight was rewritten from
+always-assume-broken to probe-first (it actually exercises `misaki`'s G2P
+before deciding whether to symlink a Homebrew build), since the bundled
+data path was empirically confirmed to work on some installs and not
+others with byte-identical files; (3) `strip_chapter_markers()`'s regex
+was mashing back-to-back marker titles together with no separator
+(`\s` matches `\n`, so the greedy edges ate the blank line between
+adjacent markers) — narrowed to `[ \t]*` on the outer edges. See
+`docs/sessionlogs/` for the full session record, including the real-render
+verification.
 
 ## Future Improvements
 

@@ -8,9 +8,11 @@
 #   - Python 3.11+ with uv
 #   - kokoro package: uv pip install kokoro
 #   - ffmpeg: brew install ffmpeg
-#   - espeak-ng: brew install espeak-ng (hard dep of misaki's G2P — the
-#     bundled espeakng_loader dylib has a broken compiled-in data path;
-#     see the espeak-ng preflight below)
+#   - espeak-ng: brew install espeak-ng — misaki's G2P depends on
+#     espeakng_loader's bundled dylib, whose data-path resolution is not
+#     reliably correct on every install (see the probe-first preflight
+#     below); Homebrew espeak-ng is the fallback when the bundled path
+#     doesn't work, not a hard requirement on machines where it does
 #   - mutagen: uv pip install mutagen
 #   - mlx-whisper (optional, for --verify): uv pip install mlx-whisper
 #   - VIRTUAL_ENV must be set (see precondition below) — misaki auto-installs
@@ -95,34 +97,48 @@ uv run --no-project python "${LIB_DIR}/pipeline.py" \
 
 # ---------- F3: espeak-ng data-path preflight (macOS) ----------
 # The espeakng_loader package (a misaki/Kokoro dependency) ships a
-# libespeak-ng.dylib with a compiled-in CI build path for espeak-ng-data
-# (e.g. /Users/runner/work/espeakng-loader/...) that doesn't exist on user
-# machines — misaki hard-aborts before Python can flush stdout. Symlinking
-# the loader's dylibs to a system espeak-ng build (brew) fixes it, since
-# that build's compiled-in default path is valid. Idempotent (safe to
-# re-run every invocation) and self-heals after `brew reinstall espeak-ng`
-# changes the target. Derives the brew prefix rather than hardcoding
-# /opt/homebrew, since Intel Macs use /usr/local.
+# libespeak-ng.dylib whose data-path resolution is not always reliable —
+# it can hard-abort before Python can flush stdout on some installs (a
+# CI-build path baked in, or otherwise). But it is NOT reliably broken:
+# the same dylib works fine on some machines/installs and fails on others
+# (observed on this project: identical espeakng_loader build, byte-identical
+# dylib+data — works from a normally-located venv, fails from a venv nested
+# under a long path). Don't assume; probe. Run the actual runtime code path
+# (misaki.espeak's import-time init + a real phonemize call) in a
+# subprocess — if it fails/aborts, only THEN fix it by symlinking the
+# loader's dylibs to a system espeak-ng build (brew), whose data path is
+# independently valid. If it already works, do nothing and stay silent —
+# no spurious warnings on a machine where nothing is wrong.
 if [[ "$(uname)" == "Darwin" ]]; then
-    LOADER_DIR="$(uv run --no-project python -c \
-        'import espeakng_loader, os; print(os.path.dirname(espeakng_loader.__file__))' \
-        2>/dev/null || true)"
-    if [[ -n "$LOADER_DIR" && -d "$LOADER_DIR" ]]; then
-        BREW_ESPEAK_PREFIX="$(brew --prefix espeak-ng 2>/dev/null || true)"
-        BREW_ESPEAK_LIB="${BREW_ESPEAK_PREFIX}/lib/libespeak-ng.dylib"
-        if [[ -n "$BREW_ESPEAK_PREFIX" && -f "$BREW_ESPEAK_LIB" ]]; then
-            for dylib in libespeak-ng.dylib libespeak-ng.1.dylib libespeak-ng.1.52.0.dylib; do
-                target="${LOADER_DIR}/${dylib}"
-                # only touch it if it's already a symlink (or absent) — never
-                # clobber a real file placed there on purpose
-                if [[ ! -e "$target" || -L "$target" ]]; then
-                    ln -sf "$BREW_ESPEAK_LIB" "$target"
-                fi
-            done
-            echo "[kokoro] espeak-ng: linked bundled loader dylibs to $BREW_ESPEAK_LIB"
-        else
-            echo "[kokoro] warning: espeak-ng not found via Homebrew — if TTS aborts" >&2
-            echo "[kokoro]   with an espeak-ng-data path error, run: brew install espeak-ng" >&2
+    if uv run --no-project python -c "
+import types
+from misaki.espeak import EspeakFallback
+g2p = EspeakFallback(british=False)
+ps, _ = g2p(types.SimpleNamespace(text='hello'))
+assert ps
+" >/dev/null 2>&1; then
+        : # bundled espeak-ng data path already works here — nothing to do
+    else
+        LOADER_DIR="$(uv run --no-project python -c \
+            'import espeakng_loader, os; print(os.path.dirname(espeakng_loader.__file__))' \
+            2>/dev/null || true)"
+        if [[ -n "$LOADER_DIR" && -d "$LOADER_DIR" ]]; then
+            BREW_ESPEAK_PREFIX="$(brew --prefix espeak-ng 2>/dev/null || true)"
+            BREW_ESPEAK_LIB="${BREW_ESPEAK_PREFIX}/lib/libespeak-ng.dylib"
+            if [[ -n "$BREW_ESPEAK_PREFIX" && -f "$BREW_ESPEAK_LIB" ]]; then
+                for dylib in libespeak-ng.dylib libespeak-ng.1.dylib libespeak-ng.1.52.0.dylib; do
+                    target="${LOADER_DIR}/${dylib}"
+                    # only touch it if it's already a symlink (or absent) —
+                    # never clobber a real file placed there on purpose
+                    if [[ ! -e "$target" || -L "$target" ]]; then
+                        ln -sf "$BREW_ESPEAK_LIB" "$target"
+                    fi
+                done
+                echo "[kokoro] espeak-ng: bundled data path failed its probe — linked loader dylibs to $BREW_ESPEAK_LIB"
+            else
+                echo "[kokoro] error: bundled espeak-ng data path failed its probe, and no" >&2
+                echo "[kokoro]   Homebrew espeak-ng was found to fall back to — run: brew install espeak-ng" >&2
+            fi
         fi
     fi
 fi
