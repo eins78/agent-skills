@@ -10,6 +10,14 @@
 #   --speed     backend-specific speed    (kokoro default: 0.92)
 #   --skip-layer N  reuse existing pipeline intermediate from layer N (1..3)
 #   --verify    run Whisper self-check after render
+#   --allow-inline-llm-rewrite  standalone/headless fallback: let the
+#               backend shell out to an isolated `claude --print --safe-mode`
+#               for the L1 narrative rewrite when no driving Claude Code
+#               agent is present to dispatch a rewrite subagent (see
+#               SKILL.md for the recommended, non-fallback workflow)
+#   --no-lyrics skip embedding narrative.txt as an ID3 USLT lyrics frame
+#               (default: embedded — the spoken text travels inside the
+#               MP3 for debugging/comparison against the source)
 #   --help      show this message
 
 set -euo pipefail
@@ -23,6 +31,8 @@ VOICE=""
 SPEED=""
 SKIP_LAYER=0
 VERIFY=0
+ALLOW_INLINE_LLM_REWRITE=0
+NO_LYRICS=0
 INPUT_FILE=""
 OUTPUT_FILE=""
 
@@ -35,8 +45,10 @@ while [[ $# -gt 0 ]]; do
         --speed)    SPEED="$2";       shift 2 ;;
         --skip-layer) SKIP_LAYER="$2"; shift 2 ;;
         --verify)   VERIFY=1;         shift   ;;
+        --allow-inline-llm-rewrite) ALLOW_INLINE_LLM_REWRITE=1; shift ;;
+        --no-lyrics) NO_LYRICS=1;     shift ;;
         --help|-h)
-            sed -n '2,12p' "${BASH_SOURCE[0]}" | sed 's/^# //'
+            sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# //'
             exit 0
             ;;
         -*)
@@ -85,6 +97,16 @@ if [[ ! -f "$BACKEND_SCRIPT" ]]; then
     exit 1
 fi
 
+# NOTE: gate on the VALUE of VERIFY, not its emptiness — VERIFY defaults to
+# the string "0", which is non-empty, so `${VERIFY:+--verify}` would always
+# expand and pass --verify regardless of whether the flag was given.
+VERIFY_FLAG=""
+[[ "$VERIFY" == "1" ]] && VERIFY_FLAG="--verify"
+INLINE_LLM_FLAG=""
+[[ "$ALLOW_INLINE_LLM_REWRITE" == "1" ]] && INLINE_LLM_FLAG="--allow-inline-llm-rewrite"
+NO_LYRICS_FLAG=""
+[[ "$NO_LYRICS" == "1" ]] && NO_LYRICS_FLAG="--no-lyrics"
+
 exec "$BACKEND_SCRIPT" \
     --input    "$INPUT_FILE" \
     --output   "$OUTPUT_FILE" \
@@ -92,4 +114,6 @@ exec "$BACKEND_SCRIPT" \
     --speed    "${SPEED}" \
     --skill-dir "${SKILL_DIR}" \
     --skip-layer "${SKIP_LAYER}" \
-    ${VERIFY:+--verify}
+    ${VERIFY_FLAG} \
+    ${INLINE_LLM_FLAG} \
+    ${NO_LYRICS_FLAG}
