@@ -4,13 +4,23 @@
 Workaround for long-document LLM calls that stall/throttle on >5k-word
 inputs. Each H2 chunk is ~500-1500 words — LLM calls complete in ~30-60s.
 
+Standalone/headless CLI utility — NOT wired into kokoro.sh/synth-audio.sh.
+When running inside an active Claude Code session, prefer having the
+driving agent dispatch one rewrite subagent per H2 section in parallel
+and concatenate the results into narrative.txt itself (see SKILL.md) —
+that gets you the same chunking benefit with genuine context isolation.
+Use this script only for headless/CI runs with no driving agent present.
+
 Usage:
     chunk_and_rewrite.py <markdown> <narrative_out> [--prompt PATH] \\
         [--llm-model MODEL]
 
 Output narrative.txt is the concatenation of chunk outputs, blank-line
 separated. Each chunk naturally produces a [[CHAPTER]] marker for its
-H2 under the chapter-focused prompt.
+H2 under the chapter-focused prompt. Its output should still be passed
+through pipeline.py's validate_narrative() before rendering — run
+pipeline.py with --skip-layer 1 afterward rather than feeding kokoro.txt
+straight to the renderer.
 """
 
 from __future__ import annotations
@@ -53,6 +63,14 @@ def chunk_by_h2(md: str) -> list[str]:
 
 
 def rewrite_chunk(chunk: str, prompt_text: str, model: str, idx: int, total: int) -> str:
+    # NOTE: like pipeline.py's inline fallback, this is a standalone/manual
+    # CLI utility (not wired into kokoro.sh's default L1 path — see
+    # SKILL.md for the recommended subagent-dispatch workflow instead).
+    # --safe-mode disables CLAUDE.md auto-discovery, output styles, hooks,
+    # plugins, and custom agents/commands, so a `claude --print` run from
+    # inside an active Claude Code session can't leak session
+    # meta-commentary (e.g. an output-style "★ Insight" block) into the
+    # rewrite — see pipeline.py's run_layer1() for the same treatment.
     user_msg = (
         "Rewrite the following dossier section into spoken prose per the "
         "system prompt rules. Output ONLY the rewritten prose with chapter "
@@ -65,6 +83,7 @@ def rewrite_chunk(chunk: str, prompt_text: str, model: str, idx: int, total: int
         [
             "claude", "--print",
             "--model", model,
+            "--safe-mode",
             "--system-prompt", prompt_text,
             user_msg,
         ],
@@ -98,7 +117,7 @@ def main() -> int:
     ap.add_argument("markdown")
     ap.add_argument("narrative_out")
     ap.add_argument("--prompt", default=str(DEFAULT_PROMPT))
-    ap.add_argument("--llm-model", default="claude-sonnet-4-6")
+    ap.add_argument("--llm-model", default="claude-sonnet-5")
     args = ap.parse_args()
 
     md = Path(args.markdown).read_text()

@@ -2,8 +2,25 @@
 """End-to-end text-preparation pipeline for TTS.
 
 Stages:
-  L1  narrative rewrite (LLM: claude --print)
+  L1  narrative rewrite (LLM)
       → narrative.txt (contains [[CHAPTER: ...]] markers)
+
+      By default this pipeline does NOT produce narrative.txt itself — it
+      expects the driving Claude Code agent to have dispatched an isolated
+      subagent (per SKILL.md) to write it, then to be re-invoked with
+      --skip-layer 1. This avoids a nested `claude --print` subprocess
+      inheriting the caller's active output style / CLAUDE.md, which can
+      leak meta-commentary into the rewrite instead of clean prose.
+
+      For standalone/headless runs with no driving agent present, pass
+      --allow-inline-llm-rewrite to fall back to an isolated (--safe-mode)
+      inline `claude --print` call.
+
+      Regardless of source, narrative.txt is passed through
+      validate_narrative() before use — this is the load-bearing backstop
+      against non-conforming L1 output (missing chapter markers, collapsed
+      word count, or known contamination patterns), since subagent
+      isolation is a behavioral guarantee, not something checked statically.
   L2  rule normalization (normalize.py)
       → normalized.txt
   L3  Kokoro-specific prep:
@@ -21,12 +38,17 @@ Usage:
     pipeline.py <markdown> <out_dir> [options]
 
 Options:
-    --skip-layer N          reuse existing <out_dir>/<name-from-layer-N>
-                            (1..3) — skip the indicated layer + earlier
-    --llm-model MODEL       Claude model (default: claude-sonnet-4-6)
-    --prompt PATH           narrative prompt (default: bundled narrative-chapter-focused.md)
-    --dict PATH             phoneme dict YAML (default: ./phoneme-dict.yaml in input dir)
-    --stress PATH           stress hints YAML (default: ./stress.yaml in input dir)
+    --skip-layer N              reuse existing <out_dir>/<name-from-layer-N>
+                                (1..3) — skip the indicated layer + earlier
+    --allow-inline-llm-rewrite  allow an isolated inline `claude --print`
+                                call for L1 when narrative.txt doesn't
+                                already exist (default: off — fail loudly
+                                instead; see L1 note above)
+    --llm-model MODEL           Claude model for the inline fallback and
+                                chunk_and_rewrite.py (default: claude-sonnet-5)
+    --prompt PATH                narrative prompt (default: bundled narrative-chapter-focused.md)
+    --dict PATH                  phoneme dict YAML (default: ./phoneme-dict.yaml in input dir)
+    --stress PATH                stress hints YAML (default: ./stress.yaml in input dir)
 """
 
 from __future__ import annotations
@@ -66,7 +88,15 @@ def parse_chapters(text: str) -> list[dict]:
     return chapters
 
 
-# ---------- Layer 1 — LLM narrative rewrite ----------
+# ---------- Layer 1 — LLM narrative rewrite (inline fallback only) ----------
+#
+# This is ONLY used when --allow-inline-llm-rewrite is passed — the default
+# path expects narrative.txt to already exist, written by a subagent the
+# driving Claude Code agent dispatched (see SKILL.md and the module
+# docstring). --safe-mode disables CLAUDE.md auto-discovery, output styles,
+# hooks, plugins, and custom agents/commands — the inheritance vectors that
+# caused a nested `claude --print` to leak session meta-commentary
+# (e.g. an explanatory-output-style "★ Insight" block) into the rewrite.
 
 def run_layer1(md_text: str, prompt_path: Path, model: str) -> str:
     user_msg = (
@@ -76,11 +106,12 @@ def run_layer1(md_text: str, prompt_path: Path, model: str) -> str:
         "---SOURCE---\n"
         f"{md_text}"
     )
-    print(f"[L1] invoking {model} via claude CLI (prompt={prompt_path.name})")
+    print(f"[L1] invoking {model} via claude CLI --safe-mode (prompt={prompt_path.name})")
     result = subprocess.run(
         [
             "claude", "--print",
             "--model", model,
+            "--safe-mode",
             "--system-prompt", prompt_path.read_text(),
             user_msg,
         ],
@@ -97,6 +128,80 @@ def run_layer1(md_text: str, prompt_path: Path, model: str) -> str:
         if first_nl > 0 and first_nl < 200:
             out = out[first_nl:].lstrip()
     return out + "\n"
+
+
+# ---------- Layer 1 validation — defensive check on narrative.txt ----------
+#
+# Applies uniformly regardless of narrative.txt's source (subagent-written,
+# human-written, or the inline fallback above). This is the load-bearing
+# backstop for Finding 2: subagent context isolation is a behavioral
+# guarantee we verified empirically but can't check statically, so this
+# function is what actually prevents garbage narrative from reaching L2/L3
+# and being rendered to audio.
+
+_HEADING_RE = re.compile(r"^#{1,2}\s+.+$", re.MULTILINE)
+_SKIP_HEADING_RE = re.compile(
+    r"^#{1,2}\s+(Sources|References|Appendix|Citations|Bibliography|Further Reading)\b",
+    re.IGNORECASE,
+)
+
+# Known contamination patterns from the observed failure (a nested
+# `claude --print` inheriting an active output style leaked a literal
+# "★ Insight" block into rendered audio). This denylist is inherently
+# incomplete — it targets the observed failure mode at near-zero cost. The
+# structural checks below (missing markers, collapsed word count) are the
+# general defense; don't rely on this list alone.
+_CONTAMINATION_MARKERS = (
+    "★",
+    "Insight ─",
+    "approve the plan",
+    "The plan is written",
+)
+
+
+def validate_narrative(narrative: str, source_md: str) -> None:
+    """Fail loudly (SystemExit) if narrative.txt doesn't look like a real
+    rewrite of source_md. Never render audio from a narrative that fails
+    this check."""
+    chapters = parse_chapters(narrative)
+
+    expected_headings = [
+        m for m in _HEADING_RE.finditer(source_md)
+        if not _SKIP_HEADING_RE.match(m.group(0))
+    ]
+    if expected_headings and not chapters:
+        raise SystemExit(
+            "narrative validation FAILED: source has "
+            f"{len(expected_headings)} heading(s) but narrative.txt has "
+            "zero [[CHAPTER: ...]] markers. This usually means the L1 "
+            "rewrite returned meta-commentary instead of prose (e.g. it "
+            "echoed an output style or explained the task) rather than "
+            "following the narrative-chapter-focused.md prompt. Re-dispatch "
+            "the L1 rewrite and re-run with --skip-layer 1."
+        )
+
+    source_words = len(source_md.split())
+    narrative_words = len(narrative.split())
+    if source_words > 0 and narrative_words / source_words < 0.2:
+        raise SystemExit(
+            "narrative validation FAILED: narrative.txt has "
+            f"{narrative_words} words vs {source_words} in the source "
+            f"({narrative_words / source_words:.0%}) — looks collapsed, not "
+            "a rewrite. Re-dispatch the L1 rewrite and re-run with "
+            "--skip-layer 1."
+        )
+
+    lowered = narrative.lower()
+    hits = [m for m in _CONTAMINATION_MARKERS if m.lower() in lowered]
+    if hits:
+        raise SystemExit(
+            "narrative validation FAILED: narrative.txt contains text that "
+            f"looks like leaked session/meta-commentary ({hits!r}) rather "
+            "than spoken prose — a known failure mode when an LLM rewrite "
+            "inherits an active output style. Re-dispatch the L1 rewrite "
+            "(this check is a denylist, not exhaustive — inspect the file "
+            "manually too)."
+        )
 
 
 # ---------- Layer 3a — phoneme dict ----------
@@ -233,6 +338,7 @@ def run(
     dict_path: Path | None = None,
     stress_path: Path | None = None,
     em_dash_mode: str = "period-dash",
+    allow_inline_llm_rewrite: bool = False,
 ) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     narrative_path = out_dir / "narrative.txt"
@@ -254,10 +360,24 @@ def run(
     if skip_layer >= 1 and narrative_path.exists():
         print(f"[pipeline] L1 skipped (reusing {narrative_path})")
         narrative = narrative_path.read_text()
-    else:
+    elif allow_inline_llm_rewrite:
         narrative = run_layer1(md_text, prompt_path, model)
         narrative_path.write_text(narrative)
         print(f"[pipeline] L1 wrote {narrative_path} ({len(narrative.split())} words)")
+    else:
+        raise SystemExit(
+            f"no narrative found at {narrative_path}, and inline LLM "
+            "rewrite is disabled by default. Either:\n"
+            "  1. Have the driving Claude Code agent dispatch a rewrite "
+            "subagent per SKILL.md, write narrative.txt, then re-run with "
+            "--skip-layer 1 (recommended — isolated context, avoids "
+            "inheriting an active output style/CLAUDE.md), or\n"
+            "  2. Pass --allow-inline-llm-rewrite for a standalone/headless "
+            "run with no driving agent present (uses `claude --print "
+            "--safe-mode` internally)."
+        )
+
+    validate_narrative(narrative, md_text)
 
     chapters_pre = parse_chapters(narrative)
     print(f"[pipeline] found {len(chapters_pre)} chapter markers")
@@ -322,7 +442,17 @@ def main() -> int:
     ap.add_argument("markdown")
     ap.add_argument("out_dir")
     ap.add_argument("--skip-layer", type=int, default=0)
-    ap.add_argument("--llm-model", default="claude-sonnet-4-6")
+    ap.add_argument(
+        "--allow-inline-llm-rewrite",
+        action="store_true",
+        help=(
+            "allow an isolated inline `claude --print --safe-mode` call for "
+            "L1 when narrative.txt doesn't already exist (default: off — "
+            "fail loudly and expect the driving agent to have dispatched a "
+            "rewrite subagent per SKILL.md)"
+        ),
+    )
+    ap.add_argument("--llm-model", default="claude-sonnet-5")
     ap.add_argument("--prompt", default=str(DEFAULT_PROMPT))
     ap.add_argument("--dict", default=None, help="phoneme dict YAML (default: ./phoneme-dict.yaml)")
     ap.add_argument("--stress", default=None, help="stress hints YAML (default: ./stress.yaml)")
@@ -341,6 +471,7 @@ def main() -> int:
         Path(args.prompt),
         dict_path=Path(args.dict) if args.dict else None,
         stress_path=Path(args.stress) if args.stress else None,
+        allow_inline_llm_rewrite=args.allow_inline_llm_rewrite,
         em_dash_mode=args.em_dash_mode,
     )
     return 0
