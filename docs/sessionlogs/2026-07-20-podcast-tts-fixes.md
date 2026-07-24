@@ -243,12 +243,44 @@ actionable error if none is found), preserving the never-clobber-a-real-file
 guard from before. The real render above is live proof: it ran with zero
 espeak-ng-related output on this machine.
 
+## Follow-up: listenable sample MP3 for Max
+
+After PR #65 was updated, Max asked for a short, real sample MP3 to listen
+to and forward. Not a repo change — no commit was made for this step, so
+it's logged here since it would otherwise leave no trace once the session
+clears.
+
+Built a fresh short-path `uv venv` (same approach as the earlier real-render
+follow-up; the previous verification venv had already been cleaned up),
+wrote a ~257-word test doc (H1 + 2 H2 sections, sized to land the rendered
+audio in Max's requested ~1–2 min range), dispatched a real L1 rewrite
+subagent per the SKILL.md workflow, and ran the actual pipeline end to end:
+`narrative.txt` → `synth-audio.sh --skip-layer 1` → real Kokoro-82M render
+→ ID3 chapters + USLT lyrics injected.
+
+**Output:** `/tmp/podcast-sample-2026-07-20.mp3` — 73.3s, ~578KB, `am_puck`
+voice. Verified via `ffprobe`/`ffmpeg -af volumedetect` (non-silent: mean
+−23.5dB, max −1.9dB) and a full clean decode (`ffmpeg -f null -`, no
+corruption). Verified via mutagen read-back: 2 CHAP frames present and
+correctly timed ("Why Momentum Matters" 0:00–0:34, "Three Ways to Build a
+Streak" 0:34–1:13) plus CTOC; USLT lyrics frame present, text matching the
+narrative exactly. This is the first time in the whole engagement that a
+finished, listenable artifact from the fixed pipeline was produced and
+confirmed end to end.
+
+The temporary verification venv (`~/tts-tmp-verify`) was deleted after use,
+per the same pattern as the earlier real-render follow-up — nothing left
+behind except the sample MP3 itself, at the exact path requested.
+
 ## Repository State
 
 - Branch: `worktree-podcast-tts-fixes`
 - Initial commit: `38fb377` - text-to-speech: remove nested claude --print,
   dispatch a subagent for L1
-- PR: https://github.com/eins78/agent-skills/pull/65 (open, not merged)
-- Follow-up commit (real-render verification + 3 additional fixes: F3
-  probe-first, chapter-timing bug, lyrics-regex bug) pushed to the same PR
-  branch after this sessionlog update.
+- Follow-up commit: `d79d33e` - text-to-speech: real end-to-end render
+  verification + F3 probe-first refinement
+- PR: https://github.com/eins78/agent-skills/pull/65 (open, not merged;
+  description updated to reflect both commits)
+- Working tree clean at session end; the sample-MP3 follow-up touched no
+  repo files (output lives at `/tmp/podcast-sample-2026-07-20.mp3`, not
+  committed, per instruction).
