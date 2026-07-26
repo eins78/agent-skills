@@ -21,6 +21,8 @@ Extracted from validated research artifacts across multiple domains:
 
 **Post-review polish (2026-04-18).** Six overfit grep hooks removed (citation-audit, forbidden-words, section-order, dated-claim-scan, ballot-anti-option, ballot-cover-archaeology); two mechanical hooks kept (`dossier-framing-declared`, `ballot-filename`). The removed hooks encoded a11y-session-specific patterns that didn't generalize across dossier styles. Replaced by `references/review-checklist.md` — a reviewer-facing audit doc that generalizes the concerns. `framing-modes.yaml` and `audit-checks.md` were deleted as orphaned; `framing-modes.md` temporarily retained mode-selection guidance (removed in the preflight-gate pass below).
 
+**Source archival (2026-07-26).** Added `scripts/archive-source.sh`, `references/source-archival.md`, review-checklist item 10, and the `sources-index-consistency.sh` gate. Until this pass the skill captured nothing — every citation was a bare URL, and the checklist named "URLs that 404 when spot-checked" as a red flag in two separate items without prescribing any remedy. Tool selection is evidence-based rather than assumed: see `research/2026-07-26-source-archival/`. The headline finding is that `wget` — the obvious first guess — is the wrong tool twice over: its `--quota` provably cannot cap a single-file download (GNU manual: *"quota will never affect downloading a single file"*), and it is not installed on stock macOS, where `curl` is the Apple-shipped binary. The ladder is therefore `monolith` → `curl` (floor) with `pandoc` layered on top, and `wget --mirror` is rejected outright rather than capped, since recursion is the failure mode and depth-0 is what verification needs.
+
 **Preflight gate (2026-04-18).** `dossier-framing-declared.sh` and `framing-modes.md` removed — the framing-mode convention (`oss`/`commercial`/`hiring`/`vendor`/`personal`) was over-specific, same anti-pattern as the six deleted grep hooks. Replaced the `### 0. FRAME` step with a three-check preflight gate (Specific / Unambiguous / Well-understood). Review-checklist item 1 swapped from "framing coherence" to "preflight evidence".
 
 ## Design Influences
@@ -37,7 +39,10 @@ dossier/
 ├── README.md                         # This file
 ├── references/
 │   ├── sources-by-domain.md          # Domain → source mapping (13 domains)
-│   └── review-checklist.md           # Reviewer audit checklist (9 items)
+│   ├── review-checklist.md           # Reviewer audit checklist (10 items)
+│   └── source-archival.md            # Capture tiers, caps, index schema, Wayback, repo hygiene
+├── scripts/
+│   └── archive-source.sh             # Depth-0 source capture + index append (no required deps)
 └── templates/
     └── dossier.md                    # Report template with REQUIRED/OPTIONAL sections
                                       # (ballot template moved to skills/ballot/)
@@ -45,13 +50,16 @@ dossier/
 # Hooks (repo-level, wired in .claude-plugin/plugin.json via dossier-hook-dispatcher.sh):
 .claude-plugin/hooks/
 ├── ballot-filename.sh                # Gate: per-reviewer ballot naming (owned by skills/ballot)
-└── dossier-hook-dispatcher.sh        # Argv/stdin shim — extracts file_path from PostToolUse JSON and invokes ballot-filename.sh
+├── sources-index-consistency.sh      # Gate: sources/ matches sources/index.md (silent if no archive)
+└── dossier-hook-dispatcher.sh        # Argv/stdin shim — extracts file_path from PostToolUse JSON, invokes both gates
 ```
 
 ## Dependencies
 
-**Required:** WebSearch, WebFetch (built into Claude Code)
-**Optional:** last30days skill (for social signal), commit-notation skill (for commit messages)
+**Required:** WebSearch, WebFetch (built into Claude Code). For source archival: `curl` and `awk` only — both are Apple-/distro-shipped, so there is nothing for an adopter to install.
+**Optional:** last30days skill (for social signal), commit-notation skill (for commit messages). For source archival: [`monolith`](https://github.com/Y2Z/monolith) (single-file HTML capture, `brew install monolith`) and [`pandoc`](https://pandoc.org/) (text extraction). Both are detected at runtime; absence degrades quality, never function.
+
+Deliberately **not** dependencies: `wget` (cannot cap a single-file download, absent on stock macOS), `single-file-cli` / `percollate` (require a Chromium install), `ArchiveBox` (a self-hosted service), `httrack` (a site mirrorer). Rationale and measurements in `research/2026-07-26-source-archival/`.
 
 ## Testing
 
@@ -61,13 +69,32 @@ To verify the skill works:
 2. **Preflight test:** Give an ambiguous request ("look into the AI space") — the skill should ask for clarification before starting research
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
 4. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
-5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 9 items should be actionable against the finished dossier.
+5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 10 items should be actionable against the finished dossier.
 6. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
 7. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
+8. **Source archival (manual, not run by `pnpm test`):**
+
+   ```bash
+   # Capture a normal page, a JS-rendered one, and an unreachable host.
+   S=skills/dossier/scripts/archive-source.sh
+   bash $S https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404 S1 /tmp/src --no-wayback
+   bash $S https://x.com/                    S2 /tmp/src --no-wayback   # expect: thin-capture
+   bash $S https://this-host.invalid/x       S3 /tmp/src --no-wayback   # expect: exit 0, unavailable
+   cat /tmp/src/index.md
+
+   # Degradation: stock PATH only — no monolith, pandoc, or Homebrew.
+   env PATH=/usr/bin:/bin bash $S https://example.com S4 /tmp/src-bare
+   ```
+
+   Expected: exit 0 in every case including the unreachable host; MDN gets both `.html` and a much smaller `.md`; `x.com` is flagged `thin-capture`; the bare-PATH run still captures via `curl`.
+9. **Consistency gate:** with an archive present, delete a file that `index.md` references and write the dossier — `sources-index-consistency.sh` reports the missing file and the dispatcher exits 2. With no `sources/` directory, the same write exits 0.
 
 ## Known Gaps
 
-- **Alerting-level gate.** PostToolUse fires *after* file write; exit 2 feeds stderr back to Claude but a motivated agent can ignore. Only one gate remains (`ballot-filename.sh`) after the polish and preflight passes removed the other six. PreToolUse rigor is documented future work; `ballot-filename.sh` is the cheapest upgrade candidate (filename is in `tool_input.file_path` before write).
+- **Alerting-level gate.** PostToolUse fires *after* file write; exit 2 feeds stderr back to Claude but a motivated agent can ignore. Two gates remain (`ballot-filename.sh`, `sources-index-consistency.sh`) after the polish and preflight passes removed six others. PreToolUse rigor is documented future work; `ballot-filename.sh` is the cheapest upgrade candidate (filename is in `tool_input.file_path` before write).
+- **JS-rendered sources cannot be captured.** Neither `curl` nor `monolith` executes JavaScript, so a client-rendered page archives as an empty shell. The skill detects this (`thin-capture`, via an awk text-length probe validated against real pages) and points at `single-file-cli` for a manual capture, but it cannot fix it. A headless browser is the real answer and is too heavy to require. Deliberate trade-off, not an oversight.
+- **Archival coverage is not enforced.** The gate checks that the archive is *self-consistent*, never that every citation was captured — a coverage gate would hard-fail on a machine where nothing could be fetched, which is exactly the adopter this skill must not break. So a dossier can ship with zero archived sources and pass every gate. Reviewed by checklist item 10 instead.
+- **`archive-source.sh` has no test suite.** Verified by the manual scenarios above (including a stock-`PATH` run) rather than by automated tests. A `tests/` dir following the `pandoc` skill's pattern is the natural next step.
 - **Checklist discipline depends on the reviewer.** The review-checklist replaces 4 deleted grep hooks; its value depends on a judgement-capable reviewer actually running it. Agents under time pressure may skim. Planned: seed a subagent test scenario that runs the checklist.
 - **Must-tier ballot gate deferred.** A hook that detects unticked Must items at delivery time would require parsing reviewer intent; too fragile. Kept as a prose rule in `skills/ballot/SKILL.md` — flag in sessionlog if blocked.
 - **Source reference file** covers 13 domains — will grow with usage.

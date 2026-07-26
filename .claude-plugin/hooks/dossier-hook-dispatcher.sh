@@ -13,8 +13,11 @@
 # docs/sessionlogs/2026-04-18-pitch-b-impl.md §Post-review Polish).
 # dossier-framing-declared was removed in the 2026-04-18 preflight-gate
 # pass (framing-mode convention replaced by judgment-based preflight gate).
-# The remaining hook (ballot-filename) is the mechanical check that
-# generalizes across dossier styles.
+#
+# The two remaining hooks are the mechanical checks that generalize across
+# dossier styles. Both check *file-level* facts — a filename shape, and whether
+# a directory matches its own index — rather than grepping document prose,
+# which is what made the removed six overfit to one session.
 
 set -euo pipefail
 
@@ -44,10 +47,13 @@ fi
 
 failures=""
 
-# The script self-gates on filename pattern — safe to call unconditionally.
-if ! output=$("$here/ballot-filename.sh" "$file_path" 2>&1); then
-  failures+="$output"$'\n'
-fi
+# Each script self-gates (on filename pattern, or on whether a sources/ archive
+# exists) — safe to call unconditionally.
+for gate in ballot-filename.sh sources-index-consistency.sh; do
+  if ! output=$("$here/$gate" "$file_path" 2>&1); then
+    failures+="$output"$'\n'
+  fi
+done
 
 if [[ -n "$failures" ]]; then
   printf '%s' "$failures" >&2
