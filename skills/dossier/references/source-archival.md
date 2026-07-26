@@ -14,6 +14,8 @@ The goal is **verification**, not reproduction. Someone re-reading this later ne
 
 Run it once per source, during GATHER, as URLs are collected — not as a separate pass at the end:
 
+**This requires assigning citation IDs at collection time.** The natural instinct is to number sources while writing §Sources, which puts archival after SYNTHESIZE and turns it into a stage of its own. Keep a running URL→ID list instead as findings come back, and let SYNTHESIZE group already-numbered sources into categories. Archiving late still works — the index and the gate do not care when it happened — but it costs a separate pass over every URL, and sources that went down during the research are already gone by then.
+
 ```bash
 SRC="research/2026-07-26-topic/sources"
 "${CLAUDE_SKILL_DIR}/scripts/archive-source.sh" https://example.com/docs   S1 "$SRC"

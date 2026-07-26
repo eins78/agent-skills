@@ -70,10 +70,18 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
-url="${1:-}"
-cid="${2:-}"
-dir="${3:-}"
-shift 3 2>/dev/null || true
+# Validate arity before shifting: `shift 3` fails atomically with fewer than
+# three args, leaving them to fall through to the option loop as "unknown
+# option: https://…" instead of the usage line.
+if [[ $# -lt 3 ]]; then
+  echo "usage: $(basename "$0") <url> <citation-id> <sources-dir> [--no-wayback] [--wayback-save]" >&2
+  exit 2
+fi
+
+url="$1"
+cid="$2"
+dir="$3"
+shift 3
 
 want_wayback=1
 want_spn=0
