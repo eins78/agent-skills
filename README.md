@@ -15,7 +15,6 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [apple-mail](skills/apple-mail/) | Read email via Apple Mail.app and AppleScript (read-only) |
 | [apple-notes](skills/apple-notes/) | Read Apple Notes via AppleScript (read-only) |
 | [ballot](skills/ballot/) | Durable decision artefact for async decisions — reviewed over chat, on a PR, on a train, after the session ends. Must/Should/Could tiers, empty checkboxes, reconciliation in sessionlog. Single async decider or multi-reviewer panel; pairs with `dossier` or stands alone (ADRs, PR review, hiring, vendor, household) |
-| [bye](skills/bye/) | Session wrap-up — reconstructs history, creates sessionlog, commits, summarizes next steps |
 | [chrome-browser](skills/chrome-browser/) | Dedicated Chrome with CDP for Playwright MCP — persistent sessions, launchd-managed, Cloudflare tips |
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
 | [lab-notes](skills/lab-notes/) | Experiment management — hypothesis, append-only running log, verdict. Rigorous + Lite modes. |
@@ -24,6 +23,22 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [private-podcast-feed](skills/private-podcast-feed/) | Private MP3+RSS feed for self-subscription — itunes:block, token URLs, ID3 chapters, Overcast ping |
 | [text-to-speech](skills/text-to-speech/) | Convert a text document to an audio MP3 file via a local TTS pipeline (backend-configurable) |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
+
+### Moved elsewhere
+
+| Skill | Now lives in |
+|-------|--------------|
+| `bye` | [quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills) (MIT, public) |
+
+`bye` existed here and in `quatico-solutions/agent-skills` under the same
+version label but with diverged content, so a fix to one silently left the
+other wrong. That repo is now its single maintained home — it carries this
+copy's improvements plus a declared sessionlog directory. Install it with:
+
+```
+/plugin marketplace add quatico-solutions/agent-skills
+/plugin install bye@quatico-marketplace
+```
 
 ## Installation
 
@@ -49,7 +64,7 @@ pnpx skills add https://github.com/eins78/agent-skills.git --global --agent clau
 Individual skills are listed in the marketplace and can be installed by name:
 
 ```
-/plugin install bye@eins78-marketplace
+/plugin install dossier@eins78-marketplace
 ```
 
 ### Manual (single skill)
