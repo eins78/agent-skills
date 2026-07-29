@@ -67,16 +67,6 @@
       }
     },
     {
-      "name": "bye",
-      "description": "Use when the user says /bye, \"wrap up\", \"end session\", or similar. Reconstructs full session history including compacted context, creates a sessionlog (if project has a sessionlog directory), commi...",
-      "version": "2.1.0",
-      "source": "./skills/bye",
-      "author": {
-        "name": "Max Albrecht",
-        "email": "1@178.is"
-      }
-    },
-    {
       "name": "chrome-browser",
       "description": "Use when setting up a dedicated Chrome browser for Playwright MCP with session persistence, or when encountering Cloudflare challenges during browser automation. Covers CDP setup, launchd auto-star...",
       "version": "1.5.0",
@@ -139,7 +129,7 @@
     {
       "name": "text-to-speech",
       "description": "Use when you need to convert a text document to an audio file via a local TTS pipeline. Outputs MP3. Handles narrative rewrite, text normalization, prosody prep, and audio render. Backend is config...",
-      "version": "1.1.0",
+      "version": "2.0.0",
       "source": "./skills/text-to-speech",
       "author": {
         "name": "Max Albrecht",
