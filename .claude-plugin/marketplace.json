@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "3.2.0",
+      "version": "4.0.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -79,7 +79,7 @@
     {
       "name": "dossier",
       "description": "Use when asked to research, compare, evaluate, or investigate any topic. Triggers: research this, compare options, evaluate alternatives, investigate, find the best, product comparison, technology ...",
-      "version": "1.1.1",
+      "version": "1.2.0",
       "source": "./skills/dossier",
       "author": {
         "name": "Max Albrecht",
@@ -129,7 +129,7 @@
     {
       "name": "text-to-speech",
       "description": "Use when you need to convert a text document to an audio file via a local TTS pipeline. Outputs MP3. Handles narrative rewrite, text normalization, prosody prep, and audio render. Backend is config...",
-      "version": "2.0.0",
+      "version": "3.0.0",
       "source": "./skills/text-to-speech",
       "author": {
         "name": "Max Albrecht",

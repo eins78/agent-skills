@@ -1,5 +1,132 @@
 # @eins78/agent-skills
 
+## 4.0.0
+
+### Major Changes
+
+- [#65](https://github.com/eins78/agent-skills/pull/65) [`38fb377`](https://github.com/eins78/agent-skills/commit/38fb3779c3d14e8e2d363ec8d5a98bc4d2f2a1f1) - `text-to-speech`: remove default nested `claude --print` from the L1 narrative rewrite — dispatch a subagent instead (Finding 2), plus three field-report fixes and ID3 lyrics embedding.
+
+  Field report from a fresh-machine run of the podcast/TTS pipeline surfaced
+  five issues; four were fixes, one a requested feature.
+
+  - **BREAKING — L1 narrative rewrite no longer runs automatically.**
+    `pipeline.py`/`chunk_and_rewrite.py` used to shell out to `claude --print`
+    directly. Run from inside an active Claude Code session, that nested call
+    inherits the session's output style / project `CLAUDE.md` and can leak
+    meta-commentary into the rewrite instead of prose (observed: a literal
+    `★ Insight` block rendered into audio). SKILL.md now instructs the driving
+    agent to dispatch an isolated rewrite subagent (Task/Agent tool), write
+    `narrative.txt`, then call `synth-audio.sh --skip-layer 1`. A bare
+    invocation with no existing `narrative.txt` now fails loudly by default
+    instead of silently falling back to the old behavior; standalone/headless
+    callers with no driving agent opt in via `--allow-inline-llm-rewrite`
+    (isolated with `claude --print --safe-mode`). Verified empirically this
+    session: a subagent dispatched from within an explanatory-output-style
+    session — the exact failure condition — returned clean prose with no
+    leaked commentary.
+  - Added `validate_narrative()` in `pipeline.py` as a source-agnostic
+    backstop (applies regardless of whether narrative.txt came from a
+    subagent, a human, or the inline fallback): hard-fails on missing chapter
+    markers when the source has headings, a collapsed word count vs. the
+    source, or known contamination patterns.
+  - Updated the stale `claude-sonnet-4-6` default to `claude-sonnet-5` in
+    `pipeline.py`, `chunk_and_rewrite.py`, and `kokoro.sh`.
+  - Fixed `synth-audio.sh` always passing `--verify` to the backend regardless
+    of whether the flag was given (`${VERIFY:+--verify}` treated the default
+    `VERIFY=0` as non-empty; now gated on value).
+  - `kokoro.sh` now runs a probe-first espeak-ng data-path preflight (macOS):
+    it actually exercises `misaki`'s G2P once and only symlinks the bundled
+    `espeakng_loader` dylib to a Homebrew `espeak-ng` build
+    (`$(brew --prefix espeak-ng)`) when that probe fails — verified
+    empirically (byte-identical dylib+data) that the bundled path is not
+    reliably broken everywhere, so the preflight no longer assumes it always
+    is and stays silent when nothing needs fixing.
+  - `kokoro.sh` now requires `VIRTUAL_ENV` to be set and fails loudly with the
+    fix instead of letting misaki's background `en-core-web-sm` auto-install
+    fail deep with an unhelpful "No virtual environment found".
+  - New: the rendered MP3's ID3 `USLT` frame now embeds the final
+    `narrative.txt` (chapter markers stripped to plain title lines) by
+    default — the spoken text travels inside the file for comparison against
+    the source without a separate artefact. `--no-lyrics` opts out.
+  - Fixed two bugs a real end-to-end render surfaced (not reachable from
+    isolated component tests): `kokoro_round5.py` was creating a
+    zero-duration chapter for the H1-title-only marker that precedes the
+    first H2 marker with no body of its own, which `inject_chapters.py`'s
+    own duration check correctly rejected; and
+    `inject_chapters.py`'s marker-stripping regex was mashing back-to-back
+    marker titles together with no separator when converting narrative.txt
+    to USLT lyrics text.
+
+  <!--
+  bumps:
+    skills:
+      text-to-speech: major
+  -->
+
+### Minor Changes
+
+- [#67](https://github.com/eins78/agent-skills/pull/67) [`75fc5a6`](https://github.com/eins78/agent-skills/commit/75fc5a6c4bf8e60059c878802e289e9b7387af10) - `dossier`: capture cited sources for offline verification. Until now the skill
+  archived nothing — every citation was a bare URL, while the reviewer checklist
+  named "URLs that 404 when spot-checked" as a red flag in two separate items
+  without prescribing any remedy. GATHER now captures each source as its URL is
+  collected, into a `sources/` folder beside the dossier with an `index.md`
+  mapping every file back to its citation ID, original URL, access date, and
+  content hash.
+
+  Tool selection is evidence-based, not assumed — see the cited dossier at
+  `research/2026-07-26-source-archival/`. The headline finding is that `wget`,
+  the obvious first guess, is the wrong tool twice over: its `--quota` provably
+  cannot cap a single-file download (GNU manual: _"quota will never affect
+  downloading a single file"_, reproduced locally) and it is not installed on
+  stock macOS, where `curl` is the Apple-shipped binary. The ladder is therefore
+  `monolith` → `curl` (the floor, never absent) with `pandoc` layered on top for
+  text extraction. `wget --mirror` is rejected outright rather than capped:
+  recursion is the gigabyte failure mode, and verification needs the cited page,
+  not the site. `ArchiveBox`, `httrack`, `single-file-cli` and `percollate` are
+  evaluated and declined as dependencies for portability reasons.
+
+  Nothing is required beyond `curl` and `awk`, both shipped by every relevant OS.
+  `monolith` and `pandoc` are detected at runtime; their absence degrades quality,
+  never function. Capture never fails a dossier — an unreachable host, a 403, or
+  an over-cap response becomes an index row recording what happened. Bounds are
+  explicit: depth 0 with no recursion knob, 5 MB and 20 s per source, 100 sources
+  and 100 MB per dossier.
+
+  Two limitations are surfaced rather than hidden. JS-rendered pages cannot be
+  captured without a browser, so captures are probed with a portable awk
+  text-length measure (validated against real pages: a JS shell scores ~469
+  characters where every server-rendered page tested scored above 4,000) and
+  flagged `thin-capture`, pointing at `single-file-cli` as the manual remedy.
+  And **Save Page Now is opt-in only** — it submits a URL to a permanent public
+  archive, so defaulting it on would publish the author's reading list one source
+  at a time. The read-only availability lookup, which publishes nothing, is the
+  default instead.
+
+  Also adds the `sources-index-consistency` gate (every index row resolves to a
+  file, every captured file has a row; silent when there is no archive) and
+  review-checklist item 10.
+
+  <!--
+  bumps:
+    skills:
+      dossier: minor
+  -->
+
+- [#68](https://github.com/eins78/agent-skills/pull/68) [`a41bd9c`](https://github.com/eins78/agent-skills/commit/a41bd9cacd8124fe4a267a270ae79855cab73c9c) - Remove the `bye` skill. It also lived in
+  [quatico-solutions/agent-skills](https://github.com/quatico-solutions/agent-skills)
+  under the same version label but with diverged content, so a fix to one copy
+  silently left the other wrong. That repo is now its single maintained home —
+  it carries this copy's improvements (skill-directory links, the skip/create
+  decision table, the hard stop when no sessionlog directory exists) plus a
+  declared `Sessionlog directory` key.
+
+  README points at the new home; the marketplace manifest was regenerated.
+
+  <!--
+  bumps:
+    skills: {}
+  -->
+
 ## 3.2.0
 
 ### Minor Changes
