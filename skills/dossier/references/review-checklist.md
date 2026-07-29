@@ -163,10 +163,29 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ---
 
+## 10. Source archival
+
+**What to check.** Cited sources have local copies under `sources/`, with `sources/index.md` mapping each captured file back to its citation ID, original URL, and access date. Sources flagged `thin-capture` or `unavailable` in the index have been noticed rather than ignored. Nothing was submitted to a public archive without the user asking.
+
+**Why it matters.** A citation is a promise that someone can check the claim. A bare URL keeps that promise only until the page moves, changes, or 404s — and the sources a dossier leans on hardest are often the most fragile: a single forum thread, one issue in a dormant tracker, a vendor page for a product that gets discontinued. This is the item that closes the loop the citation-integrity and dated-claim-freshness items open: both list "the URL 404s" as a red flag, and this is the remedy. Archival is best-effort by design, so the bar is not "everything captured" — it is "the archive that exists is accurate, and the gaps are visible."
+
+**What good looks like.** `sources/index.md` exists and every row resolves: the file is on disk, the citation ID appears in the dossier body, the access date is the production date. §Sources carries an `### Archive` subsection pointing at the folder — without it the archive is invisible to anyone reading the dossier itself. Rows with status `thin-capture` (a JS-rendered page whose capture is an empty shell) are either re-captured manually or acknowledged, rather than left looking like successful captures. Rows with status `unavailable` carry a reason. The `Wayback` column is populated where a public snapshot happened to exist and empty elsewhere — expected, since Wayback's coverage skews toward exactly the stable sources least likely to rot. A dossier with no `sources/` folder at all is acceptable when archival was not run; a dossier with a `sources/` folder that misdescribes itself is not.
+
+**Red flags.**
+- A dossier whose load-bearing claims cite forum threads, mailing-list posts, or issue trackers with no local capture at all.
+- `sources/index.md` rows pointing at files that aren't there, or captured files with no row (the `sources-index-consistency` gate catches both).
+- Every row marked `thin-capture` — the sources are JS-rendered and the archive is a directory of empty shells presented as evidence.
+- Archived copies with no index at all: a folder of HTML files nobody can map back to a citation is not an archive, it is clutter.
+- A `sources/` folder that §Sources never mentions — the reader has no way to know it is there.
+- `--wayback-save` used across a dossier's sources without the user explicitly asking — that publishes their reading list to a permanent public index.
+- The text extraction described as "readability extraction". It is HTML→markdown conversion; nav and footer text survive.
+
+---
+
 ## Why this replaced the old grep hooks
 
 Earlier iterations of the dossier skill shipped four grep-based audit hooks: `dossier-citation-audit.sh`, `dossier-forbidden-words.sh`, `dossier-section-order.sh`, and `dossier-dated-claim-scan.sh`. Each encoded a specific failure pattern from the a11y-extension Chrome-Web-Store session: the `[Xn]` citation convention, the OSS-mode forbidden-word list, H2-level glossary headings, and ISO-date patterns.
 
 Dossiers in other styles use different conventions. A hiring brief uses prose citations, not `[Xn]` refs. A vendor-selection dossier may put Glossary under an H3 subsection. An architecture decision record may have no §Sources at all. The grep hooks either miss real failures (they don't recognize the pattern) or fire spurious failures (they match something the dossier does on purpose).
 
-This checklist generalizes the *concerns* without hard-coding the *patterns*. The one hook that remains (`ballot-filename.sh`) is genuinely mechanical — a ballot filename either matches the pattern or doesn't. A grep is the right tool for that. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced was over-specific, and a judgment-capable preflight check (item 1 above) generalizes better across dossier styles.
+This checklist generalizes the *concerns* without hard-coding the *patterns*. The two hooks that remain are genuinely mechanical: a ballot filename either matches the pattern or doesn't (`ballot-filename.sh`), and a `sources/` directory either matches its own index or doesn't (`sources-index-consistency.sh`). Both check file-level facts rather than document prose, which is precisely why they generalize where the removed grep-gates didn't — what a dossier *says* varies by topic and author, but whether an archive describes itself is the same question every time. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced was over-specific, and a judgment-capable preflight check (item 1 above) generalizes better across dossier styles.

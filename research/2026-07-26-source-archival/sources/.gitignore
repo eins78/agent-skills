@@ -1,0 +1,11 @@
+# Captured page bodies and text extractions.
+#
+# agent-skills is a DISTRIBUTED PLUGIN — anything committed here ships to every
+# adopter who installs it. So only index.md is tracked: it is a few KB and still
+# preserves the full verification chain (URL, access date, SHA-256 per source).
+# The captures themselves stay on the author's disk, where they are useful.
+#
+# See skills/dossier/references/source-archival.md §Repo hygiene.
+*.html
+*.md
+!index.md

@@ -55,6 +55,8 @@ Each agent returns structured findings with URLs for every claim. Check `/last30
 
 **Dated-claim verification.** Every deadline, CFP date, release-window, or "closes X 2026" claim must be re-verified against a primary source accessed on the production date. Dates stale silently; they are the single most common source of drift in multi-session dossiers. Reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (dated-claim-freshness item).
 
+**Source archival.** Capture each cited source to disk — `"${CLAUDE_SKILL_DIR}/scripts/archive-source.sh" <url> <citation-id> <dossier-folder>/sources`. **Assign the citation ID when you collect the URL, not when you write §Sources** — that is what lets archival run here in GATHER rather than becoming a sixth stage. Keep a running URL→ID list as findings come back; SYNTHESIZE then groups those IDs into source categories instead of inventing them. A citation is a promise that someone can check the claim; a bare URL keeps that promise only until the page moves, changes, or 404s, and the sources that rot fastest — forum threads, issues in dormant trackers, vendor pages for discontinued products — are exactly the ones a dossier leans on. The script captures depth-0 (the cited page only, never a site mirror), degrades from `monolith` to `curl` to whatever is present, and **never fails a dossier** — an unreachable source becomes an index row saying so. Two things to know before running it: it flags `thin-capture` on JS-rendered pages it cannot see into, and `--wayback-save` is an **outward-facing publish** to a public archive, never a default. Details in `${CLAUDE_SKILL_DIR}/references/source-archival.md`. Reviewed via `${CLAUDE_SKILL_DIR}/references/review-checklist.md` (source-archival item).
+
 ### 3. EVALUATE
 
 - Score options against requirements
@@ -79,7 +81,7 @@ Write dossier using `${CLAUDE_SKILL_DIR}/templates/dossier.md`:
 
 ### 5. DELIVER
 
-Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers preflight evidence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, and Key Facts box accuracy. The mechanical gate (`ballot-filename`) fires automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
+Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers preflight evidence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, Key Facts box accuracy, and source archival. The mechanical gates (`ballot-filename`, `sources-index-consistency`) fire automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
 
 - Commit dossier folder (`D:` intention per commit-notation).
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers.
@@ -92,6 +94,10 @@ research/YYYY-MM-DD-slug/
 ├── DOSSIER-Title-Words-BALLOT-Max.md           # Optional: one per decider
 ├── DOSSIER-Title-Words-BALLOT-Patrick.md       # Optional: one per decider (multi-reviewer case)
 ├── DOSSIER-Followup-Title-YYYY-MM-DD.md        # Follow-up dossiers in same folder
+├── sources/                                    # Archived copies of cited sources
+│   ├── index.md                                #   citation ID ↔ URL ↔ access date ↔ file
+│   ├── S1-example.com-docs.html                #   captured page
+│   └── S1-example.com-docs.md                  #   text extraction (when pandoc present)
 └── (attachments — rare)
 ```
 
@@ -101,13 +107,16 @@ Multiple dossiers per folder is expected.
 
 ## Gates (hooks)
 
-One mechanical gate runs PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. **Alerting-level** — the file is already on disk when it fires; a motivated agent can ignore. PreToolUse rigor is future work.
+Two mechanical gates run PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. **Alerting-level** — the file is already on disk when it fires; a motivated agent can ignore. PreToolUse rigor is future work.
 
 | Gate | Fails on |
 |------|----------|
 | `ballot-filename.sh` | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
+| `sources-index-consistency.sh` | `sources/index.md` referencing a missing file, or a captured file with no index row. Silent when there is no `sources/` archive |
 
 Everything else is reviewed by checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced doesn't generalize across dossier styles. See `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
+
+Both surviving gates check **file-level facts** — a filename shape, and whether a directory matches its own index — rather than grepping document prose. That is the property the removed six lacked: what a dossier *says* varies by topic and author, but whether an archive describes itself is the same question every time. `sources-index-consistency.sh` is deliberately a *consistency* check and not a *coverage* one: it never demands that every citation be archived, because on a machine where nothing could be captured that would block the dossier outright.
 
 ## Common Mistakes
 
@@ -116,6 +125,8 @@ Everything else is reviewed by checklist, not by grep. Earlier iterations shippe
 | Orphan citations | Reviewed in the checklist (citation-integrity item) — every inline reference should match a §Sources entry |
 | Glossary at the back of the dossier | Glossary first (read-support); Sources last (trust-support) |
 | Dates treated as static | Reviewed in the checklist (dated-claim-freshness item) — re-verify each |
+| Citations left as bare URLs that will 404 later | Archive each source during GATHER; reviewed in the checklist (source-archival item) |
+| Submitting sources to a public archive by default | `--wayback-save` publishes the user's reading list — opt-in only (see `${CLAUDE_SKILL_DIR}/references/source-archival.md`) |
 | Exhaustive list, not selective | Set selectivity in SCOPE ("5-8, not all"); reviewed in the checklist |
 | Generic recommendations | Tailor to THIS user's context and infrastructure |
 | Bare product names without URLs | Hyperlink every entity on first mention |

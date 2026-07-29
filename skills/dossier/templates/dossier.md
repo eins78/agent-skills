@@ -187,6 +187,19 @@
 <!-- OPTIONAL: Policy, compliance, legal -->
 - **S10** — [{Body}: {Document}][ref-S10]
 
+### Archive
+<!-- OPTIONAL but strongly preferred: include whenever sources were captured
+     with archive-source.sh. Without it the sources/ folder is invisible to
+     anyone reading this file, and the archive may as well not exist.
+     Name any row whose status is thin-capture or unavailable — an
+     unacknowledged failed capture reads as a successful one. -->
+
+Sources are captured locally under [`sources/`](sources/), indexed in [`sources/index.md`](sources/index.md) with the access date and a SHA-256 per source.
+
+{Note any exceptions: "S7 is a `thin-capture` — the page is JS-rendered and the
+capture is a shell; the claim it supports also rests on S3, which captured
+cleanly." Delete this paragraph if every source captured cleanly.}
+
 <!-- Reference-link definitions. Keep at the bottom of §Sources so any
      [Sn][ref-Sn] in the body resolves. Add one per source actually
      cited; delete the unused placeholders. -->
