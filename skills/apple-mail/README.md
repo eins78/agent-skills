@@ -54,10 +54,31 @@ osascript -e 'tell application "Mail" to get name of every account'
 
 # Verify inbox access
 osascript -e 'tell application "Mail" to count messages of inbox'
+
+# Verify attachment listing (pick a subject you know has an attachment)
+osascript -e 'tell application "Mail"
+  set msg to item 1 of (messages of inbox whose subject contains "invoice")
+  repeat with a in (mail attachments of msg)
+    log (name of a)
+  end repeat
+end tell'
 ```
+
+The attachment commands added in 1.1.0 were verified end-to-end against a real
+mailbox: listing, saving four attachments across four messages via the `my
+posixTarget(…)` handler, and byte-size comparison against the originals. The two
+gotchas were confirmed by reproducing each failure and its fix.
+
+## Known Gaps
+
+- **Terminology collisions are only partly enumerated.** The reserved-word list in
+  SKILL.md was found by probing common identifiers, not by reading Mail's `.sdef`.
+  Generating the full list from the dictionary would be more reliable.
+- **No write operations by design** — see Limitations.
 
 ## Future Improvements
 
 - Script for structured JSON output from mail queries
 - Mailbox-specific search helpers
 - Unread count per account
+- Helper script for bulk attachment extraction with name sanitization
