@@ -144,6 +144,29 @@ pandoc -t beamer -o slides.pdf input.md               # LaTeX Beamer
 pandoc -o book.epub chapter1.md chapter2.md metadata.yaml
 ```
 
+### Markdown → Kindle EPUB
+
+For markdown destined for an e-reader — reflowable text, adjustable font size,
+and a working table of contents. Produce EPUB, not PDF: a PDF page is a fixed
+canvas and only zooms/pans on a 6" screen, while Send-to-Kindle converts EPUB
+into the device's own reflowable format on delivery.
+
+```bash
+"${CLAUDE_SKILL_DIR}/scripts/md2kindle-epub.sh" -o out.epub input.md
+"${CLAUDE_SKILL_DIR}/scripts/md2kindle-epub.sh" -o out.epub part1.md part2.md --title "Report"
+"${CLAUDE_SKILL_DIR}/scripts/md2kindle-epub.sh" -o out.epub ballot.md --raw-checkboxes
+```
+
+The wrapper sets `--toc --toc-depth=3 --split-level=2` (a real table of
+contents; chapters split at each `##` so no single internal file gets huge)
+and disables the `task_lists` extension by default, so GFM checkboxes stay
+literal `[ ]` / `[x]` text instead of HTML `<input type="checkbox">` elements.
+Plain text is guaranteed to survive a server-side ebook conversion; form
+elements are not. `--raw-checkboxes` restores native task-list HTML.
+
+Getting the file onto a device is a separate concern — see the
+`send-to-kindle` skill for delivery routes, addressing, and size limits.
+
 ### Man page → Markdown
 
 ```bash
@@ -215,6 +238,7 @@ Always use `-s` for HTML files, LaTeX documents, and slide decks. DOCX/PDF/EPUB 
 | Wrong markdown flavor in output | Specify `-t gfm` or `-t commonmark` explicitly |
 | Piping binary formats to stdout | Use `-o file.docx` — DOCX/PDF/EPUB must write to files |
 | Line wrapping mangles output | Add `--wrap=none` to preserve original line breaks |
+| Checkboxes become `<input type="checkbox">` in EPUB/HTML | Read with `-f markdown-task_lists` to keep literal `[ ]` / `[x]` text. Pre-converting to Unicode glyphs (☐/☑) does **not** help — pandoc treats those as task-list markers unconditionally, independent of the extension flag, and still emits `<input>` |
 
 ## References
 
@@ -228,3 +252,4 @@ Consult for deep dives — these are loaded on demand, not auto-included:
 
 - `${CLAUDE_SKILL_DIR}/themes/marked-print.css` — Compact A4 print stylesheet (9pt body, GitHub-like headings, Japanese + emoji)
 - `${CLAUDE_SKILL_DIR}/scripts/md2pdf-print.sh` — Markdown → A4 print PDF via pandoc + headless Chrome
+- `${CLAUDE_SKILL_DIR}/scripts/md2kindle-epub.sh` — Markdown → e-reader EPUB (TOC, chapter splitting, literal checkboxes)

@@ -21,6 +21,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |
 | [pdf-zine](skills/pdf-zine/) | Convert a PDF into a fold-and-print booklet (zine) — A4 sheets, 2-up, fold to A5, via the `pdf2zine` Docker CLI |
 | [private-podcast-feed](skills/private-podcast-feed/) | Private MP3+RSS feed for self-subscription — itunes:block, token URLs, ID3 chapters, Overcast ping |
+| [send-to-kindle](skills/send-to-kindle/) | Getting a document onto a Kindle — delivery routes and 2026 status, EPUB over PDF, per-device addressing, the silently-dropped-sender trap, one-way highlights |
 | [text-to-speech](skills/text-to-speech/) | Convert a text document to an audio MP3 file via a local TTS pipeline (backend-configurable) |
 | [tmux-control](skills/tmux-control/) | Reliable tmux patterns — targeting, send-keys, capture-pane, wait-for sync, monitoring |
 
