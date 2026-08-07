@@ -86,6 +86,8 @@ Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references
 - Commit dossier folder (`D:` intention per commit-notation).
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers.
 
+If the reader wants the dossier on an e-reader rather than on screen, see the `send-to-kindle` skill (and `pandoc`'s `md2kindle-epub.sh` for the file itself).
+
 ## Output Convention
 
 ```
