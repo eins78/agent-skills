@@ -10,13 +10,20 @@ metadata:
 
 # Apple Mail (Read Only)
 
-Read email via Mail.app AppleScript. **No sending or modifying emails.**
+Read email two ways: **Mail.app AppleScript** for live state and attachments, and
+**`ripgrep` over the on-disk `.emlx` files** for searching large archives.
+**No sending or modifying emails.**
 
 ## Prerequisites
+
+**AppleScript path:**
 
 - Mail.app running and logged in
 - Automation permissions granted (System Settings → Privacy & Security → Automation → Terminal/Claude Code → Mail)
 - If first access attempt times out, ask user to check for macOS permission dialog
+
+**Archive-search path:** Full Disk Access for the calling terminal app (System
+Settings → Privacy & Security → Full Disk Access). Mail.app need not be running.
 
 ## Reliability: always wrap osascript with timeout + retry
 
@@ -106,6 +113,9 @@ end tell'
 
 ### Search across all mailboxes
 
+Only for small stores or a handful of accounts. For old mail, or once the account
+count climbs, this becomes unusable — use **Searching large archives** below instead.
+
 ```bash
 osascript -e 'tell application "Mail"
   set foundMsgs to (messages of every mailbox of every account whose subject contains "keyword")
@@ -159,6 +169,8 @@ Attachment names often contain `:` (e.g. `SOA-2026-08-02-12:20:06.xlsx`). It sav
 
 Fallback: `source of msg` returns the raw MIME, so Python's `email` module can extract parts without AppleScript at all. Useful when a mailbox is wedged or names need heavy cleanup.
 
+That fallback still goes through Mail. To skip it entirely, the same message is already on disk as an `.emlx` file — see **Searching large archives** below, which parses it with the same `email` module and no `tell` block at all.
+
 ## Gotchas inside `tell application "Mail"`
 
 Both of these have one root cause: **unqualified terms resolve against Mail's dictionary, not AppleScript's.**
@@ -170,6 +182,128 @@ Both of these have one root cause: **unqualified terms resolve against Mail's di
 `base` · `name` · `subject` · `content` · `file` · `path` · `index` · `size` · `date` · `text` · `character`
 
 Prefix them — `basePath`, `msgSubject`, `outFile`. The failure is a *syntax* error at compile time for some (`base`, `file`, `date`, `text`, `character`) and a *runtime* error for others (`name`, `subject`, `content`, `index`, `size`), so a script can parse cleanly and still blow up mid-loop.
+
+## Searching large archives
+
+**Use this path to find old mail, or when the account count is high.** Cross-account
+AppleScript search degrades badly as accounts accumulate, and the bridge hangs
+intermittently besides (see *Reliability: always wrap osascript with timeout +
+retry*).
+
+The two paths are complements, not rivals — AppleScript still owns live state
+(unread counts, recent inbox, account and mailbox names) and attachment
+extraction, which the on-disk path cannot do. Use this one to *locate* a message
+across a large archive; use AppleScript to act on it once found.
+
+Mail stores each message as an `.emlx` file under `~/Library/Mail/`, so `ripgrep`
+searches the whole archive directly. This is read-only: it never opens Mail.app.
+
+### 1. Confirm the store is readable — do this first
+
+Both of the failure modes below return **zero results, not an error**. Establish
+that you can actually read the files before believing any empty result:
+
+```bash
+rg --files ~/Library/Mail -g '*.emlx' | wc -l
+```
+
+A count of 0, or a permission error, means the search is blind — not that the
+archive is empty. Reading `~/Library/Mail` requires **Full Disk Access** for the
+calling terminal app (System Settings → Privacy & Security → Full Disk Access).
+
+### 2. Search
+
+```bash
+rg -il --no-messages 'search\.term' ~/Library/Mail -g '*.emlx' > /tmp/matches.txt
+wc -l < /tmp/matches.txt
+```
+
+- Search `~/Library/Mail`, not `~/Library/Mail/V10` — the version directory changes
+  across macOS releases and more than one can coexist.
+- `-g '*.emlx'` **already includes `*.partial.emlx`**; no second glob is needed.
+- Use `-F` for a literal term. Email addresses and domains contain regex
+  metacharacters (`.`, `+`), so `rg -ilF 'name+tag@example.com'` avoids surprises.
+- Drop `--no-messages` on the first run. It suppresses genuine read errors, which
+  is exactly how a permissions problem disguises itself as "no such mail."
+
+### 3. Triage the hits
+
+Do not pull headers out with `grep`. Roughly a quarter of `Subject:` headers are
+MIME-encoded (`=?UTF-8?B?...?=`) and a fifth are folded across continuation lines,
+so a line-oriented `grep`/`cut` pipeline returns mojibake and truncated subjects.
+The bundled parser decodes both:
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/emlx.py" list < /tmp/matches.txt
+```
+
+Prints one TSV row per message — `UTC date, from, subject, flags, path` — sorted
+oldest first. The date column is UTC precisely so it stays sortable with `sort`.
+
+### 4. Read one message
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/emlx.py" show /path/to/123.emlx
+```
+
+Decoded headers plus the body, preferring `text/plain` and falling back to
+`text/html` — a tenth of messages have no plain-text part at all, so a
+plain-text-only extraction silently prints nothing for them.
+
+### `.emlx` format
+
+A byte-count line, then the RFC822 message, then an XML plist trailer. The count
+is why the message must be sliced out before parsing rather than fed to an
+RFC822 parser whole.
+
+### `*.partial.emlx` — include them
+
+Mail writes `.partial.emlx` when it has not downloaded the entire message. They
+can be a large share of the archive, and **they are worth searching**: headers and
+text body are normally present and intact.
+
+What they lack is attachment payloads. Such a part keeps its headers and carries
+`X-Apple-Content-Length`, but its body is empty — measured here as attachments only
+(`application/pdf`, `image/png`, `image/jpeg`, `application/pgp-signature`). So a
+term that exists only inside an attachment will not match locally. `emlx.py` flags
+these as `NOT-DOWNLOADED:<type>`; open the message in Mail.app to fetch the rest.
+
+Note this bounds what a local grep can find in general: attachment text is
+base64-encoded even in fully-downloaded messages, so it never matches a plaintext
+search regardless. Searching *inside* attachments is a separate job — extract them
+first with **Save attachments** above, then search the extracted files.
+
+### Spotlight does not work here
+
+```bash
+mdfind -onlyin ~/Library/Mail 'some term you know exists'   # → 0
+```
+
+`~/Library/Mail` is not Spotlight-indexed on current macOS. **`mdfind` returns 0
+for every query, and 0 reads as "no such mail" when it actually means "no index."**
+Do not use `mdfind` to conclude a message does not exist, and do not treat its
+silence as evidence.
+
+Volume-level indexing being enabled is not evidence the mail store is indexed —
+these two commands distinguish the cases in seconds:
+
+```bash
+mdutil -s /                                          # "Indexing enabled." — volume is fine
+mdls -name kMDItemTextContent /path/to/some.emlx     # (null) — yet no text was indexed
+```
+
+## Common Mistakes
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `mdfind -onlyin ~/Library/Mail` returns 0 | The Mail store is not Spotlight-indexed — never a negative result | Search the `.emlx` files with `rg`; confirm with `mdls -name kMDItemTextContent` |
+| `rg` over `~/Library/Mail` returns 0 | No Full Disk Access, and `--no-messages` hid the errors | Run `rg --files ~/Library/Mail -g '*.emlx' \| wc -l` first; grant Full Disk Access |
+| Subjects appear as `=?UTF-8?B?...?=` | Raw `grep` does not decode MIME-encoded headers | Use `emlx.py list` |
+| Subject is cut off mid-sentence | Header folded onto a continuation line; `grep -m1` took only the first | Use `emlx.py list` |
+| Message found, but body prints empty | Message has no `text/plain` part | Use `emlx.py show`, which falls back to `text/html` |
+| Term is known to be in the mail but does not match | It lives in an attachment — absent in `.partial.emlx`, base64 elsewhere | Extract via **Save attachments**, then search those files; check for the `NOT-DOWNLOADED` flag |
+| Cross-account AppleScript search hangs | Impractical across many accounts | Use **Searching large archives** |
+| `-1728 Can't get POSIX file "…"`, or `Can't set «constant ldaslsba» to …` | Unqualified terms resolve against Mail's dictionary | See **Gotchas inside `tell application "Mail"`** |
 
 ## Notes
 
