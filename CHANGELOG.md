@@ -1,5 +1,39 @@
 # @eins78/agent-skills
 
+## 4.2.0
+
+### Minor Changes
+
+- [#74](https://github.com/eins78/agent-skills/pull/74) [`46077b4`](https://github.com/eins78/agent-skills/commit/46077b4ece0c43c59b693ac8ded86e72c42b5f29) - **`apple-mail`** — document archive search over `.emlx`, the preferred path for old mail or many accounts. Closes [#69](https://github.com/eins78/agent-skills/issues/69).
+
+  - New **Searching large archives** section: a `ripgrep` recipe over `~/Library/Mail`, the `.emlx` format (length prefix + RFC822 + plist trailer), and triage via a new `scripts/emlx.py`. AppleScript stays the path for live and recent-inbox queries, cross-referencing the existing bridge-hang warning rather than repeating it.
+  - Warns that `mdfind -onlyin ~/Library/Mail` returns **0 for every query** because the store is not Spotlight-indexed — 0 reads as "no such mail" but means "no index", and that misreading is the bug. Ships `mdutil -s /` + `mdls -name kMDItemTextContent` as the diagnostic that tells the two apart.
+  - Same trap found in the fix itself: without Full Disk Access, `rg --no-messages` also returns a silent 0. The recipe now opens with a readability precheck instead of a prose caveat.
+  - Documents MIME-encoded (`=?UTF-8?B?...?=`) and folded headers, which raw `grep` cannot handle — measured at ~24% and ~20% of messages on the authoring machine, so a `grep`/`cut` pipeline is wrong for roughly a third of them.
+  - Documents `*.partial.emlx`: included by `-g '*.emlx'` automatically, and worth searching. Corrects the reported claim that they lack the body — measurement shows text bodies intact and only attachment parts stubbed (empty payload plus `X-Apple-Content-Length`), surfaced as a `NOT-DOWNLOADED` flag.
+  - New `tests/test-emlx.sh` — smoke test over a synthetic fixture, no real mail touched. Not run by `pnpm test`.
+  - README: archive-search row in the approach table, Full Disk Access dependency, silent-failure limitations, and a table recording which issue [#69](https://github.com/eins78/agent-skills/issues/69) recipes verified and which were corrected.
+
+  Read-only throughout: nothing added sends, deletes, or modifies mail.
+
+  <!--
+  bumps:
+    skills:
+      apple-mail: minor
+  -->
+
+- [#70](https://github.com/eins78/agent-skills/pull/70) [`5a066fb`](https://github.com/eins78/agent-skills/commit/5a066fbdbd8da3a23fe5acbfd8251c7ceb7e0dc3) - `apple-mail`: document attachment extraction and two `tell`-block gotchas
+
+  Adds `List attachments` / `Save attachments` commands and a gotchas section
+  covering `POSIX file` failing inside a `tell application "Mail"` block (-1728)
+  and the set of ordinary variable names that collide with Mail's terminology.
+
+  <!--
+  bumps:
+    skills:
+      apple-mail: minor
+  -->
+
 ## 4.1.0
 
 ### Minor Changes
