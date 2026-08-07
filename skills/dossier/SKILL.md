@@ -10,7 +10,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Dossier
