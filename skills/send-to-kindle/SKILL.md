@@ -1,12 +1,12 @@
 ---
 name: send-to-kindle
 description: >-
-  Use when getting a document onto a Kindle or e-reader — which delivery
-  routes still work, what format to produce, and why a delivery can silently
-  fail. Triggers: send to Kindle, put this on my Kindle, read on Kindle,
-  Kindle email address, sendtokindle, personal documents, sideload EPUB,
-  Kindle didn't receive it, kindle.com address, e-reader delivery, Kindle
-  highlights, My Clippings.
+  Use when getting a document onto an Amazon Kindle — which delivery routes
+  still work, what format to produce, and why a delivery can silently fail.
+  Kindle-only; nothing here applies to Kobo, reMarkable or other e-readers.
+  Triggers: send to Kindle, put this on my Kindle, read on Kindle, Kindle
+  email address, sendtokindle, personal documents, sideload EPUB, Kindle
+  didn't receive it, kindle.com address, Kindle highlights, My Clippings.
 globs: []
 compatibility: claude-code, cursor
 license: MIT
