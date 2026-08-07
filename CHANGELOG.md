@@ -1,5 +1,24 @@
 # @eins78/agent-skills
 
+## 4.1.0
+
+### Minor Changes
+
+- [#71](https://github.com/eins78/agent-skills/pull/71) [`b2f1969`](https://github.com/eins78/agent-skills/commit/b2f1969eed4754384bd1f05e662ca3063910991b) - Codify the Kindle/EPUB pipeline.
+
+  - **`send-to-kindle`** — new skill (starts at `0.1.0`). Delivery routes and their 2026 status, EPUB-over-PDF rationale, per-device addressing, the approved-sender allowlist that drops mail silently, size ceilings, and the one-way nature of personal-document highlights. Documents the manual email step in three facts; ships no sender script and no configuration contract for one.
+  - **`pandoc`** — adds `scripts/md2kindle-epub.sh` (markdown → e-reader EPUB with a real TOC, chapter splitting, and literal `[ ]` checkboxes), a "Markdown → Kindle EPUB" recipe, and a Common Mistakes row for the `task_lists` / Unicode-glyph trap: pandoc treats ☐/☑ as task-list markers unconditionally, so pre-converting them does not avoid `<input type="checkbox">` output.
+  - **`dossier`** — one-line cross-reference to `send-to-kindle` in §DELIVER.
+
+  `send-to-kindle` is intentionally absent from the bumps block below: its version is set directly in SKILL.md, and listing it would re-bump `0.1.0` to `0.1.1` on release.
+
+  <!--
+  bumps:
+    skills:
+      pandoc: minor
+      dossier: patch
+  -->
+
 ## 4.0.0
 
 ### Major Changes
