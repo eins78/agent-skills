@@ -119,6 +119,58 @@ end tell'
 osascript -e 'tell application "Mail" to get name of every mailbox of account "Gmail"'
 ```
 
+### List attachments
+
+```bash
+osascript -e 'tell application "Mail"
+  set msg to item 1 of (messages of inbox whose subject contains "invoice")
+  set out to ""
+  repeat with a in (mail attachments of msg)
+    set out to out & (name of a) & " [" & (file size of a) & " bytes]" & linefeed
+  end repeat
+  return out
+end tell'
+```
+
+### Save attachments
+
+Build the file target **outside** the `tell` block — via a handler called with `my`, so it still works inside a loop:
+
+```bash
+osascript <<'EOF'
+on posixTarget(p)
+  return POSIX file p
+end posixTarget
+
+set outDir to "/tmp/attachments/"   -- must already exist
+tell application "Mail"
+  repeat with m in (messages of inbox whose subject contains "invoice")
+    repeat with a in (mail attachments of m)
+      save a in (my posixTarget(outDir & (name of a)))
+    end repeat
+  end repeat
+end tell
+EOF
+```
+
+`outDir` must already exist — `save` into a missing directory fails with the uninformative `-10000 AppleEvent handler failed`, which says nothing about the path. `mkdir -p` first.
+
+Attachment names often contain `:` (e.g. `SOA-2026-08-02-12:20:06.xlsx`). It saves fine, but Finder and many tools render it as `/` — sanitize with `text item delimiters` if the name is going anywhere else.
+
+Fallback: `source of msg` returns the raw MIME, so Python's `email` module can extract parts without AppleScript at all. Useful when a mailbox is wedged or names need heavy cleanup.
+
+## Gotchas inside `tell application "Mail"`
+
+Both of these have one root cause: **unqualified terms resolve against Mail's dictionary, not AppleScript's.**
+
+**1. `POSIX file` fails.** Written inside the block it errors `-1728 Can't get POSIX file "…"` — Mail tries to resolve it as one of its own objects. Coerce outside the block or via `my` (see above). Note the error names the path, so it reads like a missing-file problem; it isn't.
+
+**2. Ordinary variable names are reserved.** These all fail inside the block, with `-10003`, `-10006`, or the unguessable `Can't set «constant ldaslsba» to …`:
+
+`base` · `name` · `subject` · `content` · `file` · `path` · `index` · `size` · `date` · `text` · `character`
+
+Prefix them — `basePath`, `msgSubject`, `outFile`. The failure is a *syntax* error at compile time for some (`base`, `file`, `date`, `text`, `character`) and a *runtime* error for others (`name`, `subject`, `content`, `index`, `size`), so a script can parse cleanly and still blow up mid-loop.
+
 ## Notes
 
 - AppleScript `messages of inbox` returns a unified inbox across all accounts
