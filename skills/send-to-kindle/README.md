@@ -40,10 +40,11 @@ stay out.
 | The allowlist exists and drops mail silently | Which sender addresses are on it |
 | Highlights are one-way | Any keychain account name |
 
-Nothing personal is referenced *indirectly* either: there is no `KINDLE_TO` /
-`KINDLE_FROM` env-var contract. An env-var spec no code reads would document
-an interface that does not exist. If a sender is ever built, the contract gets
-designed then, against real code.
+Nothing personal is referenced *indirectly* either: there is deliberately no
+configuration contract for sending — no env vars, no config file, no keychain
+lookups. A configuration spec that no code reads would document an interface
+that does not exist. If a sender is ever built, its contract gets designed
+then, against real code.
 
 ### No sending, by decision not by omission
 
@@ -132,11 +133,9 @@ snippets and independent trackers, not read directly from the vendor.
 - **The ~50 MB email ceiling is community-sourced and unverified** against an
   official page. Flagged as such in SKILL.md rather than stated flatly. A
   30-second check on the Personal Document Settings page would settle it.
-- **No sender automation** — deliberate, see Design Decisions. If it is ever
-  built, the open sub-question is transport: AppleScript against Mail.app
-  (reuses the user's already-approved identity, but macOS-only and needs the
-  app awake) versus SMTP (portable and headless-capable, but needs credentials
-  and an allowlisted sender).
+- **No sender automation** — deliberate, see Design Decisions. Building one
+  would be a new capability with its own transport decision to make, not a
+  chore left undone here.
 - **No `My Clippings.txt` parser** — deliberately deferred. The format is a
   well-documented plain-text convention, so this is a small follow-up when
   there are real clippings to parse, not a research question.
