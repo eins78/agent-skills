@@ -182,6 +182,43 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ---
 
+## 11. Genre match (research vs decision)
+
+**What to check.** Does the document's *shape* match the genre the reader asked for? Read only the table of contents. For a **research** dossier the headings should name subjects and the document should end with what could not be determined; any assessment sits in one labelled final section. For a **decision** dossier the headings name options and the document ends with ranked recommendations.
+
+**Why it matters.** This is the most expensive error the skill can make, because it is invisible until delivery and cannot be patched by editing. The two genres want different documents built from the same facts, so fixing it means rebuilding — the framing lives in every heading, not in a paragraph you can rewrite. It also fails silently: an adjudication reads as competent work right up until the reader says "I wanted to draw my own conclusions."
+
+**What good looks like.** A reader skimming the ToC of a research dossier can find the section about a given subject without reading prose. The first content section states what is true, not what to do. Where an assessment exists, a reader can stop before it and still have the complete research.
+
+**Red flags.**
+- A verdict, recommendation, or "what you should decide" section appears before the content it rests on.
+- Findings are phrased as stances ("X is table stakes, not a differentiator") rather than subjects ("how X is handled across the market").
+- The Key Facts box carries *who decides / decision model / deadline* on a dossier where no decision is pending — or invents them to fill the template.
+- No "what could not be determined" section in a research dossier.
+- A compiled report that does not link the analysis files it was built from — the reader sees only the summary layer and never reaches the research.
+- The genre was never settled: the request used *evaluate/assess/look into* with no named options, and no clarifying question was asked.
+
+---
+
+## 12. Insights are insights (not buried findings, not orphans)
+
+**What to check.** Three directions. First, **inversion**: for each item in §Insights, ask whether removing it would change a finding or a recommendation. If yes, it is a buried finding in the wrong place. Second, **reachability**: does each insight get teased from the body at least once, and do those teasers sit at paragraph ends rather than mid-argument? Third, **stance**: does the insight assert anything the body never established — about the subject, about the state of the debate, about what someone has failed to notice? Every claim in an insight is subject to the same evidence grading as the body. An insight is a place for material the brief filtered out, not a place where sourcing relaxes.
+
+**Why it matters.** The section fails in three ways and all of them are quiet. Filed too high, a decision-relevant fact sits below the conclusion where the decider never reaches it — the dossier technically contains the information and functionally does not. Filed correctly but never teased, the whole section lives past the point where most readers stop, so the best material in the research is the least-read part of the document. And because insights are written in a looser register than findings, they are where an unearned editorial voice creeps in — especially in a research-genre dossier, which has no assessment section to hold a stance legitimately, so an insight becomes the only place one can hide. Trailing sentences are the usual site: the facts are sound and then the last line tells the reader what to conclude from them. None of the three produces an error; all three produce a dossier that looks complete.
+
+**What good looks like.** Three to six items, each of which a reader would repeat to someone else, and none of which changes what to do. Each is reachable from at least one point in the body where it is genuinely relevant. The prose still reads as prose — a reader following the argument is not being elbowed toward an appendix every other paragraph.
+
+**Red flags.**
+- An insight whose removal would weaken a finding — promote it.
+- §Insights used as a holding pen for material that didn't fit anywhere, with no connection to the subject.
+- No teasers at all: the section is only reachable by scrolling past the conclusion.
+- Teasers stacked up — three in one paragraph, or one interrupting a sentence's argument mid-thread.
+- An insight that needs a paragraph of setup before it lands. That is a body section wearing the wrong hat.
+- Padding to reach a count. Two good insights beat six with four fillers.
+- **A closing sentence that draws a conclusion the sourced facts above it do not support** — "the debate has largely ignored this", "nobody has noticed that", "this remains unaddressed". Absence claims are the common shape: they require having looked, and an insight rarely did. Cut the sentence, or move the question to §What could not be determined and say plainly that it was not researched.
+
+---
+
 ## Why this replaced the old grep hooks
 
 Earlier iterations of the dossier skill shipped four grep-based audit hooks: `dossier-citation-audit.sh`, `dossier-forbidden-words.sh`, `dossier-section-order.sh`, and `dossier-dated-claim-scan.sh`. Each encoded a specific failure pattern from the a11y-extension Chrome-Web-Store session: the `[Xn]` citation convention, the OSS-mode forbidden-word list, H2-level glossary headings, and ISO-date patterns.
