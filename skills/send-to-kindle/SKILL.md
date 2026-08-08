@@ -68,6 +68,66 @@ purchased books, and retired Word's Send-to-Kindle button. Statuses here are
 The allowlist is separate from the ingress address; both live under
 *Manage Your Content and Devices → Preferences → Personal Document Settings*.
 
+## Confirming delivery — sending is not delivering
+
+**Ingress validation is asynchronous.** Amazon accepts the SMTP transaction,
+then validates the document afterwards and reports failure by email. Everything
+observable at send time therefore proves only that the mail *left*, not that it
+*arrived*:
+
+| What you checked | What it actually proves |
+|---|---|
+| The mail client reported "sent" | The message was queued |
+| The outbox drained to 0 | The SMTP handoff to your provider succeeded |
+| The subject is at the top of the sent mailbox | Same as above — your provider took it |
+| **No bounce after a few minutes** | **Amazon accepted it.** The only real signal |
+
+Scripted senders make this worse: an AppleScript `send` returns as soon as the
+message is *queued*, so a script that checks immediately after will always
+report success. Nothing about a queued message predicts what Amazon does with
+it two minutes later.
+
+**So: wait, then check for a bounce.** Observed bounce latency is ~30–60
+seconds. Waiting ~2–3 minutes and finding no bounce naming your filename is the
+verification. Anything faster is checking the wrong thing.
+
+### `E999 — Send to Kindle Internal Error`
+
+Amazon's **generic internal error**. It names no defect in your document, and it
+is emphatically not a format code — but do not read it as "transient, just try
+again" either. Observed behaviour is more specific than that.
+
+Observed 2026-08, one sender, one morning, all EPUBs from the same generator:
+six sends, three delivered, three bounced `E999`. What separated the recoveries
+is the useful part:
+
+| Action after an `E999` bounce | Result |
+|---|---|
+| **Rebuilt** the EPUB from source, same filename, sent 6 min later | Delivered |
+| Resent the **byte-identical** file 3.5 hours later | Bounced again in 16s |
+
+So `E999` behaved as a property of the artifact, not of the moment. **Rebuild
+from source and resend; don't just re-attach the same bytes.** A rebuild is
+cheap, and the one thing shown not to work is sending the identical file again.
+
+Note what this does *not* license: hunting for a format defect. The file that
+failed twice was the smallest and structurally simplest of the batch, passed zip
+integrity, and differed in no way anyone could point at from the ones that
+arrived. Rebuild, resend, and only escalate if a fresh build fails repeatedly.
+
+### The two silences are different
+
+Both look like "nothing arrived", and they need opposite responses:
+
+- **No bounce, no delivery** → an **allowlist** problem (see above). Amazon
+  drops unapproved senders without a word.
+- **A bounce** → the sender *is* approved; the message reached Amazon and was
+  rejected downstream. `E999` means try again.
+
+A bounce is therefore mildly good news about your configuration. Once any
+document from a given sender has arrived, "no bounce" reliably means delivered
+for that sender.
+
 ## Size ceilings
 
 | Route | Ceiling |
@@ -99,6 +159,8 @@ Plan around a manual step, or do not promise highlight round-tripping.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Sent it, nothing arrived, no bounce | Sender not on the approved list | Add the exact sending address under Personal Document Settings |
+| Sent it, nothing arrived, got `E999 - Send to Kindle Internal Error` | Amazon's generic internal error — names no defect, but re-sending the identical bytes has been observed to fail again | Rebuild the file from source and resend. Don't go hunting for a format defect first |
+| A script reported the send succeeded, but it never arrived | The script checked the outbox, which only proves SMTP handoff. Ingress validation happens later and reports by email | Wait ~2–3 min after sending, then check for a bounce naming the file. Absence of a bounce is the verification |
 | Arrived on the wrong person's Kindle | Targeted by device display name | Target by ingress address or serial; names are user-set and often stale |
 | Reader has to pan and zoom every page | A PDF was sent | Send EPUB and let Send-to-Kindle convert it |
 | Copied an `.epub` over USB, it never appears in the library | Raw EPUB isn't indexed on-device | Convert to AZW3 locally, or use email delivery instead |
