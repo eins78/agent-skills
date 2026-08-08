@@ -9,6 +9,11 @@ unapproved sender, and per-device addressing selected by a misleading display
 name). It also records the one hard limit — highlights on personal documents
 never reach the cloud.
 
+A third fate sits between those two: Amazon accepts the mail and then fails
+while processing it, reporting that **asynchronously** by bounce, minutes after
+the send returned success. *Verify delivery* covers the time-boxed check that
+separates the three, and why silence is only weak evidence of success.
+
 The skill stops short of sending. It documents the manual email step in three
 facts and ships no sender code.
 
@@ -65,7 +70,7 @@ carry the discovery load.
 
 ```
 send-to-kindle/
-├── SKILL.md       # Format choice, routes, the three send facts, size limits, highlights
+├── SKILL.md       # Format choice, routes, the three send facts, delivery verification, size limits, highlights
 └── README.md      # This file
 ```
 
@@ -97,6 +102,13 @@ not automated.
 6. **Highlights test:** "sync my Kindle highlights from that document to
    Readwise" → agent should identify this as structurally impossible for
    personal documents, not attempt a workaround
+7. **Verification test:** "I sent it, the mail went out fine" → agent should
+   *not* report success on that basis, and should describe the timed bounce
+   check instead
+8. **Bounce-reading test:** "I got a mail saying there was a problem with the
+   document I sent" → agent should conclude the approved-sender list is fine
+   (a rejected sender never bounces) and route by error code, resending on
+   `E999` rather than rebuilding the file
 
 The delivery pipeline itself was verified end-to-end on 2026-08-06 (see
 Provenance) — samples were mailed to a real device and rendered correctly.
@@ -121,6 +133,11 @@ Within it, the load-bearing sources were:
 - Size ceilings: a single community guide (see Known Gaps)
 - Per-device addressing and the silent-drop behaviour: confirmed in practice
   on 2026-08-06 when the samples were sent
+- The asynchronous-bounce fate and the `E999` code: observed in practice on
+  2026-08-08, when a 47 KB EPUB built by the standard pipeline was accepted and
+  then failed Amazon-side. A rebuilt copy of the same document, sent from the
+  same approved address, went out cleanly with no bounce — which is what makes
+  `E999` a transient-and-resend case rather than a file defect
 
 **Evidence-quality caveat carried over from the dossier:** Amazon's own
 `amazon.com/gp/help/...` pages returned HTTP 503 to every automated fetch
@@ -142,6 +159,15 @@ snippets and independent trackers, not read directly from the vendor.
 - **Whether the device's format conversion preserves HTML `<input>` elements
   is untested.** The `pandoc` wrapper sidesteps it by emitting literal `[ ]`
   text; nobody has confirmed what happens if you don't.
+- **Bounce latency is n=1 and the error-code table is seeded, not surveyed.**
+  One observed `E999` arrived ~14 seconds after the send. The `~2 min / ~15 min`
+  check in SKILL.md is deliberately slower than that single measurement,
+  because latency across other error classes is unmeasured. Codes should be
+  added as observed rather than guessed.
+- **A clean send remains unconfirmable from the sending side.** No bounce is
+  consistent with both "delivered" and "silently dropped for an unapproved
+  sender". Only the document appearing on the device closes that gap, and
+  nothing in this skill can observe the device.
 - **Amazon-specific.** Kobo, reMarkable, and Pocketbook all have their own
   ingestion stories and none of them are covered here.
 - No coverage of the Kindle's own document management (collections, deleting

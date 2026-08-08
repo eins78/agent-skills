@@ -68,6 +68,43 @@ purchased books, and retired Word's Send-to-Kindle button. Statuses here are
 The allowlist is separate from the ingress address; both live under
 *Manage Your Content and Devices → Preferences → Personal Document Settings*.
 
+## Verify delivery — sending is not the finish line
+
+A send that leaves your mail client has three possible fates, and **two of them
+look identical at the moment of sending**. Do not report a delivery as
+successful on the strength of the send alone.
+
+| Fate | What you observe | What it means |
+|---|---|---|
+| Dropped at the gate | Nothing, ever. No bounce | Sender not on the approved list — see fact 3 above |
+| Accepted, then failed | An **asynchronous bounce** from `Amazon Kindle Support <do-not-reply@amazon.com>`, subject *"There was a problem with the document(s) you sent to Kindle"*, naming the file and an error code | Amazon took the mail and failed while processing it. The allowlist is *fine* |
+| Delivered | No mail of any kind | Success is signalled by silence, which is why the check has to be time-boxed |
+
+**The check.** After sending, watch the *sending* account's inbox for that
+bounce subject:
+
+1. **At ~2 minutes** — an observed bounce is conclusive failure; act on it.
+2. **At ~15 minutes** — if still nothing, treat the send as probably delivered.
+
+Absence of a bounce is **weak evidence of success, not confirmation.** It
+cannot distinguish "delivered" from "silently dropped for an unapproved
+sender", because that case never bounces either. Only a positive bounce, or the
+document appearing on the device, is conclusive.
+
+Timing is worth calibrating rather than trusting: one observed `E999` bounce
+arrived **~14 seconds** after the send (n=1). The two-step check above is
+deliberately slower than that single data point, because bounce latency across
+error classes is unmeasured.
+
+### Bounce error codes
+
+| Code | Meaning | Response |
+|---|---|---|
+| `E999 - Send to Kindle Internal Error` | Amazon-side internal failure. Not a statement about your file | **Transient — resend.** Observed once on a well-formed 47 KB EPUB that had been built by the standard pipeline; a rebuilt copy of the same document went through cleanly |
+
+Treat this table as seeded, not complete — add codes as they are observed
+rather than guessing at their meaning.
+
 ## Size ceilings
 
 | Route | Ceiling |
@@ -99,6 +136,8 @@ Plan around a manual step, or do not promise highlight round-tripping.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Sent it, nothing arrived, no bounce | Sender not on the approved list | Add the exact sending address under Personal Document Settings |
+| Sent it, got a bounce naming the file | Amazon accepted the mail, then failed processing it | The allowlist is **not** the problem — a rejected sender never bounces. Read the error code; `E999` is transient, so resend |
+| Reported "delivered" because the send succeeded | No post-send check was made | See *Verify delivery* — watch the sending inbox for a bounce at ~2 min and ~15 min |
 | Arrived on the wrong person's Kindle | Targeted by device display name | Target by ingress address or serial; names are user-set and often stale |
 | Reader has to pan and zoom every page | A PDF was sent | Send EPUB and let Send-to-Kindle convert it |
 | Copied an `.epub` over USB, it never appears in the library | Raw EPUB isn't indexed on-device | Convert to AZW3 locally, or use email delivery instead |
