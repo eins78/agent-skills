@@ -21,7 +21,7 @@ Structured research producing cited, well-edited reports. Two genres: **research
 
 **Pick the genre before researching — it changes every stage below.** Getting it wrong is the most expensive error this skill can make: it is invisible until delivery, and it cannot be patched by editing, because the two genres want different documents built from the same facts.
 
-## Workflow: SCOPE → GATHER → EVALUATE → SYNTHESIZE → DELIVER
+## Workflow: SCOPE → GATHER → EVALUATE → SYNTHESIZE → REVIEW → DELIVER
 
 ### 0. Preflight — verify the request is actionable, and settle the genre
 
@@ -128,9 +128,29 @@ Write the dossier using the template the genre selected in SCOPE — `${CLAUDE_S
 
 **Ballot** (when decisions happen async — reviewed over chat, on a PR, after the session ends): use the `ballot` skill. Works for multi-reviewer panels and single async deciders alike. Template at `skills/ballot/templates/ballot-per-reviewer.md`; conventions at `skills/ballot/SKILL.md`.
 
-### 5. DELIVER
+### 5. REVIEW
 
-Before committing, run the reviewer checklist at `${CLAUDE_SKILL_DIR}/references/review-checklist.md` against the finished dossier. It covers preflight evidence, citation integrity, dated-claim freshness, section ordering, source bias flagging, hyperlink density, selectivity, Key Facts box accuracy, source archival, and genre match. **Run the genre-match item first** — it is the only one whose failure means rebuilding rather than editing, so discovering it after the other ten is wasted work. The mechanical gates (`ballot-filename`, `sources-index-consistency`) fire automatically on Write/Edit via the PostToolUse hook — exit 2 feeds stderr back to Claude — but most review concerns need human or judgement-capable model review, not pattern matching. Once the checklist passes:
+**Dispatch three fresh-context subagents over the finished dossier.** Full prompts, inputs, and the artifact format are at `${CLAUDE_SKILL_DIR}/references/review-lenses.md`.
+
+| Lens | Receives | Judges |
+|---|---|---|
+| **Shape** | the brief + the dossier | genre match, skimmability, section order, Key Facts accuracy |
+| **Support** | the dossier + `sources/` | claims traced to sources; uncited assertions; absence claims; dated claims |
+| **Insights** | the dossier, nothing else | inversion, reachability, stance |
+
+**The reviewers must not receive the research conversation** — not the transcript, not a summary of your reasoning. That isolation is the entire mechanism, not an implementation detail. A defect survives its author because the author half-remembers the sources and the claim *feels* safe; a reviewer holding that reasoning inherits the feeling, while a reviewer holding only the document asks what the reader asks — *was I shown the basis for this?* Dispatching a subagent gives you fresh context by construction; do not undo it by pasting your notes into the prompt.
+
+The **Insights** lens is starved on purpose. Give it `sources/` and it can verify a claim the document never cited, then pass something the reader cannot verify. Its blindness is why it catches stance.
+
+Record every finding in `review-YYYY-MM-DD.md` beside the dossier, each with `**Disposition:** fixed — …` or `**Disposition:** waived — …`. Waiving is legitimate: a fresh-context reviewer sometimes flags a correctly-cited claim it could not verify, and forcing a fix there makes the dossier worse. The gate requires a *decision*, not agreement.
+
+Run all three for anything a human will read. For a short internal dossier (under ~200 lines, no `sources/`), one combined reviewer running all three lenses is enough. **Review is never skipped** — "this one is internal" is precisely the reasoning that skips review on the dossier that then gets forwarded.
+
+The older `${CLAUDE_SKILL_DIR}/references/review-checklist.md` remains the definition of *what* good looks like, and the lens prompts are drawn from it. Consult it when a reviewer's finding needs adjudicating.
+
+### 6. DELIVER
+
+The mechanical gates (`ballot-filename`, `sources-index-consistency`) fire automatically on Write/Edit via the PostToolUse hook, and `review-artifact-present` fires PreToolUse on `git commit` — a commit that includes a main dossier is denied unless its folder holds a review artifact with every finding dispositioned. Once REVIEW is recorded:
 
 - Commit dossier folder (`D:` intention per commit-notation).
 - **Do NOT end the session** — stay available for follow-ups, iterations, or additional dossiers.
@@ -145,6 +165,7 @@ research/YYYY-MM-DD-slug/
 ├── DOSSIER-Title-Words-BALLOT-Max.md           # Optional: one per decider
 ├── DOSSIER-Title-Words-BALLOT-Patrick.md       # Optional: one per decider (multi-reviewer case)
 ├── DOSSIER-Followup-Title-YYYY-MM-DD.md        # Follow-up dossiers in same folder
+├── review-YYYY-MM-DD.md                        # REVIEW findings + dispositions (gates the commit)
 ├── sources/                                    # Archived copies of cited sources
 │   ├── index.md                                #   citation ID ↔ URL ↔ access date ↔ file
 │   ├── S1-example.com-docs.html                #   captured page
@@ -158,14 +179,23 @@ Multiple dossiers per folder is expected.
 
 ## Gates (hooks)
 
-Two mechanical gates run PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. **Alerting-level** — the file is already on disk when it fires; a motivated agent can ignore. PreToolUse rigor is future work.
+Two mechanical gates run PostToolUse on `Write|Edit` through `.claude-plugin/hooks/dossier-hook-dispatcher.sh`. Exit 2 pipes stderr back to Claude. **Alerting-level** — the file is already on disk when it fires; a motivated agent can ignore.
 
-| Gate | Fails on |
-|------|----------|
-| `ballot-filename.sh` | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
-| `sources-index-consistency.sh` | `sources/index.md` referencing a missing file, or a captured file with no index row. Silent when there is no `sources/` archive |
+One gate runs **PreToolUse on `Bash`** through `.claude-plugin/hooks/dossier-commit-gate.sh` and genuinely blocks.
 
-Everything else is reviewed by checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced doesn't generalize across dossier styles.
+| Gate | Timing | Fails on |
+|------|--------|----------|
+| `ballot-filename.sh` | PostToolUse | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
+| `sources-index-consistency.sh` | PostToolUse | `sources/index.md` referencing a missing file, or a captured file with no index row. Silent when there is no `sources/` archive |
+| `review-artifact-present.sh` | **PreToolUse on `git commit`** | A staged main dossier whose folder has no `review-*.md`, or whose review has a finding without a disposition |
+
+**Why the review gate is PreToolUse on commit and not PostToolUse on Write.** The point of the stage is that "I reviewed it" must stop being answerable without the work, so alerting-level is not enough — PreToolUse exit 2 denies the call and the gate actually holds. Write is also the wrong *moment*: a dossier is edited dozens of times during SYNTHESIZE, and demanding a review artifact on each one would fire constantly during normal authoring, which trains the reader to ignore it. `git commit` is the delivery act in this skill, which makes it the one moment where the check is both meaningful and rare.
+
+**Why there is no "review must be newer than the dossier" check.** The obvious freshness test is wrong, and only writing the script exposed it: the correct workflow is review → findings → fix the dossier, which necessarily leaves the dossier newer than the review that prompted the fixes. An mtime gate would fire on every properly-executed review and pass only when the author changed nothing — exactly inverting the behaviour it is meant to enforce. Staleness is a warning (dossier edited >14 days after its review), never a block. The gate proves review *happened* and was *dispositioned*; it cannot prove the review is semantically current, and no file-level check can.
+
+All three check **file-level facts** — a filename shape, whether a directory matches its own index, whether a review artifact exists and is dispositioned — never document prose. That is the property the removed six lacked, and it is what makes the review gate legitimate rather than a revival of them: it never reads the dossier's sentences, only whether a review of them was recorded. Judgement stays with the reviewers.
+
+Everything else is reviewed by the lenses and the checklist, not by grep. Earlier iterations shipped grep-gates for citation integrity, forbidden words, section ordering, dated claims, and ballot cover-block archaeology — a 2026-04-18 polish pass removed them after they proved overfit to the a11y-extension session. `dossier-framing-declared.sh` was removed in the 2026-04-18 preflight-gate pass: the framing-mode convention it enforced doesn't generalize across dossier styles.
 
 **The genre check added in 2026-08 is not a revival of that gate.** The axis is different: those modes (`oss`/`commercial`/`hiring`/`vendor`/`personal`) classified the *character of the sources*, while genre classifies *what document the reader wants*. Genre was never covered by that convention, so it was not lost when it died. The mechanism differs too, and that is why this one should survive. `dossier-framing-declared.sh` linted for a *declared label* that changed nothing downstream — a word you had to remember to write, enforced by grep, with identical output whether you wrote it or not. That is a rule wearing a gate's clothing, and it correctly died. The genre instead **selects the template and switches the EVALUATE and SYNTHESIZE stages**, so it cannot be declared-and-ignored: choosing wrong produces a visibly wrong-shaped document rather than a lint failure. There is no script for it, and there should not be — the check is "does this document's shape match what the reader asked for", which is a judgement, not a pattern match. See `${CLAUDE_SKILL_DIR}/references/review-checklist.md`.
 
