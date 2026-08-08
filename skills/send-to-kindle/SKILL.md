@@ -68,6 +68,80 @@ purchased books, and retired Word's Send-to-Kindle button. Statuses here are
 The allowlist is separate from the ingress address; both live under
 *Manage Your Content and Devices → Preferences → Personal Document Settings*.
 
+## Confirming delivery — sending is not delivering
+
+**Ingress validation is asynchronous.** Amazon accepts the SMTP transaction,
+then validates the document afterwards and reports failure by email. Everything
+observable at send time therefore proves only that the mail *left*, not that it
+*arrived*:
+
+| What you checked | What it actually proves |
+|---|---|
+| The mail client reported "sent" | The message was queued |
+| The outbox drained to 0 | The SMTP handoff to your provider succeeded |
+| The subject is at the top of the sent mailbox | Same as above — your provider took it |
+| **No bounce after a few minutes** | **Amazon accepted it.** The only real signal |
+
+Scripted senders make this worse: an AppleScript `send` returns as soon as the
+message is *queued*, so a script that checks immediately after will always
+report success. Nothing about a queued message predicts what Amazon does with
+it two minutes later.
+
+**So: wait, then check for a bounce.** Observed bounce latency is ~30–60
+seconds. Waiting ~2–3 minutes and finding no bounce naming your filename is the
+verification. Anything faster is checking the wrong thing.
+
+### `E999 — Send to Kindle Internal Error`
+
+Amazon's **generic rejection**. The wording names no defect and reads as
+transient, which is the trap: it is frequently a real, findable spec violation
+in your file.
+
+**Run `epubcheck` before theorising.** It settles in seconds what the error
+message actively obscures.
+
+Worked example, 2026-08-08 — one sender, one morning, all EPUBs from the same
+generator. The file that bounced twice, 3.5 hours apart, was **the only one in
+the batch missing `dc:title`**, a *required* element of the EPUB package
+metadata. Every file that carried a `dc:title` was accepted. The generator had
+made the title optional, so omitting one flag silently produced a spec-invalid
+book.
+
+Two things that make this hard to see without the validator:
+
+- **Errors alone do not predict rejection.** Accepted files in the same batch
+  failed `epubcheck` too — broken internal links, undefined fragment
+  identifiers. Amazon tolerated all of it. What it would not tolerate was the
+  missing *required* element. Triage by severity and by REQUIRED-ness, not by
+  error count.
+- **Surface plausibility misleads.** The twice-failing file was the smallest and
+  structurally simplest of the batch (36 KB vs 60 KB) and passed `unzip -t`
+  cleanly. Nothing about it looked wrong.
+
+So on `E999`:
+
+1. `epubcheck the-file.epub`
+2. Fix any violation of a **required** element (`dc:title`, `dc:identifier`,
+   `dc:language`) and rebuild.
+3. Resend. Note that re-attaching the **byte-identical** file is the one thing
+   observed never to work — it bounced again in 16 seconds — which makes sense
+   once you know the defect travels with the file.
+4. Only if a *validator-clean* build fails repeatedly should you treat it as
+   genuinely transient on Amazon's side.
+
+### The two silences are different
+
+Both look like "nothing arrived", and they need opposite responses:
+
+- **No bounce, no delivery** → an **allowlist** problem (see above). Amazon
+  drops unapproved senders without a word.
+- **A bounce** → the sender *is* approved; the message reached Amazon and was
+  rejected downstream. Validate the file (above) rather than simply retrying.
+
+A bounce is therefore mildly good news about your configuration. Once any
+document from a given sender has arrived, "no bounce" reliably means delivered
+for that sender.
+
 ## Size ceilings
 
 | Route | Ceiling |
@@ -99,10 +173,13 @@ Plan around a manual step, or do not promise highlight round-tripping.
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Sent it, nothing arrived, no bounce | Sender not on the approved list | Add the exact sending address under Personal Document Settings |
+| Sent it, nothing arrived, got `E999 - Send to Kindle Internal Error` | Amazon's generic rejection. Often a real spec violation the message doesn't name — observed cause: a missing `dc:title` | Run `epubcheck`. Fix any REQUIRED-element violation, rebuild, resend. Re-attaching the identical file never works |
+| A script reported the send succeeded, but it never arrived | The script checked the outbox, which only proves SMTP handoff. Ingress validation happens later and reports by email | Wait ~2–3 min after sending, then check for a bounce naming the file. Absence of a bounce is the verification |
 | Arrived on the wrong person's Kindle | Targeted by device display name | Target by ingress address or serial; names are user-set and often stale |
 | Reader has to pan and zoom every page | A PDF was sent | Send EPUB and let Send-to-Kindle convert it |
 | Copied an `.epub` over USB, it never appears in the library | Raw EPUB isn't indexed on-device | Convert to AZW3 locally, or use email delivery instead |
 | Checkboxes render as blank gaps | Task-list HTML `<input>` elements were emitted | See the `pandoc` skill — build the EPUB with `task_lists` disabled |
+| EPUB built fine, `epubcheck` shows errors, but it still delivers | Not all validation errors matter to Amazon — broken links and undefined fragment identifiers were tolerated | Triage by REQUIRED-ness, not error count. Fix required-element violations first; treat the rest as quality issues |
 | Waiting for highlights to sync | Personal documents never reach the cloud | USB + `My Clippings.txt`, or nothing |
 
 ## What this skill deliberately does not do

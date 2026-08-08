@@ -9,6 +9,12 @@ unapproved sender, and per-device addressing selected by a misleading display
 name). It also records the one hard limit — highlights on personal documents
 never reach the cloud.
 
+A third fate sits between those two: Amazon accepts the mail and then fails
+while validating it, reporting that **asynchronously** by bounce, up to a
+minute after the send returned success. *Confirming delivery* covers the
+time-boxed check that separates the three, and why silence is the only
+available success signal.
+
 The skill stops short of sending. It documents the manual email step in three
 facts and ships no sender code.
 
@@ -65,7 +71,7 @@ carry the discovery load.
 
 ```
 send-to-kindle/
-├── SKILL.md       # Format choice, routes, the three send facts, size limits, highlights
+├── SKILL.md       # Format choice, routes, the three send facts, delivery confirmation, size limits, highlights
 └── README.md      # This file
 ```
 
@@ -97,6 +103,17 @@ not automated.
 6. **Highlights test:** "sync my Kindle highlights from that document to
    Readwise" → agent should identify this as structurally impossible for
    personal documents, not attempt a workaround
+7. **Confirmation test:** "I sent it, the mail went out fine" → agent should
+   *not* report success on that basis, and should describe the timed bounce
+   check instead
+8. **Bounce-reading test:** "I got a mail saying there was a problem with the
+   document I sent" → agent should conclude the approved-sender list is fine
+   (a rejected sender never bounces) and route by error code
+9. **`E999` test:** "Send-to-Kindle returned E999, an internal error — shall I
+   resend?" → agent should *decline* to resend the same file, run `epubcheck`
+   first, and look for a violated REQUIRED element. An agent that reads "internal
+   error" as Amazon-side and retries unchanged has failed this test — that is the
+   specific mistake this section exists to prevent
 
 The delivery pipeline itself was verified end-to-end on 2026-08-06 (see
 Provenance) — samples were mailed to a real device and rendered correctly.
@@ -121,6 +138,14 @@ Within it, the load-bearing sources were:
 - Size ceilings: a single community guide (see Known Gaps)
 - Per-device addressing and the silent-drop behaviour: confirmed in practice
   on 2026-08-06 when the samples were sent
+- The asynchronous-bounce fate, `E999`, and the `epubcheck` triage rule:
+  observed in practice on 2026-08-08. An EPUB from the standard pipeline was
+  accepted and then rejected twice, 3.5 hours apart, the second time as a
+  **byte-identical** re-send that bounced in 16 seconds. `epubcheck` found the
+  cause: a missing `dc:title`, a REQUIRED element, which the generator omitted
+  whenever `--title` was not passed. That is a defect in *our* generator, not
+  in Amazon and not in the document — and it is now fixed at the source
+  (`pandoc/scripts/md2kindle-epub.sh` always derives a title)
 
 **Evidence-quality caveat carried over from the dossier:** Amazon's own
 `amazon.com/gp/help/...` pages returned HTTP 503 to every automated fetch
@@ -142,6 +167,32 @@ snippets and independent trackers, not read directly from the vendor.
 - **Whether the device's format conversion preserves HTML `<input>` elements
   is untested.** The `pandoc` wrapper sidesteps it by emitting literal `[ ]`
   text; nobody has confirmed what happens if you don't.
+- **The `E999` diagnosis was wrong the first two times, and the corrections are
+  the point.** Worth recording, because the wrong version is the intuitive one.
+  The initial reading was "Amazon-side and transient, so resend" — argued from
+  *a rebuilt copy of the same document went through cleanly*. That inference is
+  backwards: the rebuild was not identical (it had a title), so "rebuild worked,
+  original didn't" is evidence for a **file defect**, not for transience. The
+  byte-identical resend that followed bounced again in 16 seconds and settled
+  it. Only the third reading — run the validator, triage by REQUIRED-ness — was
+  grounded in anything but inference. **Rule extracted:** when a vendor error is
+  generic, reach for a validator before a theory.
+- **Bounce latency is n=2 (~14 s, ~16 s) and the error-code table has one
+  entry.** Both observations are the *same* failure mode on the same file, so
+  this is one data point about latency, not two. Codes and timings should be
+  added as observed rather than extrapolated; the `~2–3 min` wait prescribed in
+  SKILL.md is deliberately far slower than both measurements because latency for
+  other error classes is entirely unmeasured.
+- **`epubcheck`-clean is not proven sufficient.** The rule "fix REQUIRED-element
+  violations" is derived from a single resolved case. Files with *no* epubcheck
+  errors have not been tested against rejection, and accepted files in the same
+  batch carried non-required errors (broken links, undefined fragment
+  identifiers) that Amazon tolerated. So the tested claim is narrow: a violated
+  REQUIRED element predicted rejection once. The converse is untested.
+- **A clean send remains unconfirmable from the sending side.** No bounce is
+  consistent with both "delivered" and "silently dropped for an unapproved
+  sender". Only the document appearing on the device closes that gap, and
+  nothing in this skill can observe the device.
 - **Amazon-specific.** Kobo, reMarkable, and Pocketbook all have their own
   ingestion stories and none of them are covered here.
 - No coverage of the Kindle's own document management (collections, deleting
