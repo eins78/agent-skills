@@ -182,6 +182,24 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ---
 
+## 11. Genre match (research vs decision)
+
+**What to check.** Does the document's *shape* match the genre the reader asked for? Read only the table of contents. For a **research** dossier the headings should name subjects and the document should end with what could not be determined; any assessment sits in one labelled final section. For a **decision** dossier the headings name options and the document ends with ranked recommendations.
+
+**Why it matters.** This is the most expensive error the skill can make, because it is invisible until delivery and cannot be patched by editing. The two genres want different documents built from the same facts, so fixing it means rebuilding — the framing lives in every heading, not in a paragraph you can rewrite. It also fails silently: an adjudication reads as competent work right up until the reader says "I wanted to draw my own conclusions."
+
+**What good looks like.** A reader skimming the ToC of a research dossier can find the section about a given subject without reading prose. The first content section states what is true, not what to do. Where an assessment exists, a reader can stop before it and still have the complete research.
+
+**Red flags.**
+- A verdict, recommendation, or "what you should decide" section appears before the content it rests on.
+- Findings are phrased as stances ("X is table stakes, not a differentiator") rather than subjects ("how X is handled across the market").
+- The Key Facts box carries *who decides / decision model / deadline* on a dossier where no decision is pending — or invents them to fill the template.
+- No "what could not be determined" section in a research dossier.
+- A compiled report that does not link the analysis files it was built from — the reader sees only the summary layer and never reaches the research.
+- The genre was never settled: the request used *evaluate/assess/look into* with no named options, and no clarifying question was asked.
+
+---
+
 ## Why this replaced the old grep hooks
 
 Earlier iterations of the dossier skill shipped four grep-based audit hooks: `dossier-citation-audit.sh`, `dossier-forbidden-words.sh`, `dossier-section-order.sh`, and `dossier-dated-claim-scan.sh`. Each encoded a specific failure pattern from the a11y-extension Chrome-Web-Store session: the `[Xn]` citation convention, the OSS-mode forbidden-word list, H2-level glossary headings, and ISO-date patterns.
