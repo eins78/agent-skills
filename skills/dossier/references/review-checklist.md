@@ -202,9 +202,9 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ## 12. Insights are insights (not buried findings, not orphans)
 
-**What to check.** Two directions. First, **inversion**: for each item in §Insights, ask whether removing it would change a finding or a recommendation. If yes, it is a buried finding in the wrong place. Second, **reachability**: does each insight get teased from the body at least once, and do those teasers sit at paragraph ends rather than mid-argument?
+**What to check.** Three directions. First, **inversion**: for each item in §Insights, ask whether removing it would change a finding or a recommendation. If yes, it is a buried finding in the wrong place. Second, **reachability**: does each insight get teased from the body at least once, and do those teasers sit at paragraph ends rather than mid-argument? Third, **stance**: does the insight assert anything the body never established — about the subject, about the state of the debate, about what someone has failed to notice? Every claim in an insight is subject to the same evidence grading as the body. An insight is a place for material the brief filtered out, not a place where sourcing relaxes.
 
-**Why it matters.** The section fails in two opposite ways and both are quiet. Filed too high, a decision-relevant fact sits below the conclusion where the decider never reaches it — the dossier technically contains the information and functionally does not. Filed correctly but never teased, the whole section lives past the point where most readers stop, so the best material in the research is the least-read part of the document. Neither failure produces an error; both produce a dossier that looks complete.
+**Why it matters.** The section fails in three ways and all of them are quiet. Filed too high, a decision-relevant fact sits below the conclusion where the decider never reaches it — the dossier technically contains the information and functionally does not. Filed correctly but never teased, the whole section lives past the point where most readers stop, so the best material in the research is the least-read part of the document. And because insights are written in a looser register than findings, they are where an unearned editorial voice creeps in — especially in a research-genre dossier, which has no assessment section to hold a stance legitimately, so an insight becomes the only place one can hide. Trailing sentences are the usual site: the facts are sound and then the last line tells the reader what to conclude from them. None of the three produces an error; all three produce a dossier that looks complete.
 
 **What good looks like.** Three to six items, each of which a reader would repeat to someone else, and none of which changes what to do. Each is reachable from at least one point in the body where it is genuinely relevant. The prose still reads as prose — a reader following the argument is not being elbowed toward an appendix every other paragraph.
 
@@ -215,6 +215,7 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 - Teasers stacked up — three in one paragraph, or one interrupting a sentence's argument mid-thread.
 - An insight that needs a paragraph of setup before it lands. That is a body section wearing the wrong hat.
 - Padding to reach a count. Two good insights beat six with four fillers.
+- **A closing sentence that draws a conclusion the sourced facts above it do not support** — "the debate has largely ignored this", "nobody has noticed that", "this remains unaddressed". Absence claims are the common shape: they require having looked, and an insight rarely did. Cut the sentence, or move the question to §What could not be determined and say plainly that it was not researched.
 
 ---
 
