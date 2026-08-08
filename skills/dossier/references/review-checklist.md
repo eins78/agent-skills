@@ -200,6 +200,24 @@ Evidence of intent: the author picked one category-prefix scheme (say, `S` for a
 
 ---
 
+## 12. Insights are insights (not buried findings, not orphans)
+
+**What to check.** Two directions. First, **inversion**: for each item in §Insights, ask whether removing it would change a finding or a recommendation. If yes, it is a buried finding in the wrong place. Second, **reachability**: does each insight get teased from the body at least once, and do those teasers sit at paragraph ends rather than mid-argument?
+
+**Why it matters.** The section fails in two opposite ways and both are quiet. Filed too high, a decision-relevant fact sits below the conclusion where the decider never reaches it — the dossier technically contains the information and functionally does not. Filed correctly but never teased, the whole section lives past the point where most readers stop, so the best material in the research is the least-read part of the document. Neither failure produces an error; both produce a dossier that looks complete.
+
+**What good looks like.** Three to six items, each of which a reader would repeat to someone else, and none of which changes what to do. Each is reachable from at least one point in the body where it is genuinely relevant. The prose still reads as prose — a reader following the argument is not being elbowed toward an appendix every other paragraph.
+
+**Red flags.**
+- An insight whose removal would weaken a finding — promote it.
+- §Insights used as a holding pen for material that didn't fit anywhere, with no connection to the subject.
+- No teasers at all: the section is only reachable by scrolling past the conclusion.
+- Teasers stacked up — three in one paragraph, or one interrupting a sentence's argument mid-thread.
+- An insight that needs a paragraph of setup before it lands. That is a body section wearing the wrong hat.
+- Padding to reach a count. Two good insights beat six with four fillers.
+
+---
+
 ## Why this replaced the old grep hooks
 
 Earlier iterations of the dossier skill shipped four grep-based audit hooks: `dossier-citation-audit.sh`, `dossier-forbidden-words.sh`, `dossier-section-order.sh`, and `dossier-dated-claim-scan.sh`. Each encoded a specific failure pattern from the a11y-extension Chrome-Web-Store session: the `[Xn]` citation convention, the OSS-mode forbidden-word list, H2-level glossary headings, and ISO-date patterns.

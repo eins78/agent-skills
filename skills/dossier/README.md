@@ -31,6 +31,12 @@ Cause was structural, not a drafting slip: the skill described its own output as
 
 **This is not a revival of the removed framing-mode gate, and the axis is the giveaway.** Those modes (`oss`/`commercial`/…) classified the *character of the sources*; genre classifies *what document the reader wants*. The two never overlapped, so genre was not lost when that gate died — it was never covered. The mechanism also differs where it matters: `dossier-framing-declared.sh` linted a declared label that changed no output, which is why it was ignorable and correctly removed. Genre instead selects the template and switches EVALUATE and SYNTHESIZE, so it cannot be declared-and-ignored. Deliberately no script — see Known Gaps.
 
+**Insights section (2026-08-08).** Added an optional `## Insights` section to both templates, a SYNTHESIZE bullet, four Common Mistakes rows, and review-checklist item 12. Requested directly: *"dossier should also have a section with interesting insights that are semi related but maybe useful or inspiring, and they can be shortly mentioned (teaser and linked) a few times throughout the dossier where it fits."*
+
+The gap it fills is a structural one, not an oversight by any particular author. A brief acts as a filter, and the material it filters out is not uniformly worthless — a striking parallel, a number that reframes a scale, an adjacent field that solved the same problem differently. That material has nowhere to go, so it gets discarded at the synthesis step every time. Giving it a named home changes the default from *delete* to *collect*.
+
+Two failure modes are called out because they are opposite and both quiet. **Buried findings** — a decision-relevant fact filed under Insights sits below the conclusion where the decider never reaches it, so the dossier contains the information without delivering it. The inversion test catches this: if removing it changes a finding, it is not an insight. **Orphans** — a correctly-filed insight that is never teased from the body lives past the point most readers stop, making the most memorable material in the research the least-read part of the document. Hence the teaser convention, which deliberately reuses the existing `[S1][ref-S1]` citation idiom (`I1`/`[in-I1]`) rather than inventing a second cross-reference syntax.
+
 ## Design Influences
 
 - **[last30days](https://github.com/ScrapCreators/last30days-skill):** Parallel source dispatch + judge synthesis pass. Adapted: per-topic agent design instead of fixed 10+ platform roster.
@@ -45,7 +51,7 @@ dossier/
 ├── README.md                         # This file
 ├── references/
 │   ├── sources-by-domain.md          # Domain → source mapping (13 domains)
-│   ├── review-checklist.md           # Reviewer audit checklist (11 items)
+│   ├── review-checklist.md           # Reviewer audit checklist (12 items)
 │   └── source-archival.md            # Capture tiers, caps, index schema, Wayback, repo hygiene
 ├── scripts/
 │   └── archive-source.sh             # Depth-0 source capture + index append (no required deps)
@@ -77,7 +83,7 @@ To verify the skill works:
 2. **Preflight test:** Give an ambiguous request ("look into the AI space") — the skill should ask for clarification before starting research
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
 4. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
-5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 11 items should be actionable against the finished dossier.
+5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 12 items should be actionable against the finished dossier.
 6. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
 7. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
 8. **Source archival (manual, not run by `pnpm test`):**

@@ -141,6 +141,29 @@
 
 ---
 
+## Insights
+
+<!-- OPTIONAL. Things the research turned up that do NOT bear on the
+     recommendation, but are genuinely interesting, useful or inspiring — the
+     adjacent facts a good researcher notices and a bad one discards because
+     they didn't fit the brief.
+
+     Careful in this genre: an "insight" that actually affects the decision is
+     not an insight, it is a finding you have buried where the decider will
+     miss it. Promote it into the evaluation. This section is for the things
+     that are worth knowing and change nothing.
+
+     Three to six. Each gets a stable ID (I1, I2 …) so it can be teased from
+     the body with a one-line inline pointer: ([→ I2 — the licence that
+     outlived the company][in-I2]). Teasers go at the end of a paragraph,
+     never inside an argument. Full convention in templates/report.md. -->
+
+### I1 — {Short, concrete title}
+
+{Two to five sentences. Say the interesting thing directly. Cite it [S1][ref-S1].}
+
+---
+
 ## Sources
 
 <!-- REQUIRED: Categorized. Adapt headings to domain — not all apply.

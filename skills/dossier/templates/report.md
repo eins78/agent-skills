@@ -125,6 +125,48 @@ mention. Cite factual claims [S1][ref-S1].}
 
 ---
 
+## Insights
+
+<!-- OPTIONAL but encouraged. Things the research turned up that are NOT
+     load-bearing for the findings above, but are genuinely interesting,
+     useful or inspiring — the adjacent facts a good researcher notices and a
+     bad one discards because they didn't fit the brief.
+
+     What belongs here: a striking historical parallel; a number that
+     reframes the scale of something; a term of art with a good story behind
+     it; an adjacent field that solved this problem differently; a primary
+     source that is a pleasure to read in its own right.
+
+     What does NOT belong here: anything the findings depend on (that goes in
+     the body), padding, or trivia with no connection to the subject. If an
+     insight is load-bearing, promote it. If it needs a paragraph of setup to
+     land, it is a body section, not an insight.
+
+     Three to six is a good number. Each gets a stable ID (I1, I2 …) so it can
+     be teased from the body — see the teaser rule below. -->
+
+### I1 — {Short, concrete title}
+
+{Two to five sentences. Say the interesting thing directly; do not build up to
+it. Cite it like anything else [S1][ref-S1].}
+
+### I2 — {…}
+
+<!-- TEASER RULE. Each insight should be mentioned once or twice in the body
+     where it naturally fits, as a short inline pointer that links down to it:
+
+         … the tunnel took nineteen years to bore. ([→ I3 — what the
+         ventilation actually cost][in-I3])
+
+     Define the anchor next to the insight's own heading or at the bottom with
+     the other reference links: [in-I3]: #i3--what-the-ventilation-actually-cost
+
+     Teasers are one line and never interrupt an argument mid-thread. Place
+     them at the end of a paragraph, not inside one. An insight with no teaser
+     is fine; a body paragraph carrying three teasers is not. -->
+
+---
+
 ## What could not be determined
 
 <!-- REQUIRED. Gaps are findings. Silence here fakes completeness and removes
