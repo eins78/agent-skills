@@ -9,7 +9,7 @@ A **gzipped JSON object**. Not a container, not a wrapper — gunzip it and you
 have the recipe.
 
 ```bash
-gunzip -c "Aloo Jeera.paprikarecipe" | jq .
+gunzip -c "Miso Soup.paprikarecipe" | jq .
 ```
 
 ## `.paprikarecipes` — many recipes
@@ -20,7 +20,7 @@ deflate, no directory nesting.
 
 ```bash
 unzip -l export.paprikarecipes
-unzip -p export.paprikarecipes "Aloo Jeera.paprikarecipe" | gunzip | jq .
+unzip -p export.paprikarecipes "Miso Soup.paprikarecipe" | gunzip | jq .
 ```
 
 ## Fields
