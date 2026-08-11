@@ -1,0 +1,268 @@
+---
+name: paprika-recipes
+description: >-
+  Use when working with a Paprika Recipe Manager 3 library on macOS — looking
+  up, searching, listing or exporting saved recipes, or turning any text source
+  into a real recipe: a web page the clipper failed on, prose, a PDF, a note, a
+  photo of a cookbook page. Triggers: Paprika, recipe library, add a recipe,
+  import recipe, paprikarecipe, recipe collection, cookbook.
+license: MIT
+metadata:
+  author: eins78
+  repo: https://github.com/eins78/agent-skills
+  version: "1.0.0-beta.1"
+---
+
+# Paprika Recipe Manager 3 (macOS)
+
+Read the local library directly from its database. Create recipes through the
+app's own import format. Both paths are verified against a live install of
+Paprika 3.8.4; see `references/recipe-format.md` for the evidence.
+
+**The app has no AppleScript dictionary and no URL scheme.** Its only scripted
+surfaces are the SQLite database (read) and the file import (write). That is
+enough — there is no need for the Paprika cloud API or an account password.
+
+## Prerequisites
+
+- Paprika Recipe Manager 3 installed (Mac App Store build, sandboxed)
+- `sqlite3`, `zip`, `unzip` — all present on macOS
+- Node 18+ for the helper scripts (zero npm dependencies)
+- For `--confirm`: Automation permission for the controlling terminal. macOS
+  asks once; **the user approves it**. Until then `osascript` fails with
+  `-1743` and the import must be confirmed by hand.
+
+## Reading the library
+
+Safe while Paprika is open. Every query goes through `sqlite3 -readonly`;
+nothing here writes to the live database.
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs count            # totals + sync revisions
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs list             # all active recipes
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs list --search miso
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs get "Miso Soup"  # one recipe, full JSON
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs categories       # categories + counts
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs photo "Miso Soup"
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs snapshot /tmp/paprika.sqlite
+```
+
+`get` emits **the same JSON shape the import format uses**, so its output can
+be edited and fed straight back to `paprika-recipe.mjs`.
+
+Three details the script handles so callers don't have to: `ZCREATED` is a Core
+Data timestamp (2001 epoch, not Unix), trashed recipes must be filtered on
+`ZINTRASH`, and categories live behind a generated join table.
+
+**Never `cp` the database and read the copy with `-readonly`** — a copy keeps
+`journal_mode=wal` and SQLite then refuses to open it (`unable to open database
+file (14)`) because it cannot create the `-shm` sidecar. Use `snapshot`, which
+uses `VACUUM INTO`.
+
+### Don't write to the database directly
+
+`ZSTATUS`, `ZISSYNCED` and `ZSYNCHASH` are bookkeeping the app maintains for
+cloud sync. A hand-written row risks corrupting the library and confusing sync
+across devices. Import is the supported write path, and it is not slower.
+
+## Creating a recipe from any text source
+
+This is the main capability. The agent does the understanding; the script does
+the mechanical part.
+
+**1 — Read the source.** A web page, a note, a PDF (`pdftotext file.pdf -`, or
+the `pandoc` skill), a photo of a cookbook page, a pasted message, a chat
+transcript. Anything you can read.
+
+**2 — Structure it as JSON.** The only required field is `name`.
+
+```json
+{
+  "name": "Rhabarberkompott",
+  "ingredients": "200 g Rhabarber\n1 Vanilleschote\n2 EL Zucker",
+  "directions": "Rhabarber rüsten und in 1 cm breite Stücke schneiden.\n\nVanilleschote längs halbieren, Mark herauskratzen.\n\nAlles ca. 5 Minuten köcheln lassen.",
+  "notes": "war nicht süß genug",
+  "servings": "2 servings",
+  "source": "migusto.migros.ch",
+  "source_url": "https://migusto.migros.ch/de/rezepte/rhabarberkompott",
+  "categories": ["Dessert"]
+}
+```
+
+Rules that actually bite:
+
+- **`ingredients` and `directions` are newline-delimited plain text**, not
+  arrays. One ingredient per line. Section headers are just lines.
+- **`servings`, `prep_time`, `cook_time` are free text**, not numbers —
+  `"2 servings"`, `"15 mins"`.
+- **`categories` are plain names, and an unknown name creates a category.**
+  This is a side effect with no undo path in this skill, and it **outlives the
+  recipe**: a category is its own row in `ZRECIPECATEGORY`, so deleting the
+  recipe that introduced it leaves the category behind, to be removed by hand
+  in the app. Verified. Always run `paprika-db.mjs categories` first and reuse
+  existing names; a typo or a near-duplicate ("Desserts" vs "Dessert")
+  permanently pollutes the sidebar on every synced device.
+- **Omit `uid`, `hash`, `photo_hash`.** The app assigns them.
+- **`created` is ignored** — the app stamps its own import time.
+- **Keep the source language.** Libraries are frequently mixed-language; don't
+  translate a recipe on the way in.
+- **Put substitutions and results in `notes`** — that is what the field is for
+  in practice (*"Replace the butter with 60 g vegan block."*).
+- **Don't invent what the source doesn't say.** If a source gives ingredients
+  but no method, leave `directions` empty and record that in `notes`. A
+  plausible-sounding invented step is indistinguishable from a real one once
+  it's in the library.
+
+**3 — Build and import.**
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs build recipe.json --out ~/Downloads/recipe.paprikarecipe
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs import ~/Downloads/recipe.paprikarecipe --confirm
+```
+
+Attach a photo with `--photo image.jpg` (embedded as base64 in the file; must
+be a JPEG). Import several at once by building a bundle:
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs bundle a.json b.json --out ~/Downloads/batch.paprikarecipes
+```
+
+### Photos replace, they don't merge
+
+The single most destructive behaviour in this format, verified by test:
+
+- **An import overwrites the recipe's photo state.** A file with no embedded
+  image sets the photo to null *and deletes the JPEG from disk*. There is no
+  "leave the photo alone" — silence means delete.
+- **`photo_data` without a `photo` filename terminates the app** mid-import.
+  No crash report, no recipe written, no error dialog — the app is simply gone.
+  The filename is where the decoded JPEG gets written; it is not optional.
+
+`paprika-recipe.mjs build` handles both: it re-embeds the current photo
+whenever the input carries a `photo_path` that exists on disk (`paprika-db.mjs
+get` fills that in), and it always emits a filename alongside `photo_data`.
+
+When a recipe names a photo that **isn't on disk**, `build` refuses outright
+rather than writing a file whose import would delete it:
+
+```
+error: "Miso Soup" refers to photo AE175116-….jpg, but no local JPEG was found
+```
+
+That happens when the photo hasn't been downloaded from Paprika Cloud yet —
+most likely soon after a fresh install, while the library is still syncing.
+Open the recipe in the app so the photo downloads, then retry. Pass
+`--no-photo` only when removing the photo is what you actually want.
+
+`photo_hash` is computed by the app — an uppercase SHA-256 of the JPEG bytes.
+Never supply it. Re-importing byte-identical image data is a no-op.
+
+**4 — Verify, always.**
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs list --search "Rhabarberkompott"
+```
+
+### The import is not headless
+
+Paprika raises a modal sheet on its main window:
+
+> **Import Recipes** — Are you sure you want to import the recipes contained in
+> this file? *Format: Paprika (paprikarecipe)* — `Cancel` / `Import`
+
+then a second sheet: **Import Complete** — *Successfully imported 1 recipes.* —
+`OK`.
+
+`--confirm` clicks through both via System Events, but only after checking the
+sheet's own text; anything unexpected is left alone for a human. Without
+`--confirm`, tell the user to click Import — don't report success until the
+database confirms it.
+
+### Editing an existing recipe
+
+Importing a file whose `uid` matches an existing recipe **updates that recipe in
+place** — the app reports *"1 recipes updated"* and the row count doesn't change.
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs get "Some Recipe" > edit.json
+# edit the JSON, keeping its uid
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs build edit.json --keep-ids --out ~/Downloads/edit.paprikarecipe
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs import ~/Downloads/edit.paprikarecipe --confirm
+```
+
+`--keep-ids` is the only destructive flag here. Three caveats:
+
+- Categories **merge** rather than replace — an import can add a category to a
+  recipe but cannot remove one.
+- The original `created` is preserved.
+- The photo is **replaced**, not merged. Piping `get` output into `build` as
+  shown above carries it over; a hand-written JSON with no `photo_path` deletes
+  it. `build` refuses when it can see a photo it cannot embed, but it cannot
+  detect a photo you never told it about. See "Photos replace, they don't merge".
+
+## One source, several recipes
+
+A source that gives a component plus dishes made from it — a sauce and two
+salads that use it — can go in as one recipe or several. Both shapes appear in
+real libraries:
+
+| Shape | How | Use when |
+|---|---|---|
+| **Sectioned** | One recipe; `ingredients` carries labelled blocks (`For the Sauce:`, `To Serve:`) | The component only exists to serve this dish |
+| **Extracted** | The component becomes its own recipe; each dish names it as an ingredient line (`2 tbsp Garlic Confit`) | The component is reusable across dishes |
+
+The deciding question is **"would the user make this component for something
+else?"** — if the source itself uses it in more than one dish, that's a yes.
+
+Nothing in the Paprika format links one recipe to another. The reference is
+just the component's name appearing as an ingredient line, so **the names have
+to match exactly**, and the shopping list will show the component as a single
+line rather than expanding into its own ingredients.
+
+**Ask rather than guess.** Check the library's existing habit first
+(`paprika-db.mjs categories` — a large "Condiments"-style bucket is a strong
+signal the user extracts components), then confirm before importing several
+recipes from one source.
+
+## Other import paths
+
+**Web clipper — works almost always.** The share extension
+(`Paprika Mac Share.appex`) takes a page from the browser share sheet and
+parses the recipe out of it. This is the normal route for a URL, and it is
+better than anything this skill does: it gets the photo, the source, and the
+structure in one step. **If the user gives you a recipe URL, suggest the
+clipper first.**
+
+**Manual import — when the clipper can't parse the site.** Paprika says so
+plainly: *"We couldn't process the recipe on this site. But don't worry, you
+can still save the recipe using the clipboard tools below."* The fallback is
+the app's own **Browser** tab plus its clipboard tools (`Smart Copy/Paste`,
+`Detect Clipboard URLs`): open the page in Paprika's browser, select the
+ingredients, paste into the ingredients field, repeat for directions.
+
+**This skill is the third option** — and the only one that works for sources
+that aren't a web page at all, or when the work should happen without a human
+driving the UI field by field. For a page the clipper failed on, fetching the
+page and structuring it here is usually faster than manual copy-paste.
+
+## Sync — an import is not local
+
+**A local import publishes to every device on the account. Verified** on a
+separate device (Paprika iOS over cellular, away from the Mac) minutes after a
+Mac-side import: title, star rating, categories, source, prep time, servings,
+ingredients and directions as separate lines, and notes all survived.
+
+Consequences worth taking seriously:
+
+- **There is no local-only mode and no dry run.** An imported recipe lands with
+  `ZISSYNCED=1` and is already on its way out. You cannot "test quietly."
+- **A mistake is not confined to this machine.** A bad bulk import shows up on
+  the user's phone within a minute. This is why the caution against
+  bulk-writing is not bureaucratic — undoing it means deleting recipes on a
+  device you don't control.
+- Test with **one** obviously-named throwaway, then tell the user it exists.
+
+**Don't act on recipe counts while a sync is landing.** A fresh install pulls
+the library in over minutes (observed: 122 → 259 rows over ~15 minutes). Before
+anything that depends on a total, check that `paprika-db.mjs count` returns the
+same totals *and* the same `sync_revisions` twice, at least 60 s apart.

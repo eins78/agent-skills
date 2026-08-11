@@ -19,6 +19,7 @@ Collection of [Agent Skills](https://agentskills.io/) for Claude Code and compat
 | [dossier](skills/dossier/) | Structured research — ranked recommendations, cited sources, parallel subagents, optional decision ballots |
 | [lab-notes](skills/lab-notes/) | Experiment management — hypothesis, append-only running log, verdict. Rigorous + Lite modes. |
 | [pandoc](skills/pandoc/) | Document format conversion — 60+ formats via pandoc instead of ad-hoc scripts |
+| [paprika-recipes](skills/paprika-recipes/) | Read and create recipes in Paprika Recipe Manager 3 on macOS — local SQLite for reading, the app's import format for writing, any text source in |
 | [pdf-zine](skills/pdf-zine/) | Convert a PDF into a fold-and-print booklet (zine) — A4 sheets, 2-up, fold to A5, via the `pdf2zine` Docker CLI |
 | [private-podcast-feed](skills/private-podcast-feed/) | Private MP3+RSS feed for self-subscription — itunes:block, token URLs, ID3 chapters, Overcast ping |
 | [send-to-kindle](skills/send-to-kindle/) | Getting a document onto a Kindle — delivery routes and 2026 status, EPUB over PDF, per-device addressing, the silently-dropped-sender trap, one-way highlights |

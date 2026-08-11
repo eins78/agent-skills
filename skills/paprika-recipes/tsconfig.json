@@ -1,0 +1,14 @@
+{
+  "//": "Dev-time type checking only. The scripts run on plain Node with no build step and no runtime dependencies; typescript and @types/node are devDependencies of the workspace. Run: pnpm exec tsc -p skills/paprika-recipes",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "es2023",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "types": ["node"]
+  },
+  "include": ["scripts/**/*.mjs"]
+}
