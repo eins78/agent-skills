@@ -37,9 +37,14 @@ recoverable by retry, so the attachment path deliberately avoids the bridge.
 
 The database also turns out to be strictly better for the job:
 
-- `ZOCRSUMMARY` already holds the recognised text of every scanned attachment,
-  so identifying a scan is a column read rather than a PDF text extraction
-  (measured: 55 of 55 scanned attachments had it populated).
+- `ZOCRSUMMARY` already holds the recognised text of scans and images, so
+  identifying a scan is usually a column read rather than a PDF text extraction.
+  Measured by UTI in one library: `com.apple.paper.doc.*` 31 of 32 populated,
+  images ~100%, but **`com.adobe.pdf` 0 of 179** — Notes OCRs what it renders
+  itself, never a PDF attached from the file picker. Those carry real filenames
+  instead, so the two identification routes complement each other. The query
+  falls back `ZOCRSUMMARY → ZSUMMARY → ''`, and an empty column is a normal
+  result meaning "identify this one another way", not "no such attachment".
 - It resolves on-disk paths, which AppleScript does not expose usefully.
 - It keeps working while the AppleScript bridge is hung.
 

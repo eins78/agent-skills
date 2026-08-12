@@ -131,10 +131,23 @@ Two properties make this trap easy to fall into:
   only the scanned ones are anonymous.
 
 `list-attachments.sh` solves this by printing each attachment's **OCR/summary
-text** — Notes has already recognised the text of every scan, so the
-distinguishing first line is a column lookup, not a PDF extraction (measured:
-55 of 55 scanned attachments had it populated). Identify from that; only extract
-the file when you need the full contents:
+text**, so the distinguishing first line is usually a column lookup rather than a
+PDF extraction.
+
+**Which attachments carry that text is not uniform, and the two gaps cover for
+each other.** Measured across one real library:
+
+| Attachment | Has a real title? | Has OCR text? |
+|---|---|---|
+| Scanned document (`com.apple.paper.doc.*`) | ✗ — always `PDF` | ✓ 31 of 32 |
+| PDF added from the file picker (`com.adobe.pdf`) | ✓ | ✗ **0 of 179** |
+| Image (jpeg/png/heic/…) | usually ✗ | ✓ ~100% |
+
+Notes recognises text in what it renders itself — scans and photos — and never
+in a PDF file you attached. So identify a *scanned* document by its OCR text and
+a *file* PDF by its name, and treat an empty text column as normal rather than
+as "nothing here". When it is empty and the name is unhelpful, fall back to
+extracting the file:
 
 ```bash
 # 1. What is actually attached?
