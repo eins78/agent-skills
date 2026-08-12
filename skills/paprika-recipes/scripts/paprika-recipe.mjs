@@ -372,7 +372,22 @@ function cmdYaml(args) {
 
   const dropped = new Set()
   const recipes = sources.map((source) => {
-    const full = normalize(readJson(source), { noPhoto: true })
+    const raw = readJson(source)
+    const full = normalize(raw, { noPhoto: true })
+
+    // The two formats disagree about one field. "on_favorites" is documented
+    // for .yml but is not part of the JSON interchange format, so normalize()
+    // treats it as DB-only and strips it *silently* — no unknown-field warning,
+    // because DB-only fields are expected to be present and ignored. Carrying
+    // it across by hand is what keeps "every dropped field is reported" true:
+    // otherwise the one field where the formats differ is the one that
+    // disappears without a word. Any future YAML-only field lands here too.
+    for (const key of YAML_FIELDS) {
+      if (!(key in full) && raw && typeof raw === 'object' && raw[key] !== undefined) {
+        full[key] = raw[key]
+      }
+    }
+
     /** @type {Record<string, unknown>} */
     const trimmed = {}
     for (const [key, value] of Object.entries(full)) {
