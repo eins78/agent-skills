@@ -74,6 +74,20 @@ the mechanical part.
 the `pandoc` skill), a photo of a cookbook page, a pasted message, a chat
 transcript. Anything you can read.
 
+> **When the user names a source, find *that* source.** If a search comes back
+> empty, that is evidence about the search, not about the user's memory. Never
+> substitute a similar-looking document you found elsewhere — a plausible
+> substitute produces a recipe that is wrong in ways nobody can see afterwards,
+> because it is internally consistent and correctly attributed to the wrong
+> thing.
+>
+> The specific trap: **a container's text is not its contents.** Attachments,
+> embeds and linked files usually live outside the body you just searched, and
+> they are often unidentifiable by name — Apple Notes titles *every* scanned PDF
+> literally `PDF` with a null filename, so four different recipes look like four
+> identical rows. Enumerate the attachments and extract each one's text. A
+> title-based scan finds nothing while looking thorough.
+
 **2 — Structure it as JSON.** The only required field is `name`.
 
 ```json
