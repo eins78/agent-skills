@@ -168,16 +168,34 @@ Since `notes` renders links, the reverse-linking convention (a component's notes
 linking back to the dishes that use it) is a real navigation aid rather than
 decorative text.
 
-**Open observation, deliberately not written up as a rule.** In the same
-screenshots, Paprika rendered some lines **bold**: `For the base:`,
-`For the topping:` and `7. Trailing spaces on this line:` all end with a colon,
-which suggests "a line ending in a colon becomes a heading". But
-`Line 10 link token: [recipe:Shio-Koji (Base)]` also rendered bold and does *not*
-end with a colon, while `Line 2 has a colon: and text after it` did *not* render
-bold — which rules out the simpler "bold everything before the first colon".
-Neither rule fits all four observations, so the mechanism is unknown. What *is*
-established: the stored text is byte-identical to the input, so whatever the rule
-is, it is applied at render time and nothing is stored to mark it.
+### Subsection headers — end the line with a colon
+
+**A line that ends with a colon renders as a bold, highlighted subsection
+header.** This is a real Paprika formatting feature, not an accident of the text.
+
+Confirmed by a natural experiment in an existing library — one recipe, one
+`ingredients` field, two candidate lines:
+
+| Line | Renders |
+|---|---|
+| `For the Miso Soup:` | **bold header** |
+| `For the Dashi (makes a scant 2 cups)` | plain line |
+
+Same field, same recipe; the only difference is the trailing colon. It also
+explains why `For the base:` and `For the topping:` came out bold in the `.yml`
+import test while `Line 2 has a colon: and text after it` did not — **the colon
+must be the last character**, not merely present.
+
+It is a **rendering** rule, not a storage rule. The colon is ordinary text in
+`ZINGREDIENTS` / `ZDIRECTIONS`, stored and round-tripped verbatim; nothing marks
+the line as a header. So never strip it — stripping the colon silently demotes a
+header to a plain line.
+
+One observation still unexplained: `Line 10 link token: [recipe:Shio-Koji (Base)]`
+rendered bold although the stored line does not end with a colon. A plausible
+reconciliation is that the link renders as its own element, leaving the visible
+line ending at the colon — unconfirmed, and it does not affect the authoring
+rule.
 
 Because the target is matched by name, **renaming a linked recipe breaks the
 link silently** — nothing validates it. Check the target exists before writing

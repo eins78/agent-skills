@@ -106,7 +106,25 @@ transcript. Anything you can read.
 Rules that actually bite:
 
 - **`ingredients` and `directions` are newline-delimited plain text**, not
-  arrays. One ingredient per line. Section headers are just lines.
+  arrays. One ingredient per line.
+- **End a section header with a colon.** A line whose *last character* is `:`
+  renders as a bold, highlighted subsection header — a real Paprika formatting
+  feature. So write `For the dressing:`, never `For the dressing` or
+  `For the dressing (makes 200 ml)`. This is an authoring rule, not a curiosity:
+  a header without the trailing colon silently renders as an ordinary
+  ingredient line, and nothing about the stored data reveals the difference.
+
+  ```
+  For the dressing:          ← bold header
+  2 tbsp rice vinegar
+                             ← blank line separates the blocks
+  To serve:                  ← bold header
+  Sliced tomatoes
+  ```
+
+  The colon must be **last**, not merely present: `Salt: about 2 g` stays a
+  plain line. And it is a *rendering* rule — the colon is ordinary stored text,
+  so never strip it when reading, editing or round-tripping.
 - **`servings`, `prep_time`, `cook_time` are free text**, not numbers —
   `"2 servings"`, `"15 mins"`.
 - **`categories` are plain names, and an unknown name creates a category.**

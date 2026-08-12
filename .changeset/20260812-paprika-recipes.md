@@ -18,6 +18,8 @@ The 14th field is the interesting one. **`on_favorites` does not take effect**: 
 
 **`.yml` cannot be automated the way the JSON format can**, and the reason is mechanical: the app declares only its own two UTIs, and that declaration is what selects one of its ~20 importers. `open -a` therefore routes a `.paprikarecipes` straight to a single confirm sheet, while a `.yml` must go through the Import Recipes screen and its format picker — the picker supplying the hint the UTI would have carried. For unattended import, use `build`/`bundle`.
 
+**Subsection headers are a formatting feature, and the skill now says so.** A line whose last character is `:` renders as a bold, highlighted header; the same line without the colon renders as an ordinary ingredient. Confirmed by a natural experiment in a real library — `For the Miso Soup:` bold and `For the Dashi (makes a scant 2 cups)` plain, in the same ingredients field of the same recipe. This is documented as an authoring rule because the failure is silent: a section header written without the trailing colon looks fine in the data and simply is not a header on screen. It is a rendering rule only — the colon is ordinary stored text and must never be stripped.
+
 The headline capability is turning **any** text source into a real recipe — a page the web clipper failed on, prose, a PDF, a photo of a cookbook page — since the clipper handles URLs well and nothing else at all.
 
 Four behaviours that are easy to get wrong and are documented as hazards:
