@@ -6,6 +6,9 @@ Read and create recipes in **Paprika Recipe Manager 3** on macOS, so an agent
 can turn any text source — a web page the clipper failed on, prose, a PDF, a
 photo of a cookbook page — into a real recipe in the user's library.
 
+The gap it fills: Paprika's web clipper handles URLs well and nothing else.
+For every other source, typing it in by hand was the only route.
+
 **Tier: publishable.** The container path, the Core Data schema and the
 `.paprikarecipe` / `.paprikarecipes` interchange format are properties of
 Paprika 3 itself, identical for every Mac App Store user. Nothing in the skill
@@ -103,8 +106,10 @@ Write path — **touches the real library**. Gate it:
    user has to clean it up by hand. (This skill's own testing created a
    `ZZZ Test Category` before that was understood.)
 
-Note that an import is **not local** — it publishes to Paprika Cloud and on to
-the user's other devices, verified on iOS. There is no dry run.
+**An import is a publish, not a local write.** It reaches Paprika Cloud and the
+user's other devices within a minute — verified on a second device. There is no
+dry run and no local-only mode, which is what makes "one throwaway, never
+bulk-write" load-bearing rather than ceremonial.
 
 ## Design decisions
 
@@ -125,7 +130,11 @@ the user's other devices, verified on iOS. There is no dry run.
 - **`get` emits interchange JSON, not raw columns.** One vocabulary for reading
   and writing means round-tripping and editing need no translation layer.
 - **Category names, not ids, in the format** — matching what Paprika's own
-  exports do. Consequence documented in SKILL.md: unknown names get created.
+  exports do. The consequence is that an unknown name **creates** a category,
+  and it outlives the recipe: categories are independent rows joined to recipes,
+  so deleting the recipe that introduced one leaves it behind on every synced
+  device, to be removed by hand. There is no undo path in this skill, which is
+  why SKILL.md tells agents to run `categories` first and reuse existing names.
 - **Checked GUI automation, not blind clicking.** `--confirm` verifies the
   dialog's own text before acting.
 - **`build` carries the existing photo forward by default.** Imports replace
