@@ -1,22 +1,26 @@
 ---
 name: apple-notes
-description: Read Apple Notes via AppleScript. Use when asked to check, search, or read notes. READ ONLY — no creating or modifying notes.
+description: Use when asked to check, search or read Apple Notes, or to find a document, PDF, scan or image attached to a note. READ ONLY — no creating or modifying notes.
 license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Apple Notes (Read Only)
 
-Read notes via Notes.app AppleScript. **No creating, updating, or deleting notes.**
+Read notes via Notes.app AppleScript, and list their attachments by reading the
+Notes database. **No creating, updating, or deleting notes.**
 
 ## Prerequisites
 
 - Notes.app running and synced
 - Automation permissions granted (System Settings → Privacy & Security → Automation → Terminal/Claude Code → Notes)
 - If first access attempt times out, ask user to check for macOS permission dialog
+- `list-attachments.sh` does *not* use AppleScript — it reads the Notes database
+  directly, so it needs **Full Disk Access** for the terminal instead of
+  Automation. It keeps working when the AppleScript bridge is wedged.
 
 ## Reliability: always wrap osascript with timeout + retry
 
@@ -64,6 +68,17 @@ ${CLAUDE_SKILL_DIR}/scripts/read-note.sh "Meeting Notes" "iCloud"    # Specific 
 
 Returns metadata header + HTML body.
 
+### List attachments on a note
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/list-attachments.sh "Recipe Ideas"           # what is attached
+${CLAUDE_SKILL_DIR}/scripts/list-attachments.sh "Recipe Ideas" --paths   # + on-disk file paths
+```
+
+Output: `[note] type | title | identifying text`, one per line.
+
+**Read this before concluding a note doesn't contain something.** See below.
+
 ### Search notes by name
 
 ```bash
@@ -90,6 +105,62 @@ osascript -e 'tell application "Notes" to get body of note "Note Name"'
 # Count all notes
 osascript -e 'tell application "Notes" to count every note'
 ```
+
+## A note's body is not its contents
+
+**A note body does not include its attachments.** PDFs, scans and images are
+separate rows in the Notes database, linked back to the note — so reading the
+body, by AppleScript or any other route, cannot see them. Every other script in
+this skill reads bodies. That means:
+
+> **A body search returning nothing is evidence about the search, not about the
+> note.** If someone says a document is on a note and you can't find it, list the
+> attachments before concluding it isn't there. Never substitute a similar file
+> found somewhere else — a plausible substitute is worse than an empty result,
+> because nothing downstream can tell it was the wrong one.
+
+Two properties make this trap easy to fall into:
+
+- **Scanned documents are all titled literally `PDF`.** Anything scanned in the
+  app (`com.apple.paper.doc.pdf`) has the title `PDF` and no filename — measured
+  at 17 of 17 in one real library. A note with four scanned recipes shows four
+  identical rows. Filtering attachments *by title* finds nothing while looking
+  thorough.
+- **Ordinary attachments do carry real titles** (`Trailer-Manual-EN.pdf`), so
+  partial success here is misleading: the file-picker attachments look fine and
+  only the scanned ones are anonymous.
+
+`list-attachments.sh` solves this by printing each attachment's **OCR/summary
+text** — Notes has already recognised the text of every scan, so the
+distinguishing first line is a column lookup, not a PDF extraction (measured:
+55 of 55 scanned attachments had it populated). Identify from that; only extract
+the file when you need the full contents:
+
+```bash
+# 1. What is actually attached?
+list-attachments.sh "Recipe Ideas"
+#    -> paper.doc.pdf | PDF | Tomato Soup / A simple weeknight soup with…
+
+# 2. Get the file, then read it properly.
+list-attachments.sh "Recipe Ideas" --paths
+pdftotext -layout "<the path>" -
+```
+
+### Where attachments live on disk
+
+Under `~/Library/Group Containers/group.com.apple.notes/Accounts/<account>/`:
+
+| Kind | Path |
+|---|---|
+| Scanned document | `FallbackPDFs/<attachment-id>/<generation>/FallbackPDF.pdf` |
+| Everything else | `Media/<media-row-id>/<filename>` |
+
+⚠️ The `Media` path is keyed by the **linked media row's** identifier, not the
+attachment's, and the real filename lives on that row too — the attachment row's
+own `ZFILENAME` is always null. Joining the wrong row silently yields no path.
+
+A missing file is normal and does not mean the attachment is missing: iCloud
+downloads lazily, so the row can exist while the bytes have not arrived.
 
 ## Notes
 
