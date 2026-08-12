@@ -93,15 +93,50 @@ their multi-recipe example shows.
 | macOS build has a YAML importer, not just iOS | Verified — `YamlImporter` class in the app binary |
 | `.yml` is **not** a declared document type on macOS | Verified — absent from `CFBundleDocumentTypes`, so it is chosen via the importer's format picker rather than opened from Finder |
 | JSON output parses as YAML, as a list of mappings, with newlines and Unicode intact | Verified — round-tripped through a standard YAML parser |
-| Paprika's own importer accepts the JSON-style file end to end | **Untested** — see below |
+| Paprika's own importer accepts the JSON-style file end to end | **Verified** — 2026-08-12, see below |
+| `on_favorites` takes effect | **No** — see below |
 
-The last row is the one that matters and it is not proven. Confirming it means
-importing, which on a real library means creating recipes; it was not worth
-duplicating rows to test. The reasoning is strong (YAML 1.2 is a JSON superset,
-and the emitted file parses correctly as the documented shape) but reasoning is
-not a test. **To settle it in a minute:** write one throwaway recipe with
-`yaml --out ~/Downloads/test.yml`, import it through the app's Import Recipes
-screen picking the YAML format, then delete it.
+### The `.yml` import, verified end to end
+
+Settled 2026-08-12 with one throwaway recipe exercising 14 of the 15 documented
+fields. Imported on **iOS** (Settings → Import), then read back from the macOS
+database after sync.
+
+The format picker is labelled **`YAML (yml, yaml)`** on iOS, and the confirmation
+sheet reads `Format: YAML (yml)`. (The macOS picker was not seen; `YamlImporter`
+is in the Mac binary, but the label there is unconfirmed.)
+
+**13 of the 14 fields came back byte-identical** — including every construct that
+breaks hand-written block YAML, which is the whole argument for emitting JSON:
+
+| Construct in the payload | Survived |
+|---|---|
+| A colon inside a value (`2 g salt: fine sea salt`) | ✅ |
+| Line starting with `-` | ✅ |
+| Line starting with `#` | ✅ |
+| A literal `---` document-marker line | ✅ |
+| Tab, two-space indent, trailing spaces, blank line | ✅ |
+| Both quote styles and a bare apostrophe | ✅ |
+| `éàüß`, 日本語, `½`, `°C`, emoji | ✅ |
+| Multi-line `nutritional_info` | ✅ |
+| Two existing categories (no new category created) | ✅ |
+
+**The one failure — `on_favorites`.** A file carrying `on_favorites: true`
+imported cleanly with everything else intact, but the recipe was **not**
+favorited (`ZONFAVORITES = 0`). The vendor's own example writes the YAML 1.1
+bareword `on_favorites: yes`, and **JSON cannot express a bareword** — a quoted
+`"yes"` is a string, not a boolean. So this is the single documented field where
+the JSON-as-YAML approach cannot reproduce the vendor's example, and the only
+known crack in "JSON has no whitespace or quoting pitfalls".
+
+Whether the importer would accept a quoted `"yes"`, or ignores the field
+entirely, is **untested** — distinguishing them needs a second import. The `yaml`
+command warns when the field is set rather than letting it look applied. Set the
+favorite in the app instead.
+
+`photo` is the 15th field and is unreachable here by construction: the format
+carries only a filename with no channel for image bytes, which is case E in the
+photo-behaviour table below — a filename alone preserves nothing.
 
 ### Recipe links — `[recipe:Name]`
 
@@ -125,8 +160,24 @@ Serve with:
 | Stored verbatim on import (`ingredients`, `directions`) | Verified — re-read from the DB after import |
 | Unknown target is safe to import | Verified — import succeeded, no error, no crash |
 | Renders as a link in `ingredients` | Verified in the Paprika **iOS** app; not separately checked on macOS |
-| Renders as a link in `directions` / `notes` | **Untested** — stored fine; real libraries do use `notes` |
+| Renders as a link in `notes` | **Verified** 2026-08-12 — imported via `.yml`, rendered on iOS as a live blue link reading `Shio-Koji (Base)` |
+| Renders as a link in `directions` | **Untested** — stored fine |
 | How an unknown target renders (literal text vs dead link) | **Untested** |
+
+Since `notes` renders links, the reverse-linking convention (a component's notes
+linking back to the dishes that use it) is a real navigation aid rather than
+decorative text.
+
+**Open observation, deliberately not written up as a rule.** In the same
+screenshots, Paprika rendered some lines **bold**: `For the base:`,
+`For the topping:` and `7. Trailing spaces on this line:` all end with a colon,
+which suggests "a line ending in a colon becomes a heading". But
+`Line 10 link token: [recipe:Shio-Koji (Base)]` also rendered bold and does *not*
+end with a colon, while `Line 2 has a colon: and text after it` did *not* render
+bold — which rules out the simpler "bold everything before the first colon".
+Neither rule fits all four observations, so the mechanism is unknown. What *is*
+established: the stored text is byte-identical to the input, so whatever the rule
+is, it is applied at render time and nothing is stored to mark it.
 
 Because the target is matched by name, **renaming a linked recipe breaks the
 link silently** — nothing validates it. Check the target exists before writing

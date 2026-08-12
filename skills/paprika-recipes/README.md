@@ -165,13 +165,25 @@ paprika-recipes/
 
 ## Known gaps / future improvements
 
-- **`.yml` import is not verified end to end.** The emitted file parses through
-  a standard YAML parser as the documented shape, and the vendor documents the
-  format, but Paprika's own `YamlImporter` has not been fed one. Testing means
-  creating a recipe in a real library. `references/recipe-format.md` says how to
-  settle it with one throwaway. Also note `.yml` is absent from the Mac app's
-  `CFBundleDocumentTypes`, so `import` cannot route it — it goes through the
-  app's Import Recipes screen and its format picker.
+- **`.yml` import cannot be automated the way `.paprikarecipes` can.** The app
+  declares only its own two UTIs in `CFBundleDocumentTypes`, and that declaration
+  is what tells it which of its ~20 importers to use. So `open -a` routes a
+  `.paprikarecipes` straight to a single confirm sheet, while a `.yml` has to go
+  through the Import Recipes screen *and its format picker* — the picker supplies
+  the format hint the UTI would otherwise carry. Driving that screen end to end
+  (file chooser plus format popup) is not implemented. It is probably possible
+  with the same System Events approach, but a file chooser and a popup menu are
+  weaker identifying surfaces than a sheet that names itself, so it would be
+  blinder automation than `--confirm` currently is.
+
+  Note this makes the JSON format the *only* automatable one today. If a caller
+  needs unattended import, use `build`/`bundle`, not `yaml`.
+
+- **`on_favorites` is documented for `.yml` but does not take effect.** Verified
+  by import: everything else byte-identical, favorite flag still 0. The vendor's
+  example uses the YAML 1.1 bareword `yes`, which JSON cannot emit. Whether a
+  quoted `"yes"` would work, or the importer ignores the field, needs a second
+  import to distinguish — the command warns rather than guessing.
 
 - **`photos` array structure is unknown.** Empty in every export entry
   inspected, and `ZRECIPEPHOTO` was likewise empty locally, so multi-photo

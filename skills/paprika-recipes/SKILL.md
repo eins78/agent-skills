@@ -162,9 +162,20 @@ one silently changes the text rather than failing, so the recipe imports wrong
 instead of not importing.
 
 ⚠️ macOS does **not** associate `.yml` with Paprika, so `import` (which uses
-`open`) will not route it. Pick the file on the app's Import Recipes screen and
-choose the YAML format. End-to-end import of a JSON-style `.yml` through
-Paprika's own importer is **untested** — see `references/recipe-format.md`.
+`open`) will not route it — the app declares only its own two UTIs, and the file
+type is what tells it which of its ~20 importers to use. Pick the file on the
+app's Import Recipes screen instead and choose the YAML format, labelled
+**`YAML (yml, yaml)`** on iOS.
+
+**Verified end to end 2026-08-12** (imported on iOS, read back from the macOS
+database): 13 of 14 fields byte-identical, including a mid-line colon, lines
+starting with `-` and `#`, a literal `---` line, tabs, indents, trailing spaces,
+blank lines, both quote styles and full Unicode.
+
+⚠️ **`on_favorites` does not take effect.** The vendor's example uses the YAML
+bareword `on_favorites: yes`, which JSON cannot emit — the one field where this
+approach cannot reproduce their example. The command warns when it is set; set
+the favorite in the app. Details in `references/recipe-format.md`.
 
 ### Linking to another recipe — `[recipe:Name]`
 
