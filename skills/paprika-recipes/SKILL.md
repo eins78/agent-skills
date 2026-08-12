@@ -112,6 +112,47 @@ Rules that actually bite:
   but no method, leave `directions` empty and record that in `notes`. A
   plausible-sounding invented step is indistinguishable from a real one once
   it's in the library.
+- **Link to another recipe with `[recipe:Name]`** — see below. Whenever a
+  source says *"serve with X"* or calls for a component the library already
+  has, that is a link, not a plain string.
+
+### Linking to another recipe — `[recipe:Name]`
+
+Paprika resolves a `[recipe:Exact Recipe Name]` token in a text field into a
+tappable link to that recipe. It is **plain text in the stored field**, not a
+separate column — which is why it survives the interchange format untouched.
+
+```
+1 tbsp [recipe:Spice Rub]              inline, after a quantity
+Vegan Ricotta ([recipe:Cashew Ricotta]) in parentheses, beside a label
+Serve with:
+[recipe:Chili / Garlic Oil]           standalone on its own line
+```
+
+What is verified:
+
+- **It resolves by name, not by uid.** The token carries a name; the name may
+  contain spaces, slashes and punctuation. It must match the target's `name`
+  **exactly** — so rename a linked recipe and the link goes stale.
+- **It round-trips.** The token survives `get` → `build` → `import` and appears
+  verbatim in Paprika's own `.paprikarecipes` export. Nothing escapes or
+  rewrites it.
+- **An unknown target is harmless to write.** Importing a recipe whose token
+  names a recipe that does not exist succeeds normally — no error, no crash.
+- **Rendering is confirmed for `ingredients`.** A token in that field displays
+  as a tappable link in the app.
+
+What is **not** verified: how a token renders in `directions` or `notes` (it is
+*stored* there fine, and real libraries do use it in `notes`), and what an
+unknown target looks like on screen — plain literal text or a dead link. If
+that matters, put links in `ingredients`, which is the field that is proven.
+
+Because a link is just text, **check the target exists before emitting one**:
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-db.mjs list --search "Spice Rub" \
+  | jq -r '.[].name'   # must print the name exactly as you'll write it
+```
 
 **3 — Build and import.**
 
@@ -135,7 +176,10 @@ The single most destructive behaviour in this format, verified by test:
   image sets the photo to null *and deletes the JPEG from disk*. There is no
   "leave the photo alone" — silence means delete.
 - **`photo_data` without a `photo` filename terminates the app** mid-import.
-  No crash report, no recipe written, no error dialog — the app is simply gone.
+  No recipe written, no error dialog — the app is simply gone. macOS writes a
+  crash report (`~/Library/Logs/DiagnosticReports/`): `SIGABRT` from an
+  uncaught exception on an `NSManagedObjectContext` queue. Check there before
+  concluding an import "did nothing".
   The filename is where the decoded JPEG gets written; it is not optional.
 
 `paprika-recipe.mjs build` handles both: it re-embeds the current photo
@@ -214,10 +258,14 @@ real libraries:
 The deciding question is **"would the user make this component for something
 else?"** — if the source itself uses it in more than one dish, that's a yes.
 
-Nothing in the Paprika format links one recipe to another. The reference is
-just the component's name appearing as an ingredient line, so **the names have
-to match exactly**, and the shopping list will show the component as a single
-line rather than expanding into its own ingredients.
+**Extracting is cheap because of `[recipe:Name]`** (above): each dish links to
+the component and the link is tappable, so the two aren't merely related by a
+matching string. Write the ingredient line as `80 g [recipe:Garlic Confit]`,
+not a bare name.
+
+The one real cost that remains: the shopping list adds the component as a
+**single line** rather than expanding it into its own ingredients, so shopping
+for a dish you haven't already got the component for takes two steps.
 
 **Ask rather than guess.** Check the library's existing habit first
 (`paprika-db.mjs categories` — a large "Condiments"-style bucket is a strong

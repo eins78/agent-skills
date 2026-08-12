@@ -161,7 +161,8 @@ function normalize(input, options = {}) {
  * Three behaviours measured against Paprika 3.8.4 dictate this logic:
  *
  *   1. photo_data with a null/absent "photo" filename TERMINATES the app
- *      mid-import — no crash report, no recipe written. The filename is not
+ *      mid-import — no recipe written, no in-app error (macOS does log a
+ *      crash report). The filename is not
  *      decoration; it is where the decoded JPEG gets written on disk.
  *   2. An import REPLACES photo state rather than merging it. A file without
  *      photo_data clears the recipe's photo and deletes the JPEG from disk,

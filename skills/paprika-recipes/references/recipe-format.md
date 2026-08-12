@@ -53,6 +53,35 @@ Paprika's own files even when empty, so `paprika-recipe.mjs` emits all of them.
 | `photo_large` | string \| null | Null in every export entry inspected. |
 | `photo_data` | string \| null | **base64 JPEG**, embedded directly in the JSON. This is how a photo travels in an interchange file. 206 of 219 entries in a real export carried one. |
 
+### Recipe links — `[recipe:Name]`
+
+A text field may contain `[recipe:Exact Recipe Name]`, which Paprika renders as
+a tappable link to that recipe. It is **plain text inside the existing column**
+— there is no join table, no id, and no separate field.
+
+```
+1 tbsp [recipe:Spice Rub]
+Vegan Ricotta ([recipe:Cashew Ricotta])
+Serve with:
+[recipe:Chili / Garlic Oil]
+```
+
+| Property | Status |
+|---|---|
+| Resolves by **name**, not uid | Verified — the token contains only a name |
+| Name may contain spaces, `/`, punctuation | Verified (`Chili / Garlic Oil`) |
+| Survives `.paprikarecipe` gzip round trip | Verified — `get` → `build` → `inspect` |
+| Survives Paprika's own `.paprikarecipes` export | Verified — present verbatim in export entries |
+| Stored verbatim on import (`ingredients`, `directions`) | Verified — re-read from the DB after import |
+| Unknown target is safe to import | Verified — import succeeded, no error, no crash |
+| Renders as a link in `ingredients` | Verified in the app |
+| Renders as a link in `directions` / `notes` | **Untested** — stored fine; real libraries do use `notes` |
+| How an unknown target renders (literal text vs dead link) | **Untested** |
+
+Because the target is matched by name, **renaming a linked recipe breaks the
+link silently** — nothing validates it. Check the target exists before writing
+one.
+
 Fields present in the local database but *not* in the interchange format:
 `scale` (Paprika's serving multiplier), `on_favorites`, `in_trash`.
 
@@ -109,9 +138,12 @@ database and on disk.
 Three conclusions, all load-bearing:
 
 1. **`photo_data` with a null or absent `photo` filename kills Paprika.** The
-   process is gone, nothing is imported, and — notably — **no crash report is
-   written** to `~/Library/Logs/DiagnosticReports`, so this looks at first like
-   "the import silently did nothing". Reproduced twice.
+   process is gone and nothing is imported. There is no in-app error, so it
+   looks at first like "the import silently did nothing" — but macOS **does**
+   write a crash report to `~/Library/Logs/DiagnosticReports`: `SIGABRT` raised
+   by `uncaught_exception_handler` on an `NSManagedObjectContext` queue, i.e.
+   an uncaught exception during the Core Data import. Reproduced twice, one
+   report each. Check there before concluding the import was a no-op.
 2. **An import replaces photo state; it never merges.** Tests D and E show that
    anything short of re-supplying `photo_data` deletes the existing photo *and*
    its file. This is the opposite of how categories behave, and it makes the

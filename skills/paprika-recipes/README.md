@@ -164,7 +164,9 @@ paprika-recipes/
   an existing value on update was not determined. (Photo clearing *is* known —
   it happens by default.)
 - **Paprika can be terminated by a malformed file.** `photo_data` with a null
-  `photo` filename ends the process mid-import, with no crash report. The
+  `photo` filename ends the process mid-import. macOS *does* write a crash
+  report — an uncaught exception on an `NSManagedObjectContext` queue — but
+  there is no in-app error, so it still presents as "the import did nothing". The
   script cannot emit that shape, but a hand-written file can. Worth reporting
   to Hindsight Labs; it is an unhandled nil, not a data problem.
 - **Only JPEG photos are tested.** `--photo` base64s the bytes it is given and
