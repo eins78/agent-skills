@@ -10,6 +10,8 @@ Two zero-dependency `.mjs` helpers (`paprika-db.mjs`, `paprika-recipe.mjs`) plus
 
 **Recipe links are documented as part of the format.** A text field may contain `[recipe:Exact Recipe Name]`, which Paprika renders as a tappable link — plain text in the existing column, no join table and no id, which is why it survives the interchange format untouched. It resolves by name (so renaming a target breaks the link silently), an unknown target imports harmlessly, and rendering is verified for `ingredients` (observed in the iOS app; the stored format is identical on both platforms). This matters for the "one source, several recipes" decision: extracting a reusable component into its own recipe is cheap precisely because the dishes can link to it.
 
+**Link both ways.** A link creates no reverse pointer, so the skill also has the component link back to its dishes in `notes` — otherwise opening the component (exactly what happens when deciding whether to make a batch) gives no route to the dishes it exists for. Documented with its two costs: `notes` rendering is unverified, and every back-link is another name a rename can silently break.
+
 The headline capability is turning **any** text source into a real recipe — a page the web clipper failed on, prose, a PDF, a photo of a cookbook page — since the clipper handles URLs well and nothing else at all.
 
 Four behaviours that are easy to get wrong and are documented as hazards:

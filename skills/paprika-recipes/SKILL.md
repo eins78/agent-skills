@@ -162,6 +162,34 @@ What is **not** verified: how a token renders in `directions` or `notes` (it is
 unknown target looks like on screen — plain literal text or a dead link. If
 that matters, put links in `ingredients`, which is the field that is proven.
 
+#### Link both ways
+
+A dish links **down** to its component in `ingredients`. Also link the component
+**back up** to the dishes that use it, in its `notes`:
+
+```
+Used with:
+[recipe:Roast Carrots with Spice Rub]
+[recipe:Grilled Aubergine with Spice Rub]
+```
+
+Without it the relationship is one-way. Opening the component — which is exactly
+what happens when someone is deciding whether to make a batch — gives no way to
+reach the dishes it was made for. That is the moment the answer is most useful.
+
+Keep it to the list. The dish already describes the dish; a paragraph here just
+goes stale when a dish changes.
+
+Two caveats specific to this direction:
+
+- It lives in `notes`, where **rendering is unverified** (see above). Real
+  libraries do use links there, but if you need a guaranteed-rendering link,
+  `ingredients` is the proven field.
+- Every back-link is another name to keep in sync. Links resolve by name, so
+  renaming a dish silently breaks its component's back-link as well as any
+  forward link. Prefer back-links on components that are genuinely reused;
+  a one-off does not need one.
+
 Because a link is just text, **check the target exists before emitting one**:
 
 ```bash
@@ -276,7 +304,8 @@ else?"** — if the source itself uses it in more than one dish, that's a yes.
 **Extracting is cheap because of `[recipe:Name]`** (above): each dish links to
 the component and the link is tappable, so the two aren't merely related by a
 matching string. Write the ingredient line as `80 g [recipe:Garlic Confit]`,
-not a bare name.
+not a bare name — and link the component back to its dishes in `notes`, so the
+set is navigable from either end.
 
 The one real cost that remains: the shopping list adds the component as a
 **single line** rather than expanding it into its own ingredients, so shopping

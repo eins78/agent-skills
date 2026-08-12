@@ -82,6 +82,19 @@ Because the target is matched by name, **renaming a linked recipe breaks the
 link silently** — nothing validates it. Check the target exists before writing
 one.
 
+Links are one-directional: a token in a dish creates no reverse pointer on the
+component. To make a component/dish set navigable from either end, write the
+reverse links explicitly in the component's `notes`:
+
+```
+Used with:
+[recipe:Roast Carrots with Spice Rub]
+[recipe:Grilled Aubergine with Spice Rub]
+```
+
+Note this puts links in `notes`, whose rendering is untested (see the table
+above), and adds another name that a rename can break.
+
 Fields present in the local database but *not* in the interchange format:
 `scale` (Paprika's serving multiplier), `on_favorites`, `in_trash`.
 
