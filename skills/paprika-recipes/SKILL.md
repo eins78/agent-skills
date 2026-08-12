@@ -140,7 +140,8 @@ What is verified:
 - **An unknown target is harmless to write.** Importing a recipe whose token
   names a recipe that does not exist succeeds normally — no error, no crash.
 - **Rendering is confirmed for `ingredients`.** A token in that field displays
-  as a tappable link in the app.
+  as a tappable link — observed in the Paprika **iOS** app. The stored format is
+  identical on both platforms, but rendering was not separately checked on macOS.
 
 What is **not** verified: how a token renders in `directions` or `notes` (it is
 *stored* there fine, and real libraries do use it in `notes`), and what an

@@ -74,7 +74,7 @@ Serve with:
 | Survives Paprika's own `.paprikarecipes` export | Verified — present verbatim in export entries |
 | Stored verbatim on import (`ingredients`, `directions`) | Verified — re-read from the DB after import |
 | Unknown target is safe to import | Verified — import succeeded, no error, no crash |
-| Renders as a link in `ingredients` | Verified in the app |
+| Renders as a link in `ingredients` | Verified in the Paprika **iOS** app; not separately checked on macOS |
 | Renders as a link in `directions` / `notes` | **Untested** — stored fine; real libraries do use `notes` |
 | How an unknown target renders (literal text vs dead link) | **Untested** |
 
