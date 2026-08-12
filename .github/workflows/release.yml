@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -45,18 +45,27 @@ jobs:
 
       - name: Create Release PR or Publish
         id: changesets
-        uses: changesets/action@v1
+        # v2 pushes release commits and tags through the GitHub API by default,
+        # which signs them with GitHub's web-flow key. That is what makes the
+        # release commit show as Verified and satisfies the signed-commits rule
+        # on main. Do not set push-with-git-cli: true — that reverts to the
+        # unsigned git-CLI push this upgrade exists to fix.
+        uses: changesets/action@v2
         with:
-          version: pnpm run version
-          publish: bash .dev/scripts/create-release.sh
-          commit: "release: ${{ steps.nextver.outputs.version }}"
-          title: "release: ${{ steps.nextver.outputs.version }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version-script: pnpm run version
+          publish-script: bash .dev/scripts/create-release.sh
+          commit-message: "release: ${{ steps.nextver.outputs.version }}"
+          pr-title: "release: ${{ steps.nextver.outputs.version }}"
+          # v2 no longer reads the GITHUB_TOKEN env var; the token must come
+          # through this input, in both push modes.
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Assign release PR
-        if: steps.changesets.outputs.pullRequestNumber
+        # Output renamed pull-request-number -> pr-number in v2. This one fails
+        # silently if missed: the `if:` simply evaluates false and the step is
+        # skipped, so the PR would just never get assigned.
+        if: steps.changesets.outputs.pr-number
         env:
-          PR_NUMBER: ${{ steps.changesets.outputs.pullRequestNumber }}
+          PR_NUMBER: ${{ steps.changesets.outputs.pr-number }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr edit "$PR_NUMBER" --add-assignee eins78
