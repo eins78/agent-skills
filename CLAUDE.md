@@ -114,7 +114,7 @@ Every skill MUST have a `metadata.version` field in its SKILL.md frontmatter.
 **When any skill version is bumped, add a changeset:**
 
 ```bash
-pnpm changeset   # creates a timestamped file in .changeset/ — edit bump type and description
+pnpm add-changelog   # creates a timestamped file in .changeset/ — edit bump type and description
 ```
 
 The changeset describes what changed and at what semver level:
@@ -122,9 +122,44 @@ The changeset describes what changed and at what semver level:
 - Skill minor → plugin `minor` changeset (at minimum)
 - Skill major → plugin `major` changeset
 
+### How long a changeset should be
+
+**A headline line, plus at most one short paragraph.** That is the whole entry.
+
+```markdown
+**`pandoc`** — `md2kindle-epub.sh` no longer emits EPUBs without a title.
+
+`dc:title` is required EPUB metadata, but `--title` was optional and its absence
+produced a spec-invalid book silently. The script now derives a title from the
+first H1 of the first input, falling back to the output filename.
+```
+
+Shape: bold backticked skill name, em dash, one sentence naming what changed.
+Then one paragraph saying what it is for. No headings, no bullet lists.
+
+**Why:** a changeset is a **release note**, answering one question — *does this
+release affect me?* It is not a design document. The reasoning, the hazards, the
+measurements and the rejected alternatives belong in the skill's `SKILL.md`,
+`README.md` and `references/`, which is where someone hits them while working.
+
+Three consequences that make this a rule rather than a preference:
+
+- The changeset text is copied **verbatim** into `CHANGELOG.md`, and
+  `create-release.sh` feeds that section straight to `gh release create
+  --notes-file`. It is the public release announcement, not an internal note.
+- A published changelog entry is **immutable**. A fact restated there is the one
+  copy that can never be corrected when it drifts.
+- Nobody reads six paragraphs to decide whether to upgrade.
+
+**Cut, do not compress.** Removing detail is the point; packing it into denser
+sentences defeats it. If something feels too important to cut, that is a signal
+it belongs in the README — put it there and link, rather than keeping it here.
+
 ### Changeset `bumps:` Block (required)
 
-Every changeset that modifies a skill MUST include a `<!-- bumps: -->` HTML comment block with structured YAML listing affected skills and their bump types. This is parsed by `bump-skill-versions.sh` to automatically update each skill's `metadata.version` in its SKILL.md frontmatter. The block is hidden from the rendered CHANGELOG.
+Every changeset that modifies a skill MUST include a `<!-- bumps: -->` HTML comment block with structured YAML listing affected skills and their bump types. This is parsed by `bump-skill-versions.sh` to automatically update each skill's `metadata.version` in its SKILL.md frontmatter.
+
+The block is **stripped from the rendered CHANGELOG by `sync-versions.sh`**, which runs after `changeset version` in `pnpm run version`. It is not hidden by changesets itself — `changelog-github` copies the changeset summary verbatim, so without that strip the block renders into `CHANGELOG.md` and then into the published GitHub Release. (It did: entries up to 4.2.0 carried it visibly until 2026-08-12.) Keep writing the block in the changeset — it is load-bearing there.
 
 ```markdown
 ---

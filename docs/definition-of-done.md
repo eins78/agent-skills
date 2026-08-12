@@ -34,6 +34,6 @@ Checklist that must pass before any skill PR is merged.
   - Patch (`x.y.Z`): wording, bug fixes
   - Minor (`x.Y.0`): new sections, new patterns
   - Major (`X.0.0`): structural changes, removed sections
-- [ ] **Changeset added** — `pnpm changeset` run and changeset file describes the change with correct bump type
+- [ ] **Changeset added** — `pnpm add-changelog` run and changeset file describes the change with correct bump type
 - [ ] **`bumps:` block in changeset** — every changeset that touches a skill includes a `<!-- bumps: skills: ... -->` block
 - [ ] **Plugin version synced** — verified via `pnpm run version` (do NOT edit version fields manually)

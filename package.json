@@ -15,7 +15,7 @@
     "test:council": "node --test skills/ai-council-review/tests/*.test.mjs",
     "typecheck:council": "tsc -p skills/ai-council-review/jsconfig.json",
     "postinstall": "skills add . --global --skill '*' --agent claude-code -y < /dev/null",
-    "changeset": "cp .changeset/_template \".changeset/$(date +%Y%m%d-%H%M%S).md\" && echo 'Created changeset — edit it now'",
+    "add-changelog": "cp .changeset/_template \".changeset/$(date +%Y%m%d-%H%M%S).md\" && echo 'Created changelog entry — edit it now'",
     "version": "bash .dev/scripts/bump-skill-versions.sh && changeset version && bash .dev/scripts/sync-versions.sh",
     "validate": "bash .dev/scripts/validate-skills.sh",
     "release": "pnpm run version && git add -A && git commit -m \"chore: release v$(jq -r .version package.json)\" && git tag \"v$(jq -r .version package.json)\" && echo 'Release committed and tagged. Run: git push --follow-tags'"
