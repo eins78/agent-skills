@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.3.1
+
+### Patch Changes
+
+- [#53](https://github.com/eins78/agent-skills/pull/53) [`c0b9eaa`](https://github.com/eins78/agent-skills/commit/c0b9eaa61ef0d469460ab8e26426c6006d71c256) - **`chrome-browser`** — documents the conflict with the official `claude-plugins-official/playwright` plugin.
+
+  The official `playwright` plugin from Anthropic's marketplace registers `npx @playwright/mcp@latest` without `--cdp-endpoint`, which causes Playwright to spawn its own bundled Chromium instead of attaching to the CfT instance set up by this skill — defeating the persistent-session purpose entirely. Added a callout in INSTALL.md step 3 with two resolution paths (disable the plugin via `~/.claude/settings.json`, or patch the plugin's bundled `.mcp.json`) plus a verification command.
+
 ## 4.3.0
 
 ### Minor Changes
