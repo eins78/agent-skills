@@ -36,8 +36,17 @@ snapshot instead of the live database.
 ### `scripts/paprika-recipe.mjs` — create
 
 Gzip via Node's built-in `node:zlib`; ZIP by shelling out to the system `zip`
-rather than hand-rolling a ZIP writer. Subcommands: `build`, `bundle`,
+rather than hand-rolling a ZIP writer. Subcommands: `build`, `bundle`, `yaml`,
 `import`, `inspect`.
+
+`yaml` emits the vendor's `.yml` import format **as JSON**, since YAML is a
+superset of JSON. This is not a shortcut — it is the fix for the vendor's own
+warning that the format "is quite strict with regards to whitespace and
+indentation". Hand-written block YAML fails badly rather than loudly: a
+mis-indented line inside a `|` block silently changes the text, so the recipe
+imports *wrong* instead of not importing. JSON has no indentation, no pipe
+blocks and no quoting rules, so the failure mode cannot occur. It filters to the
+15 documented YAML fields and warns about anything dropped.
 
 `import --confirm` drives the app's modal sheets via System Events. It reads
 the sheet's static text first and only clicks a button named `Import` on a
@@ -155,6 +164,14 @@ paprika-recipes/
 ```
 
 ## Known gaps / future improvements
+
+- **`.yml` import is not verified end to end.** The emitted file parses through
+  a standard YAML parser as the documented shape, and the vendor documents the
+  format, but Paprika's own `YamlImporter` has not been fed one. Testing means
+  creating a recipe in a real library. `references/recipe-format.md` says how to
+  settle it with one throwaway. Also note `.yml` is absent from the Mac app's
+  `CFBundleDocumentTypes`, so `import` cannot route it — it goes through the
+  app's Import Recipes screen and its format picker.
 
 - **`photos` array structure is unknown.** Empty in every export entry
   inspected, and `ZRECIPEPHOTO` was likewise empty locally, so multi-photo

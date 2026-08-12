@@ -130,6 +130,42 @@ Rules that actually bite:
   source says *"serve with X"* or calls for a component the library already
   has, that is a link, not a plain string.
 
+### Choosing an import format
+
+| Want | Use |
+|---|---|
+| A photo on the recipe, or updating an existing recipe by `uid` | `.paprikarecipe` / `.paprikarecipes` |
+| Plain text, no photos — the simplest path | `.yml` |
+
+`.yml` is a vendor-documented plain-text format
+(<http://www.paprikaapp.com/help/ios/>). Only `name`, `ingredients` and
+`directions` are required. It carries **fewer fields** than the JSON format —
+no `total_time`, `description`, `image_url` or `uid` — so it cannot update an
+existing recipe and cannot carry a photo.
+
+**Write it as JSON.** YAML is a superset of JSON, so `JSON.stringify` output is
+valid YAML. The vendor warns their format "is quite strict with regards to
+whitespace and indentation"; that applies to hand-written block YAML, and
+emitting JSON removes the problem entirely — no indentation to get wrong, no
+`|` blocks, no quoting rules.
+
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs yaml recipe.json --out ~/Downloads/r.yml
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs yaml a.json b.json --out ~/Downloads/two.yml
+```
+
+Several recipes become a JSON array — exactly the YAML list the vendor's
+multi-recipe example shows. The command warns about any field it drops.
+
+⚠️ **Do not hand-write block YAML** with `|` blocks. A mis-indented line inside
+one silently changes the text rather than failing, so the recipe imports wrong
+instead of not importing.
+
+⚠️ macOS does **not** associate `.yml` with Paprika, so `import` (which uses
+`open`) will not route it. Pick the file on the app's Import Recipes screen and
+choose the YAML format. End-to-end import of a JSON-style `.yml` through
+Paprika's own importer is **untested** — see `references/recipe-format.md`.
+
 ### Linking to another recipe — `[recipe:Name]`
 
 Paprika resolves a `[recipe:Exact Recipe Name]` token in a text field into a

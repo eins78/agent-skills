@@ -53,6 +53,56 @@ Paprika's own files even when empty, so `paprika-recipe.mjs` emits all of them.
 | `photo_large` | string \| null | Null in every export entry inspected. |
 | `photo_data` | string \| null | **base64 JPEG**, embedded directly in the JSON. This is how a photo travels in an interchange file. 206 of 219 entries in a real export carried one. |
 
+### The `.yml` import format
+
+Paprika also imports a **plain-text YAML file**, documented by the vendor at
+<http://www.paprikaapp.com/help/ios/> ("YAML Format"). It is far simpler to
+produce than `.paprikarecipe` — no gzip, no ZIP — and it is the same format on
+iOS and macOS (the Mac binary carries a `YamlImporter` class).
+
+Documented fields — **`name`, `ingredients` and `directions` are the only
+required ones**, and the order does not matter:
+
+```
+name  servings  source  source_url  prep_time  cook_time  on_favorites
+categories  nutritional_info  difficulty  rating  notes  photo
+ingredients  directions
+```
+
+⚠️ This is a **subset** of the JSON interchange format above. `total_time`,
+`description`, `image_url`, `uid`, `hash` and `photo_hash` are **not** in it.
+`paprika-recipe.mjs yaml` warns about every field it drops rather than letting
+one vanish quietly.
+
+Several recipes go in one file as a YAML list (`- name: …` per entry).
+
+**Emit JSON, not hand-written YAML.** The vendor warns the format "is quite
+strict with regards to whitespace and indentation" — that warning applies to
+the block style in their examples, where a mis-indented line under a `|` block
+silently changes the text. YAML is a superset of JSON, so `JSON.stringify`
+output *is* valid YAML, and it removes the whole class of problem: no
+indentation, no pipe blocks, no quoting rules, and newlines inside
+`ingredients`/`directions` become `\n` escapes instead of significant leading
+whitespace. Several recipes become a JSON array, which is exactly the YAML list
+their multi-recipe example shows.
+
+| Property | Status |
+|---|---|
+| Vendor documents `.yml` as a supported import type | Verified — vendor help page |
+| Required fields are `name`, `ingredients`, `directions` | Verified — vendor help page |
+| macOS build has a YAML importer, not just iOS | Verified — `YamlImporter` class in the app binary |
+| `.yml` is **not** a declared document type on macOS | Verified — absent from `CFBundleDocumentTypes`, so it is chosen via the importer's format picker rather than opened from Finder |
+| JSON output parses as YAML, as a list of mappings, with newlines and Unicode intact | Verified — round-tripped through a standard YAML parser |
+| Paprika's own importer accepts the JSON-style file end to end | **Untested** — see below |
+
+The last row is the one that matters and it is not proven. Confirming it means
+importing, which on a real library means creating recipes; it was not worth
+duplicating rows to test. The reasoning is strong (YAML 1.2 is a JSON superset,
+and the emitted file parses correctly as the documented shape) but reasoning is
+not a test. **To settle it in a minute:** write one throwaway recipe with
+`yaml --out ~/Downloads/test.yml`, import it through the app's Import Recipes
+screen picking the YAML format, then delete it.
+
 ### Recipe links — `[recipe:Name]`
 
 A text field may contain `[recipe:Exact Recipe Name]`, which Paprika renders as

@@ -338,6 +338,72 @@ function cmdBundle(args) {
 }
 
 /**
+ * Fields the vendor documents for the `.yml` import format.
+ * Anything else is dropped rather than silently hoped-for.
+ * @see http://www.paprikaapp.com/help/ios/ — "YAML Format"
+ */
+const YAML_FIELDS = [
+  'name', 'servings', 'source', 'source_url', 'prep_time', 'cook_time',
+  'on_favorites', 'categories', 'nutritional_info', 'difficulty', 'rating',
+  'notes', 'photo', 'ingredients', 'directions',
+]
+
+/**
+ * Write recipes as a `.yml` import file.
+ *
+ * The trick: YAML is a superset of JSON, so emitting JSON *is* emitting valid
+ * YAML. The vendor warns the format "is quite strict with regards to whitespace
+ * and indentation" — that warning applies to hand-written block YAML, and
+ * JSON.stringify sidesteps it completely: no indentation to get wrong, no pipe
+ * blocks, no quoting rules, and newlines inside ingredients/directions become
+ * plain \n escapes instead of significant leading whitespace.
+ *
+ * Several recipes become a JSON array, which is exactly the YAML list the
+ * vendor's multi-recipe example shows.
+ * @param {string[]} args
+ */
+function cmdYaml(args) {
+  const { positional: sources, flags } = parseArgs(args, ['out'])
+  if (sources.length === 0) {
+    fail('usage: paprika-recipe.mjs yaml <a.json> [b.json ...] --out FILE.yml')
+  }
+  if (typeof flags.out !== 'string') fail('yaml requires --out FILE.yml')
+  const out = resolve(flags.out)
+
+  const dropped = new Set()
+  const recipes = sources.map((source) => {
+    const full = normalize(readJson(source), { noPhoto: true })
+    /** @type {Record<string, unknown>} */
+    const trimmed = {}
+    for (const [key, value] of Object.entries(full)) {
+      if (value === undefined || value === null || value === '') continue
+      if (YAML_FIELDS.includes(key)) trimmed[key] = value
+      else dropped.add(key)
+    }
+    if (!trimmed.name) fail(`${source}: name is required`)
+    // The vendor lists name, ingredients and directions as the only required
+    // fields; an empty one imports, but warn so it is never a surprise.
+    for (const req of ['ingredients', 'directions']) {
+      if (!trimmed[req]) console.error(`warning: ${trimmed.name}: no ${req}`)
+    }
+    return trimmed
+  })
+
+  if (dropped.size > 0) {
+    console.error(
+      `warning: dropped field(s) not in the documented YAML format: ${[...dropped].sort().join(', ')}`
+    )
+  }
+
+  // A single recipe stays a mapping; several become a list. Both match the
+  // vendor's examples. Written UTF-8, which the vendor requires explicitly.
+  const payload = recipes.length === 1 ? recipes[0] : recipes
+  writeFileSync(out, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
+  console.error(`built: ${out} (${recipes.length} recipe${recipes.length === 1 ? '' : 's'})`)
+  process.stdout.write(`${out}\n`)
+}
+
+/**
  * Run an AppleScript snippet, returning its output.
  * @param {string} script
  * @returns {string}
@@ -474,6 +540,9 @@ const USAGE = `paprika-recipe.mjs — create Paprika recipes via the app's own i
                           Write one .paprikarecipe (gzipped JSON)
   bundle <a.json> [b.json ...] --out FILE.paprikarecipes
                           Write a ZIP of several recipes
+  yaml <a.json> [b.json ...] --out FILE.yml
+                          Write the vendor's plain-text .yml import format
+                          (JSON is valid YAML, so no whitespace pitfalls)
   import <file>           Hand the file to ${APP_NAME}
   inspect <file> [--raw]  Read a .paprikarecipe or .paprikarecipes back as JSON
                           (embedded photos summarized unless --raw)
@@ -503,6 +572,9 @@ switch (command) {
     break
   case 'bundle':
     cmdBundle(args)
+    break
+  case 'yaml':
+    cmdYaml(args)
     break
   case 'import':
     cmdImport(args)
