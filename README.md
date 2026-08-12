@@ -162,7 +162,7 @@ Claude loads both skills when context matches. No formal import system — just 
 When making changes, add a changeset to describe your change:
 
 ```bash
-pnpm changeset
+pnpm add-changelog
 ```
 
 Edit the created file to set the bump type (`patch`, `minor`, or `major`), describe the change, and add a `<!-- bumps: -->` block naming the affected skills:

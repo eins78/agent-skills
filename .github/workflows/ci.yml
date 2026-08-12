@@ -34,7 +34,7 @@ jobs:
           changeset_files=$(find .changeset -name '*.md' -not -name 'README.md' -not -name '_template' 2>/dev/null || true)
 
           if [ -z "$changeset_files" ]; then
-            echo "::warning::No changeset found. If this PR changes skills, run 'pnpm changeset' to add one."
+            echo "::warning::No changeset found. If this PR changes skills, run 'pnpm add-changelog' to add one."
             exit 0
           fi
 

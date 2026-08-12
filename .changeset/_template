@@ -2,7 +2,13 @@
 "@eins78/agent-skills": patch
 ---
 
-Brief description of change
+**`skill-name`** — one sentence naming what changed.
+
+One short paragraph saying what it is for. That is the whole entry: a changeset
+is a release note answering "does this release affect me", not a design
+document. Reasoning, hazards and measurements go in the skill's README and
+references. Cut rather than compress — see CLAUDE.md, "How long a changeset
+should be".
 
 <!--
 bumps:
