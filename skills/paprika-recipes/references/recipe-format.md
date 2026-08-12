@@ -53,97 +53,18 @@ Paprika's own files even when empty, so `paprika-recipe.mjs` emits all of them.
 | `photo_large` | string \| null | Null in every export entry inspected. |
 | `photo_data` | string \| null | **base64 JPEG**, embedded directly in the JSON. This is how a photo travels in an interchange file. 206 of 219 entries in a real export carried one. |
 
-### The `.yml` import format
+### The `.yml` import format — see `import-formats.md`
 
-Paprika also imports a **plain-text YAML file**, documented by the vendor at
-<http://www.paprikaapp.com/help/ios/> ("YAML Format"). It is far simpler to
-produce than `.paprikarecipe` — no gzip, no ZIP — and it is the same format on
-iOS and macOS (the Mac binary carries a `YamlImporter` class).
+Paprika also imports a vendor-documented **plain-text YAML file**
+(<http://www.paprikaapp.com/help/ios/>), on both macOS (File → Import) and iOS
+(Settings → Import). It carries 15 fields to the native format's 24, cannot
+update an existing recipe and cannot carry a photo.
 
-Documented fields — **`name`, `ingredients` and `directions` are the only
-required ones**, and the order does not matter:
+**The skill defaults to the native format for anything it generates.** The full
+comparison — field-by-field coverage, the verified import, why `.yml` cannot be
+automated, and the two cases where it is still the right choice — is in
+[`import-formats.md`](import-formats.md).
 
-```
-name  servings  source  source_url  prep_time  cook_time  on_favorites
-categories  nutritional_info  difficulty  rating  notes  photo
-ingredients  directions
-```
-
-⚠️ This is a **subset** of the JSON interchange format above. `total_time`,
-`description`, `image_url`, `uid`, `hash` and `photo_hash` are **not** in it.
-`paprika-recipe.mjs yaml` warns about every field it drops rather than letting
-one vanish quietly.
-
-Several recipes go in one file as a YAML list (`- name: …` per entry).
-
-**Emit JSON, not hand-written YAML.** The vendor warns the format "is quite
-strict with regards to whitespace and indentation" — that warning applies to
-the block style in their examples, where a mis-indented line under a `|` block
-silently changes the text. YAML is a superset of JSON, so `JSON.stringify`
-output *is* valid YAML, and it removes the whole class of problem: no
-indentation, no pipe blocks, no quoting rules, and newlines inside
-`ingredients`/`directions` become `\n` escapes instead of significant leading
-whitespace. Several recipes become a JSON array, which is exactly the YAML list
-their multi-recipe example shows.
-
-| Property | Status |
-|---|---|
-| Vendor documents `.yml` as a supported import type | Verified — vendor help page |
-| Required fields are `name`, `ingredients`, `directions` | Verified — vendor help page |
-| macOS build imports YAML too, not just iOS | Verified — imported via **File → Import** on macOS 2026-08-12 (`YamlImporter` is also present in the Mac binary) |
-| `.yml` is **not** a declared document type on macOS | Verified — absent from `CFBundleDocumentTypes`, so it is chosen via the importer's format picker rather than opened from Finder |
-| JSON output parses as YAML, as a list of mappings, with newlines and Unicode intact | Verified — round-tripped through a standard YAML parser |
-| Paprika's own importer accepts the JSON-style file end to end | **Verified** — 2026-08-12, see below |
-| `on_favorites` takes effect | **No** — see below |
-
-### The `.yml` import, verified end to end
-
-Settled 2026-08-12 with one throwaway recipe exercising 14 of the 15 documented
-fields. Imported on **iOS** (Settings → Import), then read back from the macOS
-database after sync.
-
-Both platforms accept it, and each has its own entry point:
-
-| Platform | Path | Notes |
-|---|---|---|
-| iOS | Settings → Import | Format picker labelled `YAML (yml, yaml)`; confirm sheet reads `Format: YAML (yml)` |
-| macOS | **File → Import** | Confirmed working 2026-08-12 with the same file. Not reachable via `open`/Finder — the app declares no `.yml` type |
-
-Note macOS import is a *menu* action, not a file-association one: the app claims
-only its own two UTIs, so double-clicking or `open`-ing a `.yml` will not route
-it. The menu path supplies the format hint that the UTI would otherwise carry.
-
-**13 of the 14 fields came back byte-identical** — including every construct that
-breaks hand-written block YAML, which is the whole argument for emitting JSON:
-
-| Construct in the payload | Survived |
-|---|---|
-| A colon inside a value (`2 g salt: fine sea salt`) | ✅ |
-| Line starting with `-` | ✅ |
-| Line starting with `#` | ✅ |
-| A literal `---` document-marker line | ✅ |
-| Tab, two-space indent, trailing spaces, blank line | ✅ |
-| Both quote styles and a bare apostrophe | ✅ |
-| `éàüß`, 日本語, `½`, `°C`, emoji | ✅ |
-| Multi-line `nutritional_info` | ✅ |
-| Two existing categories (no new category created) | ✅ |
-
-**The one failure — `on_favorites`.** A file carrying `on_favorites: true`
-imported cleanly with everything else intact, but the recipe was **not**
-favorited (`ZONFAVORITES = 0`). The vendor's own example writes the YAML 1.1
-bareword `on_favorites: yes`, and **JSON cannot express a bareword** — a quoted
-`"yes"` is a string, not a boolean. So this is the single documented field where
-the JSON-as-YAML approach cannot reproduce the vendor's example, and the only
-known crack in "JSON has no whitespace or quoting pitfalls".
-
-Whether the importer would accept a quoted `"yes"`, or ignores the field
-entirely, is **untested** — distinguishing them needs a second import. The `yaml`
-command warns when the field is set rather than letting it look applied. Set the
-favorite in the app instead.
-
-`photo` is the 15th field and is unreachable here by construction: the format
-carries only a filename with no channel for image bytes, which is case E in the
-photo-behaviour table below — a filename alone preserves nothing.
 
 ### Recipe links — `[recipe:Name]`
 

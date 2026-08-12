@@ -20,6 +20,10 @@ The 14th field is the interesting one. **`on_favorites` does not take effect**: 
 
 **Subsection headers are a formatting feature, and the skill now says so.** A line whose last character is `:` renders as a bold, highlighted header; the same line without the colon renders as an ordinary ingredient. Confirmed by a natural experiment in a real library — `For the Miso Soup:` bold and `For the Dashi (makes a scant 2 cups)` plain, in the same ingredients field of the same recipe. This is documented as an authoring rule because the failure is silent: a section header written without the trailing colon looks fine in the data and simply is not a header on screen. It is a rendering rule only — the colon is ordinary stored text and must never be stripped.
 
+**Two import formats, with a stated default.** The native `.paprikarecipe` / `.paprikarecipes` is what the skill writes: 24 fields against `.yml`'s 15, the only format that can update an existing recipe (via `uid`) or carry a photo, and the only one that can be imported without a human clicking — `open` routes it by declared file type, then `--confirm` clicks a button on a sheet that identifies itself in its own static text.
+
+`.yml` is documented and kept for the two cases it genuinely fits: a human hand-authoring a recipe in a text editor, and one-way conversion scripts from other structured data, where emitting YAML (which is just JSON) is easier than producing a gzipped archive. Both accept the same costs — no update or round-trip, and a manual import. `references/import-formats.md` carries the full comparison, including the measured field-set difference, the one YAML-only field that does not work, why the author-in-YAML-convert-to-native hybrid defeats itself, and an explicit note that the macOS import element tree was not enumerated.
+
 The headline capability is turning **any** text source into a real recipe — a page the web clipper failed on, prose, a PDF, a photo of a cookbook page — since the clipper handles URLs well and nothing else at all.
 
 Four behaviours that are easy to get wrong and are documented as hazards:

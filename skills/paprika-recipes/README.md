@@ -40,13 +40,16 @@ rather than hand-rolling a ZIP writer. Subcommands: `build`, `bundle`, `yaml`,
 `import`, `inspect`.
 
 `yaml` emits the vendor's `.yml` import format **as JSON**, since YAML is a
-superset of JSON. This is not a shortcut — it is the fix for the vendor's own
-warning that the format "is quite strict with regards to whitespace and
-indentation". Hand-written block YAML fails badly rather than loudly: a
-mis-indented line inside a `|` block silently changes the text, so the recipe
-imports *wrong* instead of not importing. JSON has no indentation, no pipe
-blocks and no quoting rules, so the failure mode cannot occur. It filters to the
-15 documented YAML fields and warns about anything dropped.
+superset of JSON — which sidesteps the vendor's own warning that the format "is
+quite strict with regards to whitespace and indentation". It filters to the 15
+documented YAML fields and warns about anything dropped.
+
+**It is not the default.** Anything the skill generates should use `build` /
+`bundle`: the native format carries 24 fields to `.yml`'s 15, is the only one
+that can update a recipe or carry a photo, and is the only one that can be
+imported without a human clicking. `yaml` is kept for hand-authoring and for
+one-way conversion scripts from other structured data. Full comparison and
+evidence: `references/import-formats.md`.
 
 `import --confirm` drives the app's modal sheets via System Events. It reads
 the sheet's static text first and only clicks a button named `Import` on a
@@ -160,30 +163,24 @@ paprika-recipes/
 │   ├── paprika-db.mjs           # read the local library
 │   └── paprika-recipe.mjs       # build + import recipes
 └── references/
-    └── recipe-format.md         # field reference, schema, verified behaviour
+    ├── recipe-format.md         # field reference, schema, verified behaviour
+    └── import-formats.md        # native vs .yml — comparison, evidence, verdict
 ```
 
 ## Known gaps / future improvements
 
-- **`.yml` import cannot be automated the way `.paprikarecipes` can.** The app
-  declares only its own two UTIs in `CFBundleDocumentTypes`, and that declaration
-  is what tells it which of its ~20 importers to use. So `open -a` routes a
-  `.paprikarecipes` straight to a single confirm sheet, while a `.yml` has to go
-  through the Import Recipes screen *and its format picker* — the picker supplies
-  the format hint the UTI would otherwise carry. Driving that screen end to end
-  (file chooser plus format popup) is not implemented. It is probably possible
-  with the same System Events approach, but a file chooser and a popup menu are
-  weaker identifying surfaces than a sheet that names itself, so it would be
-  blinder automation than `--confirm` currently is.
-
-  Note this makes the JSON format the *only* automatable one today. If a caller
-  needs unattended import, use `build`/`bundle`, not `yaml`.
+- **`.yml` import is not automated, deliberately.** The app declares only its own
+  two UTIs, so `open` cannot route a `.yml`; it needs the Import screen and its
+  format picker — roughly 5 UI steps against native's 2, including an
+  `NSOpenPanel` that has to be driven by keystrokes with nothing to verify first.
+  Judged not worth building for a strict subset of a format we can already import
+  in two checked clicks. Reasoning, measurements and the unenumerated-element-tree
+  caveat: `references/import-formats.md`.
 
 - **`on_favorites` is documented for `.yml` but does not take effect.** Verified
-  by import: everything else byte-identical, favorite flag still 0. The vendor's
-  example uses the YAML 1.1 bareword `yes`, which JSON cannot emit. Whether a
-  quoted `"yes"` would work, or the importer ignores the field, needs a second
-  import to distinguish — the command warns rather than guessing.
+  by import. The vendor's example uses the YAML 1.1 bareword `yes`, which JSON
+  cannot emit. Whether a quoted `"yes"` would work needs a second import; the
+  command warns rather than guessing.
 
 - **`photos` array structure is unknown.** Empty in every export entry
   inspected, and `ZRECIPEPHOTO` was likewise empty locally, so multi-photo

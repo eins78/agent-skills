@@ -148,52 +148,42 @@ Rules that actually bite:
   source says *"serve with X"* or calls for a component the library already
   has, that is a link, not a plain string.
 
-### Choosing an import format
+### Choosing an import format — native by default
 
-| Want | Use |
-|---|---|
-| A photo on the recipe, or updating an existing recipe by `uid` | `.paprikarecipe` / `.paprikarecipes` |
-| Plain text, no photos — the simplest path | `.yml` |
+**When this skill writes a file, write the native format.** `.paprikarecipe` for
+one recipe, `.paprikarecipes` for several.
 
-`.yml` is a vendor-documented plain-text format
-(<http://www.paprikaapp.com/help/ios/>). Only `name`, `ingredients` and
-`directions` are required. It carries **fewer fields** than the JSON format —
-no `total_time`, `description`, `image_url` or `uid` — so it cannot update an
-existing recipe and cannot carry a photo.
+```bash
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs build recipe.json --out ~/Downloads/r.paprikarecipe
+node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs bundle a.json b.json --out ~/Downloads/two.paprikarecipes
+```
 
-**Write it as JSON.** YAML is a superset of JSON, so `JSON.stringify` output is
-valid YAML. The vendor warns their format "is quite strict with regards to
-whitespace and indentation"; that applies to hand-written block YAML, and
-emitting JSON removes the problem entirely — no indentation to get wrong, no
-`|` blocks, no quoting rules.
+It carries 24 fields to `.yml`'s 15, is the only format that can **update** an
+existing recipe (via `uid`) or carry a **photo**, and is the only one that can be
+**imported automatically** — `open` routes it by file type, then `--confirm`
+clicks a button on a sheet that identifies itself.
+
+A second format exists: vendor-documented plain-text **`.yml`**, produced by the
+`yaml` subcommand. It is kept and documented, and it is the right choice in two
+cases:
+
+- **a human hand-authoring** a recipe in a text editor and importing it themselves
+- **conversion scripts from other structured data** — when something already holds
+  recipe-shaped data, emitting YAML (which is just JSON) is often easier than
+  producing the gzipped native format
+
+Both cases accept the same two costs: **no update or round-trip** (there is no
+`uid`, so re-running a conversion duplicates rather than corrects) and a
+**manual import** — `.yml` is not associated with the app, so it goes through
+File → Import on macOS or Settings → Import on iOS.
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs yaml recipe.json --out ~/Downloads/r.yml
-node ${CLAUDE_SKILL_DIR}/scripts/paprika-recipe.mjs yaml a.json b.json --out ~/Downloads/two.yml
 ```
 
-Several recipes become a JSON array — exactly the YAML list the vendor's
-multi-recipe example shows. The command warns about any field it drops.
+📖 Full comparison, evidence and the failure modes:
+[`references/import-formats.md`](references/import-formats.md).
 
-⚠️ **Do not hand-write block YAML** with `|` blocks. A mis-indented line inside
-one silently changes the text rather than failing, so the recipe imports wrong
-instead of not importing.
-
-⚠️ macOS does **not** associate `.yml` with Paprika, so `import` (which uses
-`open`) will not route it — the app declares only its own two UTIs, and the file
-type is what tells it which of its ~20 importers to use. Pick the file on the
-app's own import screen instead — **File → Import** on macOS, **Settings →
-Import** on iOS — and choose the YAML format, labelled `YAML (yml, yaml)`.
-
-**Verified end to end 2026-08-12 on both platforms**, read back from the macOS
-database: 13 of 14 fields byte-identical, including a mid-line colon, lines
-starting with `-` and `#`, a literal `---` line, tabs, indents, trailing spaces,
-blank lines, both quote styles and full Unicode.
-
-⚠️ **`on_favorites` does not take effect.** The vendor's example uses the YAML
-bareword `on_favorites: yes`, which JSON cannot emit — the one field where this
-approach cannot reproduce their example. The command warns when it is set; set
-the favorite in the app. Details in `references/recipe-format.md`.
 
 ### Linking to another recipe — `[recipe:Name]`
 
