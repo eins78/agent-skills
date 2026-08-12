@@ -396,17 +396,16 @@ function cmdYaml(args) {
       else dropped.add(key)
     }
     if (!trimmed.name) fail(`${source}: name is required`)
-    // Verified 2026-08-12: a file carrying on_favorites: true imported cleanly
-    // with every other field byte-identical, but the recipe was NOT favorited.
-    // The vendor's example writes the YAML 1.1 bareword `on_favorites: yes`,
-    // which JSON cannot express — a quoted "yes" is a string, not a boolean.
-    // This is the one documented field where the JSON-as-YAML trick cannot
-    // reproduce the vendor's example, so say so rather than let it look applied.
+    // Observed 2026-08-12: a file carrying `"on_favorites": true` -- a valid
+    // YAML boolean in both 1.1 and 1.2 -- imported cleanly with every other
+    // field byte-identical, and the recipe was NOT favorited (ZONFAVORITES=0).
+    // The parser accepted it; the importer did not honour it. Cause UNKNOWN --
+    // do not infer one. Warn rather than let it look applied.
+    // See references/import-formats.md for the checks that would narrow it.
     if (trimmed.on_favorites) {
       console.error(
-        `warning: ${trimmed.name}: on_favorites did not take effect in testing — ` +
-          `Paprika's example uses the YAML bareword "yes", which JSON cannot emit. ` +
-          `Set the favorite in the app.`,
+        `warning: ${trimmed.name}: on_favorites was not honoured by the importer ` +
+          `in testing (cause unknown). Set the favorite in the app.`,
       )
     }
     // The vendor lists name, ingredients and directions as the only required

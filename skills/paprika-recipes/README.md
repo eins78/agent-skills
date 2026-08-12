@@ -177,10 +177,12 @@ paprika-recipes/
   in two checked clicks. Reasoning, measurements and the unenumerated-element-tree
   caveat: `references/import-formats.md`.
 
-- **`on_favorites` is documented for `.yml` but does not take effect.** Verified
-  by import. The vendor's example uses the YAML 1.1 bareword `yes`, which JSON
-  cannot emit. Whether a quoted `"yes"` would work needs a second import; the
-  command warns rather than guessing.
+- **`on_favorites` is documented for `.yml` but is not honoured on import.**
+  Observed: `"on_favorites": true` — a valid YAML boolean — imported cleanly with
+  every other field byte-identical, and the recipe was not favourited
+  (`ZONFAVORITES = 0`). The parser accepted it; the importer did not act on it.
+  **Cause unknown**, deliberately not guessed at. Three open checks that would
+  narrow it are listed in `references/import-formats.md`. The command warns.
 
 - **`photos` array structure is unknown.** Empty in every export entry
   inspected, and `ZRECIPEPHOTO` was likewise empty locally, so multi-photo

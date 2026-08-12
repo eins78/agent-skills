@@ -58,14 +58,35 @@ Computed from the source, not recalled — 24 native fields against 15 YAML ones
 
 **YAML-only (1):** `on_favorites` — **and it does not work.**
 
-That one exclusive field was tested and had no effect: a file carrying
-`on_favorites: true` imported cleanly with every other field byte-identical, but
-the recipe was not favorited (`ZONFAVORITES = 0`). The vendor's own example
-writes the YAML 1.1 bareword `on_favorites: yes`, and **JSON cannot express a
-bareword** — a quoted `"yes"` is a string, not a boolean. Whether the importer
-would accept the quoted form, or ignores the field entirely, is **untested**;
-distinguishing them needs a second import. The `yaml` command warns when the
-field is set rather than letting it look applied.
+That one exclusive field was tested and had no effect.
+
+**What was observed, and nothing more:**
+
+- The file contained `"on_favorites": true`.
+- That is a **valid YAML boolean**. JSON `true` is a boolean in YAML 1.2 and in
+  YAML 1.1 alike; 1.1 additionally accepts `yes`/`no`/`on`/`off`, which is a
+  superset and does not make `true` any less correct.
+- The import **succeeded**, with every other field byte-identical.
+- The recipe did **not** arrive favourited: `ZONFAVORITES = 0`, and the heart in
+  the iOS UI is an unfilled outline.
+
+So the parser accepted the value and the importer did not honour it.
+**The cause is unknown.** Do not infer one from the vendor's example — the field
+is documented and the value we sent was correctly typed.
+
+Three checks would narrow it. All are **open questions, not findings**:
+
+1. Does the importer recognise the key at all? Importing the same recipe written
+   `on_favorites: yes` — the vendor's own spelling — would show whether the
+   spelling matters or the field is simply ignored.
+2. Does macOS behave the same as iOS? Only the iOS result was observed here.
+3. Does Paprika's own exporter emit this field, and under this name? It is
+   **absent from the JSON interchange format** — `paprika-db.mjs` supplies it
+   from the `ZONFAVORITES` column, not from any Paprika-authored file — so the
+   documented YAML name has never been seen round-tripping through the app.
+
+The `yaml` command warns when the field is set, so it is not silently assumed to
+have applied.
 
 **So in practice `.yml` is a strict subset**: it carries nothing native does not,
 and drops ten things native has. Two of those are capabilities, not cosmetics:
