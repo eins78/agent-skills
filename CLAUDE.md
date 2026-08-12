@@ -194,12 +194,22 @@ If two changesets bump the same skill differently, the highest bump wins (major 
 
 ### Automated (GitHub Actions)
 
-Releases are automated via the `changesets/action` GitHub Action:
+Releases are automated via `changesets/action@v2`:
 
 1. Merge a PR with changesets to `main`
 2. The Action creates a "Version Packages" PR with version bumps, CHANGELOG updates, and per-skill marketplace entries
 3. Review and merge the version PR
 4. The Action creates git tags (`v2.2.0` + `lab-notes@1.1.0`) and a GitHub Release
+
+**`main` requires signed commits, and that constrains the action's config.** v2
+pushes release commits and tags through the **GitHub API**, which signs them with
+GitHub's web-flow key so they show as *Verified*. Under v1 the bot pushed with the
+git CLI, producing an unsigned commit that left every release PR
+`mergeStateStatus: BLOCKED` — 4.3.0 had to be merged with `--admin`. So:
+
+- **Do not set `push-with-git-cli: true`.** That reverts to the unsigned push.
+- The token must come through the **`github-token` input**; v2 ignores the
+  `GITHUB_TOKEN` environment variable.
 
 ### Manual (fallback)
 
@@ -207,6 +217,15 @@ Releases are automated via the `changesets/action` GitHub Action:
 GITHUB_TOKEN=$(gh auth token) pnpm run version   # bumps skill versions, consumes changesets, syncs all metadata
 pnpm run release   # runs version, commits, tags — then push with: git push --follow-tags
 ```
+
+Two Changesets v3 behaviours worth knowing before you run these by hand:
+
+- **Node `^22.11 || ^24 || >=26` is required** (declared in `engines`). Node 20
+  no longer works.
+- **`changeset version` exits 1 when there are no pending changesets**, where v2
+  exited 0 silently. `pnpm run version` chains with `&&`, so on an empty run it
+  stops there and `sync-versions.sh` never executes. That is only a local-run
+  surprise — the Action invokes the version script solely when changesets exist.
 
 ### Validation
 
