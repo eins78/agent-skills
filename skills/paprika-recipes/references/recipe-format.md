@@ -90,7 +90,7 @@ their multi-recipe example shows.
 |---|---|
 | Vendor documents `.yml` as a supported import type | Verified — vendor help page |
 | Required fields are `name`, `ingredients`, `directions` | Verified — vendor help page |
-| macOS build has a YAML importer, not just iOS | Verified — `YamlImporter` class in the app binary |
+| macOS build imports YAML too, not just iOS | Verified — imported via **File → Import** on macOS 2026-08-12 (`YamlImporter` is also present in the Mac binary) |
 | `.yml` is **not** a declared document type on macOS | Verified — absent from `CFBundleDocumentTypes`, so it is chosen via the importer's format picker rather than opened from Finder |
 | JSON output parses as YAML, as a list of mappings, with newlines and Unicode intact | Verified — round-tripped through a standard YAML parser |
 | Paprika's own importer accepts the JSON-style file end to end | **Verified** — 2026-08-12, see below |
@@ -102,9 +102,16 @@ Settled 2026-08-12 with one throwaway recipe exercising 14 of the 15 documented
 fields. Imported on **iOS** (Settings → Import), then read back from the macOS
 database after sync.
 
-The format picker is labelled **`YAML (yml, yaml)`** on iOS, and the confirmation
-sheet reads `Format: YAML (yml)`. (The macOS picker was not seen; `YamlImporter`
-is in the Mac binary, but the label there is unconfirmed.)
+Both platforms accept it, and each has its own entry point:
+
+| Platform | Path | Notes |
+|---|---|---|
+| iOS | Settings → Import | Format picker labelled `YAML (yml, yaml)`; confirm sheet reads `Format: YAML (yml)` |
+| macOS | **File → Import** | Confirmed working 2026-08-12 with the same file. Not reachable via `open`/Finder — the app declares no `.yml` type |
+
+Note macOS import is a *menu* action, not a file-association one: the app claims
+only its own two UTIs, so double-clicking or `open`-ing a `.yml` will not route
+it. The menu path supplies the format hint that the UTI would otherwise carry.
 
 **13 of the 14 fields came back byte-identical** — including every construct that
 breaks hand-written block YAML, which is the whole argument for emitting JSON:

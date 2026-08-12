@@ -182,11 +182,11 @@ instead of not importing.
 ⚠️ macOS does **not** associate `.yml` with Paprika, so `import` (which uses
 `open`) will not route it — the app declares only its own two UTIs, and the file
 type is what tells it which of its ~20 importers to use. Pick the file on the
-app's Import Recipes screen instead and choose the YAML format, labelled
-**`YAML (yml, yaml)`** on iOS.
+app's own import screen instead — **File → Import** on macOS, **Settings →
+Import** on iOS — and choose the YAML format, labelled `YAML (yml, yaml)`.
 
-**Verified end to end 2026-08-12** (imported on iOS, read back from the macOS
-database): 13 of 14 fields byte-identical, including a mid-line colon, lines
+**Verified end to end 2026-08-12 on both platforms**, read back from the macOS
+database: 13 of 14 fields byte-identical, including a mid-line colon, lines
 starting with `-` and `#`, a literal `---` line, tabs, indents, trailing spaces,
 blank lines, both quote styles and full Unicode.
 
