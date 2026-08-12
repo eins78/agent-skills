@@ -1,5 +1,35 @@
 # @eins78/agent-skills
 
+## 4.3.0
+
+### Minor Changes
+
+- [#77](https://github.com/eins78/agent-skills/pull/77) [`a18adb2`](https://github.com/eins78/agent-skills/commit/a18adb2b99798c08230440c90b0d9b97616b05e9) - **`dossier`** — a dossier has two genres, and the skill only knew one. Adds the research/decision genre split.
+
+  Preflight now asks whether the reader wants to learn the state of a topic and conclude for themselves, or to be handed a ranked recommendation. The answer selects the template and switches EVALUATE and SYNTHESIZE, and the research genre keeps its assessment at the end — so a reader can take the survey and skip the opinion.
+
+- [#77](https://github.com/eins78/agent-skills/pull/77) [`9a01ae1`](https://github.com/eins78/agent-skills/commit/9a01ae1ecc0087fbcd5a0315793e710504e8ee75) - **`dossier`** — adds an `## Insights` section for the interesting-but-not-load-bearing material research turns up.
+
+  Three to six items per dossier, teased from the body so they get read, and held to the same evidence standard as findings. If removing an item would change a finding, it is not an insight — it is a buried finding, and it belongs in the body.
+
+- [#77](https://github.com/eins78/agent-skills/pull/77) [`20d677e`](https://github.com/eins78/agent-skills/commit/20d677e63ee310a86dfc5a5fe8b2eedd762f1a76) - **`dossier`** — adds a REVIEW stage between SYNTHESIZE and DELIVER, run by three fresh-context subagents and enforced by a commit gate.
+
+  The review checklist already existed as an instruction, and was ignorable enough that its own author shipped a dossier violating it about two hours after writing it. Reviewers now run without the research conversation, because a defect survives its author precisely when the author half-remembers the sources.
+
+- [#78](https://github.com/eins78/agent-skills/pull/78) [`6376f89`](https://github.com/eins78/agent-skills/commit/6376f8901d0d504c634db56c8bf36d443b1febac) - **`pandoc`** — `md2kindle-epub.sh` no longer emits EPUBs without a title.
+
+  `dc:title` is required EPUB metadata, but `--title` was optional and its absence produced a spec-invalid book silently. The script now derives a title from the first H1 of the first input, falling back to the output filename.
+
+  **`send-to-kindle`** — adds delivery verification and documents the `E999` failure mode. Kindle ingress validates asynchronously, so every signal available at send time proves only that the mail left; the one real signal is no bounce after a few minutes.
+
+- [#81](https://github.com/eins78/agent-skills/pull/81) [`6bc2e39`](https://github.com/eins78/agent-skills/commit/6bc2e39a9cb300f582f6f7d34d23f29c09d2115f) - **`apple-notes`** — a note's body is not its contents. Adds attachment listing, and the rule that stops a failed search becoming a false conclusion.
+
+  Attachments are separate rows in the Notes database, so a body read cannot see them — which makes it possible to search a note, find nothing, and conclude the document was never there. New `scripts/list-attachments.sh` lists every attachment with its type, title and identifying text, and `--paths` resolves the file on disk.
+
+- [#80](https://github.com/eins78/agent-skills/pull/80) [`c914ab7`](https://github.com/eins78/agent-skills/commit/c914ab7084c46b99f46798816c1ab72d7e45def5) - **`paprika-recipes`** — new skill for reading and creating recipes in Paprika Recipe Manager 3 on macOS.
+
+  The point of it is turning **any** text source into a real recipe — a page the web clipper failed on, prose, a PDF, a photo of a cookbook page. The clipper handles URLs well and nothing else, and until now typing it in by hand was the only alternative.
+
 ## 4.2.0
 
 ### Minor Changes
