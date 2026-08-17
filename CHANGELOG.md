@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.3.2
+
+### Patch Changes
+
+- [#87](https://github.com/eins78/agent-skills/pull/87) [`a50b460`](https://github.com/eins78/agent-skills/commit/a50b460641d5f01b7f111335b3bad9136f47dfc4) - **`apple-mail`** — the description now covers on-disk archive search, not just AppleScript.
+
+  The skill has documented two access paths since 1.1.0, but its description named only Mail.app and AppleScript, so it under-triggered on requests to find old mail in a large or multi-account archive. It now names both paths and the attachment commands, and states that the on-disk path works with Mail.app closed.
+
 ## 4.3.1
 
 ### Patch Changes

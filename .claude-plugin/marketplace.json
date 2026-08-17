@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "4.3.1",
+      "version": "4.3.2",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -38,8 +38,8 @@
     },
     {
       "name": "apple-mail",
-      "description": "Read email via Apple Mail.app and AppleScript. Use when asked to check, search, or read emails. READ ONLY — no sending or modifying emails.",
-      "version": "1.1.0",
+      "description": "Use when asked to check, search or read email, including finding old messages in a large or multi-account archive, or listing and saving attachments. Covers live Mail.app queries via AppleScript an...",
+      "version": "1.1.1",
       "source": "./skills/apple-mail",
       "author": {
         "name": "Max Albrecht",
