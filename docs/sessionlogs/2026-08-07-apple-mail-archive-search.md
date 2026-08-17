@@ -72,7 +72,14 @@ The convention post-dates the PR, so this was not a violation at the time. It is
 
 ## 7. Open judgement call — the frontmatter `description`
 
-**Unresolved, and a one-line change if Max wants it.** `skills/apple-mail/SKILL.md` still declares:
+> **Resolved 2026-08-17 — PR #87, merged.** Max approved the change. The description was rewritten
+> trigger-first, in the shape `apple-notes` uses: the situations covered — including finding
+> old mail in a large or multi-account archive, and the attachment commands — then both
+> mechanisms, then the `READ ONLY` qualifier, plus the note that the on-disk path works with
+> Mail.app closed. Shipped as a **patch**: no content changed, only the metadata routing to
+> it. The rest of this section records the reasoning as it stood when the call was still open.
+
+**Was unresolved, and a one-line change if Max wants it.** `skills/apple-mail/SKILL.md` still declares:
 
 ```yaml
 description: Read email via Apple Mail.app and AppleScript. …
@@ -81,6 +88,8 @@ description: Read email via Apple Mail.app and AppleScript. …
 After this PR one of the two documented paths uses **neither** Mail.app nor AppleScript — it reads `.emlx` files off disk with Mail.app closed. The body was updated to name both paths; the frontmatter was not.
 
 Left alone deliberately: "Use when asked to check, search, or read emails" already covers triggering, so the stale half is a mechanism detail rather than a discovery problem. But PR #73 was Max narrowing a description for precision, so this is a field he cares about — flagging rather than deciding. Changing it affects skill activation everywhere, which is not a call to make silently at wrap-up.
+
+That last judgement is the part that did not hold. The approved framing was that the skill **under-triggers** for archive searches — a `description` is the only text loaded before activation, so naming just one of two paths shapes which requests reach the body at all. Flagging rather than deciding was still right; calling the omission cosmetic was not. Neither reading was measured, and a cheap way to settle such a question would be worth having before the next one.
 
 ## Smaller notes
 
@@ -94,5 +103,5 @@ Left alone deliberately: "Use when asked to check, search, or read emails" alrea
 
 ## Pending
 
-- [ ] Max: decide the frontmatter `description` question (§7) — one line, or explicitly leave as-is
+- [x] Max: decide the frontmatter `description` question (§7) — approved, implemented in PR #87, merged 2026-08-17
 - [ ] Optional: verify the `V10` → `~/Library/Mail` broadening on a machine with a populated legacy store
