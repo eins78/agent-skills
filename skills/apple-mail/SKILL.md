@@ -1,6 +1,6 @@
 ---
 name: apple-mail
-description: Read email via Apple Mail.app and AppleScript. Use when asked to check, search, or read emails. READ ONLY — no sending or modifying emails.
+description: Use when asked to check, search or read email, including finding old messages in a large or multi-account archive, or listing and saving attachments. Covers live Mail.app queries via AppleScript and searching the on-disk .emlx store directly, with Mail.app closed. READ ONLY — no sending or modifying emails.
 license: MIT
 metadata:
   author: eins78
