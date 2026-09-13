@@ -19,9 +19,10 @@
  *   1  usage/input error (bad args, nothing to review, unknown slug/preset)
  *   2  quorum failed (fewer than `quorum` members returned a review)
  *   3  budget gate blocked the dispatch (nothing was sent)
- *   4  OPENROUTER_API_KEY missing or rejected
+ *   4  API key missing or rejected
  *
- * Env: OPENROUTER_API_KEY (required to dispatch; never logged),
+ * Env: AI_COUNCIL_OPENROUTER_API_KEY (the council's own key; required to
+ *      dispatch, never logged) or OPENROUTER_API_KEY as a fallback,
  *      OPENROUTER_BASE_URL, COUNCIL_TIMEOUT_MS, AI_COUNCIL_MODELS,
  *      AI_COUNCIL_PRESET, AI_COUNCIL_BUDGET_USD, AI_COUNCIL_QUORUM,
  *      XDG_STATE_HOME, REVIEW_BASE_BRANCH.
@@ -51,6 +52,39 @@ const major = Number(process.versions.node.split(".")[0]);
 if (major < 20) {
   console.error(`ai-council-review requires node >= 20 (found ${process.versions.node})`);
   process.exit(EXIT.USAGE);
+}
+
+/**
+ * Where the OpenRouter key comes from, in precedence order.
+ *
+ * The council has its own variable so it can be pointed at a dedicated,
+ * budget-capped key instead of silently inheriting whatever generic
+ * OPENROUTER_API_KEY a shell happens to export. A council run fans the same
+ * payload out to several third-party providers and spends real money doing
+ * it — not a choice to make by accident. The generic name still works, but
+ * a run that falls back to it says so.
+ */
+const API_KEY_VARS = ["AI_COUNCIL_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"];
+
+/**
+ * @param {NodeJS.ProcessEnv} env
+ * @returns {{key: string|undefined, source: string|undefined}}
+ */
+function resolveApiKey(env) {
+  const source = API_KEY_VARS.find((name) => env[name]);
+  return { key: source ? env[source] : undefined, source };
+}
+
+/**
+ * Redact every key the council *could* have read, not just the active one:
+ * with two candidate variables, the unused value is still key material
+ * present in this process's environment.
+ *
+ * @param {string} text
+ * @param {NodeJS.ProcessEnv} env
+ */
+function redactKeys(text, env) {
+  return API_KEY_VARS.reduce((acc, name) => redact(acc, env[name]), text);
 }
 
 /** Experimental --personas focus areas, applied in roster order. */
@@ -327,13 +361,19 @@ async function main() {
     process.exit(EXIT.BUDGET);
   }
 
-  const apiKey = env.OPENROUTER_API_KEY;
+  const { key: apiKey, source: apiKeySource } = resolveApiKey(env);
   if (!apiKey) {
     console.error(
-      "OPENROUTER_API_KEY is not set. Get a key at https://openrouter.ai/keys and export it. Nothing was sent.",
+      "No API key. Set AI_COUNCIL_OPENROUTER_API_KEY — the council's own variable, so it can hold a dedicated, " +
+        "budget-capped key — or OPENROUTER_API_KEY as a fallback. Get a key at https://openrouter.ai/keys. Nothing was sent.",
     );
     process.exit(EXIT.AUTH);
   }
+  console.error(
+    apiKeySource === "OPENROUTER_API_KEY"
+      ? "council: key from OPENROUTER_API_KEY (fallback) — set AI_COUNCIL_OPENROUTER_API_KEY to pin a dedicated key"
+      : `council: key from ${apiKeySource}`,
+  );
 
   const runDir = makeRunDir(cwd, env, config.outDir);
   const labels = anonymousLabels(config.models.length);
@@ -431,7 +471,7 @@ async function main() {
     const model = config.models[i];
     const label = labels[i];
     if (result.status === "rejected") {
-      const msg = redact(String(result.reason?.message ?? result.reason), apiKey);
+      const msg = redactKeys(String(result.reason?.message ?? result.reason), env);
       // Failed members delivered no opinion — naming them carries no finding
       // bias, and the failure report needs the model to fix the roster.
       manifest.members[label] = { status: "failed", model, error: msg };
@@ -471,7 +511,7 @@ async function main() {
   // falling back to a single-model review.
   const failures = Object.values(manifest.members).filter((m) => m.status === "failed");
   if (failures.length === results.length && failures.every((m) => /HTTP 401/.test(String(m.error)))) {
-    console.error("OPENROUTER_API_KEY was rejected (HTTP 401 from every member). Nothing usable was returned — ask your human partner to check the key.");
+    console.error(`${apiKeySource} was rejected (HTTP 401 from every member). Nothing usable was returned — ask your human partner to check the key.`);
     process.exit(EXIT.AUTH);
   }
 
@@ -507,11 +547,10 @@ async function main() {
 }
 
 main().catch((err) => {
-  const apiKey = process.env.OPENROUTER_API_KEY;
   if (err instanceof UsageError) {
-    console.error(redact(err.message, apiKey));
+    console.error(redactKeys(err.message, process.env));
     process.exit(EXIT.USAGE);
   }
-  console.error(redact(err?.stack ?? String(err), apiKey));
+  console.error(redactKeys(err?.stack ?? String(err), process.env));
   process.exit(EXIT.USAGE);
 });

@@ -1,7 +1,8 @@
 // @ts-check
 /**
  * Optional live smoke test against the real OpenRouter API.
- * Skips cleanly without OPENROUTER_API_KEY. Uses a council of one cheap
+ * Skips cleanly without a key in either AI_COUNCIL_OPENROUTER_API_KEY or
+ * OPENROUTER_API_KEY. Uses a council of one cheap
  * model (deepseek-v4-flash, ~$0.077/M input) on a 12-line diff with a hard
  * $0.02 budget — a run costs well under one cent.
  *
@@ -20,8 +21,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SMOKE_MODEL = "deepseek/deepseek-v4-flash";
 
 test("live smoke: council of one reviews tiny diff for < $0.01", (t) => {
-  if (!process.env.OPENROUTER_API_KEY) {
-    return t.skip("OPENROUTER_API_KEY not set — skipping live smoke test");
+  if (!process.env.AI_COUNCIL_OPENROUTER_API_KEY && !process.env.OPENROUTER_API_KEY) {
+    return t.skip("no API key (AI_COUNCIL_OPENROUTER_API_KEY or OPENROUTER_API_KEY) — skipping live smoke test");
   }
   const home = mkdtempSync(join(tmpdir(), "council-live-"));
   try {

@@ -2,7 +2,8 @@
 /**
  * End-to-end dispatch tests against a mock OpenRouter server (node:http).
  * council.mjs is spawned as a child process — the same way agents run it —
- * with OPENROUTER_BASE_URL pointed at the mock and XDG_* dirs isolated.
+ * with OPENROUTER_BASE_URL pointed at the mock, the council's own
+ * AI_COUNCIL_OPENROUTER_API_KEY supplying the key, and XDG_* dirs isolated.
  */
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -50,6 +51,8 @@ let behavior = () => ({});
 let completionHits = new Map();
 /** @type {((raw: string) => void) | undefined} */
 let captureBody;
+/** @type {((auth: string) => void) | undefined} */
+let captureAuth;
 
 before(async () => {
   server = createServer((req, res) => {
@@ -89,6 +92,7 @@ before(async () => {
       req.on("data", (c) => (raw += c));
       req.on("end", () => {
         captureBody?.(raw);
+        captureAuth?.(String(req.headers.authorization ?? ""));
         const model = String(JSON.parse(raw).model);
         const hits = (completionHits.get(model) ?? 0) + 1;
         completionHits.set(model, hits);
@@ -144,7 +148,7 @@ function runCli(args, envOverrides = {}, cwd) {
       env: {
         PATH: process.env.PATH,
         OPENROUTER_BASE_URL: baseUrl,
-        OPENROUTER_API_KEY: TEST_KEY,
+        AI_COUNCIL_OPENROUTER_API_KEY: TEST_KEY,
         XDG_STATE_HOME: join(home, "state"),
         XDG_CONFIG_HOME: join(home, "config"),
         COUNCIL_RETRY_BACKOFF_MS: "10",
@@ -419,10 +423,46 @@ test("hard cap refuses even with --yes → exit 3, zero hits", async () => {
 test("missing API key → exit 4, nothing dispatched, no key material in output", async () => {
   behavior = () => ({});
   completionHits = new Map();
-  const r = await runCli(REVIEW_ARGS, { OPENROUTER_API_KEY: "" });
+  const r = await runCli(REVIEW_ARGS, { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: "" });
   assert.equal(r.status, 4, r.output);
   assert.equal(completionHits.size, 0);
   assert.match(r.output, /openrouter\.ai\/keys/);
+  assert.match(r.output, /AI_COUNCIL_OPENROUTER_API_KEY/, "names the council's own variable first");
+  r.cleanup();
+});
+
+test("AI_COUNCIL_OPENROUTER_API_KEY is the key actually sent, and wins over OPENROUTER_API_KEY", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const DECOY = "sk-or-decoy-GENERIC-KEY";
+  /** @type {string[]} */
+  const seen = [];
+  captureAuth = (auth) => seen.push(auth);
+  const r = await runCli(REVIEW_ARGS, { OPENROUTER_API_KEY: DECOY });
+  captureAuth = undefined;
+  assert.equal(r.status, 0, r.output);
+  assert.ok(seen.length > 0, "members were dispatched");
+  for (const auth of seen) {
+    assert.equal(auth, `Bearer ${TEST_KEY}`, "the council's own key authorizes the request");
+  }
+  assert.ok(!r.output.includes(DECOY), "the unused key is redacted too");
+  assert.match(r.stderr, /key from AI_COUNCIL_OPENROUTER_API_KEY/);
+  r.cleanup();
+});
+
+test("falls back to OPENROUTER_API_KEY, and says that it did", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  /** @type {string[]} */
+  const seen = [];
+  captureAuth = (auth) => seen.push(auth);
+  const r = await runCli(REVIEW_ARGS, { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: TEST_KEY });
+  captureAuth = undefined;
+  assert.equal(r.status, 0, r.output);
+  assert.ok(seen.length > 0, "members were dispatched");
+  assert.equal(seen[0], `Bearer ${TEST_KEY}`);
+  assert.match(r.stderr, /OPENROUTER_API_KEY \(fallback\)/, "the borrowed key is announced, not silent");
+  assert.ok(!r.output.includes(TEST_KEY), "announcing the source must not print the key");
   r.cleanup();
 });
 
@@ -442,7 +482,7 @@ test("redaction: API key never appears in output even when the server echoes it"
 test("dry-run makes no completion requests and prints the estimate table", async () => {
   behavior = () => ({});
   completionHits = new Map();
-  const r = await runCli([...REVIEW_ARGS, "--dry-run"], { OPENROUTER_API_KEY: "" });
+  const r = await runCli([...REVIEW_ARGS, "--dry-run"], { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: "" });
   assert.equal(r.status, 0, r.output);
   assert.equal(completionHits.size, 0);
   assert.match(r.stdout, /Estimated total/);
