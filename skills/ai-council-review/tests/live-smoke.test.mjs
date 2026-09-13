@@ -51,7 +51,14 @@ test("live smoke: council of one reviews tiny diff for < $0.01", (t) => {
     const runDir = r.stdout.match(/^RUN_DIR=(.+)$/m)?.[1];
     assert.ok(runDir);
     const manifest = JSON.parse(readFileSync(join(String(runDir), "manifest.json"), "utf8"));
-    const member = manifest.members[SMOKE_MODEL];
+    // Members are keyed by their anonymized label, and a member that succeeded
+    // carries no model field at all — that is the anonymization working. The
+    // label->model mapping lives in roster-key.json; go through it.
+    const rosterKey = JSON.parse(readFileSync(join(String(runDir), "roster-key.json"), "utf8"));
+    const label = Object.keys(rosterKey).find((l) => rosterKey[l] === SMOKE_MODEL);
+    assert.ok(label, `roster-key.json has no label for ${SMOKE_MODEL}: ${JSON.stringify(rosterKey)}`);
+    const member = manifest.members[String(label)];
+    assert.ok(member, `no manifest entry for ${label}: ${JSON.stringify(manifest.members)}`);
     assert.ok(member.status === "ok" || member.status === "parse_failed", JSON.stringify(member));
     assert.ok(manifest.actualUsd > 0, "OpenRouter should report a real cost");
     assert.ok(manifest.actualUsd < 0.01, `smoke run cost ${manifest.actualUsd} — expected < $0.01`);
