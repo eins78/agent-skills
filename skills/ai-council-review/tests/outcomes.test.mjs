@@ -106,7 +106,7 @@ test("CLI: outcomes record + show work offline (no network, no API key)", () => 
   const env = {
     PATH: process.env.PATH,
     XDG_STATE_HOME: join(home, "state"),
-    // Deliberately no OPENROUTER_API_KEY and an unroutable base URL:
+    // Deliberately no API key (neither variable) and an unroutable base URL:
     // the outcomes subcommand must never touch the network.
     OPENROUTER_BASE_URL: "http://127.0.0.1:1",
   };

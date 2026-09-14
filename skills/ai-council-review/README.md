@@ -48,7 +48,7 @@ ai-council-review/
 | Dependency | Required | Install |
 |---|---|---|
 | Node.js >= 20 | Yes | `brew install node` |
-| `OPENROUTER_API_KEY` | For dispatch (not for `--dry-run`/`models`) | <https://openrouter.ai/keys> |
+| `AI_COUNCIL_OPENROUTER_API_KEY` | For dispatch (not for `--dry-run`/`models`); falls back to `OPENROUTER_API_KEY` | <https://openrouter.ai/keys> |
 | npm packages | **None** | — (zero runtime dependencies by design) |
 | `gh` CLI | Only for `--pr` mode | `brew install gh` |
 
@@ -75,7 +75,8 @@ node scripts/council.mjs outcomes show
 ```
 
 Exit codes: `0` ok · `1` usage/input · `2` quorum failed · `3` budget-blocked
-(nothing sent) · `4` API key missing. Env vars: `OPENROUTER_API_KEY`,
+(nothing sent) · `4` API key missing. Env vars:
+`AI_COUNCIL_OPENROUTER_API_KEY` (fallback: `OPENROUTER_API_KEY`),
 `OPENROUTER_BASE_URL`, `COUNCIL_TIMEOUT_MS`, `COUNCIL_RETRY_BACKOFF_MS`,
 `AI_COUNCIL_{MODELS,PRESET,BUDGET_USD,CONFIRM_THRESHOLD_USD,QUORUM}`,
 `REVIEW_BASE_BRANCH`, `XDG_STATE_HOME`.
@@ -90,7 +91,7 @@ node --test skills/ai-council-review/tests/*.test.mjs
 pnpm run typecheck:council
 
 # live smoke: one tiny diff to deepseek-v4-flash, < $0.01; skips without key
-OPENROUTER_API_KEY=sk-or-... node --test skills/ai-council-review/tests/live-smoke.test.mjs
+AI_COUNCIL_OPENROUTER_API_KEY=sk-or-... node --test skills/ai-council-review/tests/live-smoke.test.mjs
 
 # root convenience (offline suite + live smoke if key is set)
 pnpm run test:council
@@ -113,6 +114,14 @@ directions.
 - **OpenRouter over per-provider CLIs** — one key, one OpenAI-compatible API
   shape, per-request cost accounting (`usage.cost`), and the roster is data
   (`references/presets.json`), not code.
+- **Its own key variable (`AI_COUNCIL_OPENROUTER_API_KEY`)** — a run fans one
+  payload out to several third-party providers and spends real money doing it,
+  so which key pays, and which account's privacy settings therefore apply,
+  should be a deliberate choice rather than whatever `OPENROUTER_API_KEY` a
+  shell happens to export. `OPENROUTER_API_KEY` stays as a fallback so existing
+  setups keep working, but a run that falls back to it says so on stderr — a
+  borrowed key is visible, never silent. Both variables are redacted from all
+  output, including the one that was not used.
 - **Anthropic excluded from the default council** — the synthesizer is
   Claude in-session; excluding its vendor from the council maximizes
   independent signal and avoids self-agreement bias (self-preference bias

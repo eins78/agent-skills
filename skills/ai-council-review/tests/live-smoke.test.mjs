@@ -1,7 +1,8 @@
 // @ts-check
 /**
  * Optional live smoke test against the real OpenRouter API.
- * Skips cleanly without OPENROUTER_API_KEY. Uses a council of one cheap
+ * Skips cleanly without a key in either AI_COUNCIL_OPENROUTER_API_KEY or
+ * OPENROUTER_API_KEY. Uses a council of one cheap
  * model (deepseek-v4-flash, ~$0.077/M input) on a 12-line diff with a hard
  * $0.02 budget — a run costs well under one cent.
  *
@@ -20,8 +21,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const SMOKE_MODEL = "deepseek/deepseek-v4-flash";
 
 test("live smoke: council of one reviews tiny diff for < $0.01", (t) => {
-  if (!process.env.OPENROUTER_API_KEY) {
-    return t.skip("OPENROUTER_API_KEY not set — skipping live smoke test");
+  if (!process.env.AI_COUNCIL_OPENROUTER_API_KEY && !process.env.OPENROUTER_API_KEY) {
+    return t.skip("no API key (AI_COUNCIL_OPENROUTER_API_KEY or OPENROUTER_API_KEY) — skipping live smoke test");
   }
   const home = mkdtempSync(join(tmpdir(), "council-live-"));
   try {
@@ -50,7 +51,14 @@ test("live smoke: council of one reviews tiny diff for < $0.01", (t) => {
     const runDir = r.stdout.match(/^RUN_DIR=(.+)$/m)?.[1];
     assert.ok(runDir);
     const manifest = JSON.parse(readFileSync(join(String(runDir), "manifest.json"), "utf8"));
-    const member = manifest.members[SMOKE_MODEL];
+    // Members are keyed by their anonymized label, and a member that succeeded
+    // carries no model field at all — that is the anonymization working. The
+    // label->model mapping lives in roster-key.json; go through it.
+    const rosterKey = JSON.parse(readFileSync(join(String(runDir), "roster-key.json"), "utf8"));
+    const label = Object.keys(rosterKey).find((l) => rosterKey[l] === SMOKE_MODEL);
+    assert.ok(label, `roster-key.json has no label for ${SMOKE_MODEL}: ${JSON.stringify(rosterKey)}`);
+    const member = manifest.members[String(label)];
+    assert.ok(member, `no manifest entry for ${label}: ${JSON.stringify(manifest.members)}`);
     assert.ok(member.status === "ok" || member.status === "parse_failed", JSON.stringify(member));
     assert.ok(manifest.actualUsd > 0, "OpenRouter should report a real cost");
     assert.ok(manifest.actualUsd < 0.01, `smoke run cost ${manifest.actualUsd} — expected < $0.01`);

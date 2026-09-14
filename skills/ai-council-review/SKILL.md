@@ -49,10 +49,14 @@ proprietary code this means unreleased source leaves the machine.
 ## Prerequisites
 
 - Node.js >= 20 (`node --version`)
-- `OPENROUTER_API_KEY` exported (get one: <https://openrouter.ai/keys>).
-  The script reads it from the environment only and never prints it. If it is
-  missing, dispatch exits with code 4 — ask your human partner; do NOT hunt
-  for keys in keychains, dotfiles, or session archives.
+- `AI_COUNCIL_OPENROUTER_API_KEY` exported — the council's own variable, so
+  it can hold a dedicated, budget-capped key rather than whatever generic key
+  a shell happens to export (get one: <https://openrouter.ai/keys>).
+  `OPENROUTER_API_KEY` still works as a fallback, and a run that falls back
+  says so on stderr. The script reads the key from the environment only and
+  never prints it. If neither is set, dispatch exits with code 4 — ask your
+  human partner; do NOT hunt for keys in keychains, dotfiles, or session
+  archives.
 
 ## CRITICAL rules
 
@@ -118,7 +122,7 @@ its last line.
 | 1 | Usage/input error (bad slug, empty diff, oversized payload) | Fix per the message; slug errors include suggestions — update roster, retry |
 | 2 | Quorum failed | Report which members failed and why; offer `ai-review` fallback; do NOT synthesize or self-substitute |
 | 3 | Budget gate blocked (nothing sent) | Relay the estimate to your human partner; only proceed how they decide |
-| 4 | API key missing/rejected | Ask your human partner to set `OPENROUTER_API_KEY` |
+| 4 | API key missing/rejected | Ask your human partner to set `AI_COUNCIL_OPENROUTER_API_KEY` (or `OPENROUTER_API_KEY`) |
 
 ### 4. Synthesize
 
