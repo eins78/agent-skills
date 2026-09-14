@@ -1,5 +1,17 @@
 # @eins78/agent-skills
 
+## 4.5.0
+
+### Minor Changes
+
+- [#97](https://github.com/eins78/agent-skills/pull/97) [`8f4c61e`](https://github.com/eins78/agent-skills/commit/8f4c61eeb1c274c17ec41f0305d6dcad7b8a0d81) - **`ai-council-review`** — the council reads its own `AI_COUNCIL_OPENROUTER_API_KEY`.
+
+  A council run fans one payload out to several third-party providers and spends
+  real money doing it, so it should not silently inherit whatever
+  `OPENROUTER_API_KEY` a shell happens to export. Point the council's own
+  variable at a dedicated, budget-capped key; the generic name still works as a
+  fallback, and a run that falls back to it says so.
+
 ## 4.4.0
 
 ### Minor Changes
