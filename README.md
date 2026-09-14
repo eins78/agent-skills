@@ -55,11 +55,27 @@ Register the marketplace and install:
 
 Skills auto-update when you run `/plugin update`.
 
+### As an opencode plugin (skills + dossier hooks)
+
+All skills are also published as an opencode plugin that registers them with opencode's **native** `skill` tool and ports the dossier `PostToolUse`/`PreToolUse` hooks. See [opencode-plugin/](opencode-plugin/) for details:
+
+```jsonc
+// ~/.config/opencode/opencode.json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@eins78/opencode-skills"]
+}
+```
+
+Unpinned plugin specs resolve `@latest` at every opencode startup, so this auto-updates with the npm package.
+
 ### Via skills CLI
 
 ```bash
 pnpx skills add https://github.com/eins78/agent-skills.git --global --agent claude-code --all --yes
 ```
+
+The skills CLI also targets opencode (`--agent opencode`), which lands skills in `~/.agents/skills/` — opencode scans that path natively. Prefer the opencode plugin above, which rides npm versions instead of the CLI's copy step.
 
 ### Single skill (via plugin marketplace)
 
