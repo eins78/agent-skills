@@ -24,8 +24,19 @@ verification command output.
   (not two), because `quorum: 2` means a two-seat preset fails on any single
   member failure.
 - New `crowd` preset: `budget`'s three seats plus `qwen/qwen3.8-27b`,
-  `tencent/hunyuan-a13b-instruct`, `google/gemini-3-flash-preview` — six
-  seats, many-weak-independent-opinions rather than one-strong-seat-per-vendor.
+  `tencent/hy4-preview`, `google/gemini-3-flash-preview` — six seats, five
+  vendors (Alibaba twice), many-weak-independent-opinions rather than
+  one-strong-seat-per-vendor. `crowd` was first drafted with
+  `tencent/hunyuan-a13b-instruct` in this seat and approved before anyone
+  checked context windows: `council.mjs` fits the payload to the *smallest*
+  context window across the council (`council.mjs:299`, calling
+  `fitPayload` in `lib/input.mjs`) before dispatch,
+  and hunyuan's 131,072-token window — 8× smaller than every other seated
+  model — was silently capping all six members' input at 131k, defeating
+  what `crowd` is for. Caught before merge; swapped for `tencent/hy4-preview`
+  (1,048,576 ctx, $0.83/$2.50) before this roster ever shipped. Effective
+  cap is now 1,000,000 exactly, set by `qwen3.8-flash`/`qwen3.8-27b`, not by
+  the Tencent seat. `crowd` input rises from $1.12/M to $1.81/M as a result.
 - `max`: `openai/gpt-5.5` → `openai/gpt-6-astra` (upgrade, not an added seat —
   keeps one seat per vendor).
 - New `flagship` preset: `openai/gpt-6-astra`, `anthropic/claude-fable-5.1`,
@@ -49,9 +60,13 @@ verification command output.
 │ 9       │ 'qwen/qwen3.8-flash'            │ 1000000 │ '0.15'  │ '0.47'  │ 'yes'      │
 │ 10      │ 'qwen/qwen3.8-27b'              │ 1000000 │ '0.20'  │ '2.55'  │ 'yes'      │
 │ 11      │ 'qwen/qwen3.8-max-0902'         │ 1000000 │ '2.00'  │ '6.00'  │ 'yes'      │
-│ 12      │ 'tencent/hunyuan-a13b-instruct' │ 131072  │ '0.14'  │ '0.57'  │ 'yes'      │
+│ 12      │ 'tencent/hy4-preview'           │ 1048576 │ '0.83'  │ '2.50'  │ 'yes'      │
 └─────────┴─────────────────────────────────┴─────────┴─────────┴─────────┴────────────┘
 ```
+
+(Row 12 was re-verified after `tencent/hunyuan-a13b-instruct` was swapped for
+`tencent/hy4-preview` in the `crowd` seat — see above; all other rows are the
+original 2026-09-20 verification.)
 
 All 13 slugs resolved against the live OpenRouter catalog with structured
 output support. Full reasoning, both rounds of the decision, and rejected

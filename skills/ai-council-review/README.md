@@ -125,7 +125,7 @@ follow-up if this drifts.
 | `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
 | **Total** | | **0.28** | **0.84** | |
 
-**`crowd`** — `budget`'s three seats plus three more: many weak independent opinions rather than one strong seat per vendor. Deliberately carries two Alibaba seats (`qwen3.8-flash`, `qwen3.8-27b`) — the exception to the one-seat-per-vendor rule below, because `crowd`'s thesis is opinion count, not per-vendor independence. **Its smallest context window (131,072, from `hunyuan-a13b-instruct`) caps the whole preset's payload** — the dispatch script trims to the council's smallest window.
+**`crowd`** — `budget`'s three seats plus three more: many weak independent opinions rather than one strong seat per vendor. Deliberately carries two Alibaba seats (`qwen3.8-flash`, `qwen3.8-27b`) — the exception to the one-seat-per-vendor rule below, because `crowd`'s thesis is opinion count, not per-vendor independence; still six seats but only five vendors. **Effective context cap is 1,000,000 exactly** — the smallest window in the council, set by `qwen3.8-flash`/`qwen3.8-27b` (both 1,000,000, not 1,048,576) — since the dispatch script trims every member's payload to the council's smallest window.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
@@ -133,9 +133,9 @@ follow-up if this drifts.
 | `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
 | `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
 | `qwen/qwen3.8-27b` | Alibaba | 0.20 | 2.55 | 1,000,000 |
-| `tencent/hunyuan-a13b-instruct` | Tencent | 0.14 | 0.57 | 131,072 |
+| `tencent/hy4-preview` | Tencent | 0.83 | 2.50 | 1,048,576 |
 | `google/gemini-3-flash-preview` | Google | 0.50 | 3.00 | 1,048,576 |
-| **Total** | | **1.12** | **6.96** | |
+| **Total** | | **1.81** | **8.89** | |
 
 **`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion.
 
@@ -185,7 +185,7 @@ OpenRouter catalog.
 | `qwen/qwen3.8-flash` | Cheapest four-vendor `budget` seat | `budget`, `crowd` | none known | 2026-09-20 |
 | `qwen/qwen3.8-27b` | Extra `crowd` seat (second Alibaba seat, deliberate exception to one-seat-per-vendor) | `crowd` | none known | 2026-09-20 |
 | `qwen/qwen3.8-max-0902` | Strongest available Alibaba seat | `flagship` | none known | 2026-09-20 |
-| `tencent/hunyuan-a13b-instruct` | `crowd` breadth seat | `crowd` | **131,072-token context window — the smallest of any seated model; caps the whole `crowd` preset's payload via the trim ladder** | 2026-09-20 |
+| `tencent/hy4-preview` | `crowd` breadth seat | `crowd` | replaced `tencent/hunyuan-a13b-instruct` in this seat (2026-09-20): hunyuan's 131,072-token window was 8× smaller than every other member and capped `crowd`'s whole payload via the trim ladder before anyone checked context windows | 2026-09-20 |
 
 ## Testing
 

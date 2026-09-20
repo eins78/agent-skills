@@ -35,7 +35,7 @@
       "deepseek/deepseek-v4-flash",
       "z-ai/glm-5.3-flash",
       "qwen/qwen3.8-27b",
-      "tencent/hunyuan-a13b-instruct",
+      "tencent/hy4-preview",
       "google/gemini-3-flash-preview"
     ],
     "max": [
