@@ -27,7 +27,9 @@ gating, and clustering; **you** synthesize, because you can do the one thing
 the council cannot: verify findings against the actual repository.
 
 This is the heavyweight sibling of `ai-review` (single model, ~$0.03). A
-council run costs real money (~$0.30–0.90 with default presets). Use it for
+council run costs real money — from well under a cent (`budget`) to over $1
+(`flagship`, which trips the confirmation gate on anything beyond a small
+diff). See the per-preset tables in README.md for exact pricing. Use it for
 high-stakes decisions, not routine diffs.
 
 ## Data leaves the machine — confirm before first dispatch
@@ -84,8 +86,10 @@ path — never a relative `./scripts/...`).
 | Plan or design doc | `<file>` or `--plan <file>` | `--rubric plan` |
 | Any other document/files | `<file...>` or `--input-file <f>` | `--rubric doc` |
 
-Preset: `code` rubric → `--preset code`; otherwise the default preset is
-already right. `--models a,b,c` overrides for custom councils.
+Preset: the default preset is already the code-review roster (`--rubric
+code` needs no flag). For `plan`/`doc` rubrics, use `--preset prose` — the
+prior default roster, better suited to prose than the codex-tuned default.
+`--models a,b,c` overrides for custom councils.
 
 `--personas` runs the council in **coverage mode**: each member gets a
 distinct focus lens (correctness, security, design, testing, operations)
@@ -152,11 +156,13 @@ formal review via `gh api`). The script never posts anywhere.
 A suggestion for material that may not need a frontier council — nothing
 enforces it:
 
-1. Run `--preset budget` (3 cheaper members) first.
-2. Escalate to `default`/`max` **only if** the budget run produced
+1. Run `--preset budget` (3 cheaper members) first, or `--preset crowd` (6
+   members) for broader coverage at still-modest cost.
+2. Escalate to `default`/`max` **only if** the budget/crowd run produced
    majors/blockers or contested clusters — objective properties of
    `clusters.json`, not a feeling.
-3. A clean budget run (approvals + nits) is a result: report it and stop.
+3. A clean budget/crowd run (approvals + nits) is a result: report it and
+   stop.
 
 Each stage passes the same estimate and consent gates; escalation is a
 second run with its own estimate. Prior art: cascade cost controls
@@ -180,8 +186,9 @@ a council run follows an earlier run of the same material:
 
 Precedence: flags > `AI_COUNCIL_*` env > repo `.ai-council.json` >
 `~/.config/ai-council-review/config.json` > bundled
-`references/presets.json` (presets: `default`, `code`, `budget`, `max`,
-`smoke`; scalars: `budgetUsd`, `confirmThresholdUsd`, `timeoutMs`,
+`references/presets.json` (presets: `default`, `code`, `prose`, `budget`,
+`crowd`, `max`, `flagship`, `smoke` — see README.md for per-preset rosters
+and pricing; scalars: `budgetUsd`, `confirmThresholdUsd`, `timeoutMs`,
 `quorum`, `preset`).
 
 Useful env: `OPENROUTER_BASE_URL` (testing), `COUNCIL_TIMEOUT_MS`,
