@@ -15,7 +15,7 @@ license: MIT
 metadata:
   author: eins78
   repo: https://github.com/eins78/agent-skills
-  version: "0.3.0"
+  version: "0.3.1"
 compatibility: Claude Code, Cursor
 ---
 
