@@ -187,7 +187,7 @@ One gate runs **PreToolUse on `Bash`** through `.claude-plugin/hooks/dossier-com
 |------|--------|----------|
 | `ballot-filename.sh` | PostToolUse | Ballot file not matching `DOSSIER-<slug>-BALLOT-<Reviewer>.md` (owned by the `ballot` skill) |
 | `sources-index-consistency.sh` | PostToolUse | `sources/index.md` referencing a missing file, or a captured file with no index row. Silent when there is no `sources/` archive |
-| `review-artifact-present.sh` | **PreToolUse on `git commit`** | A staged main dossier whose folder has no `review-*.md`, or whose review has a finding without a disposition |
+| `review-artifact-present.sh` | **PreToolUse on `git commit`** | A staged main dossier whose folder has no `review-*.md`, or whose review has a finding without a disposition. During a merge, only files the merge itself contributes (differing from every parent) are checked — integrating a dossier that another branch already committed is not delivery |
 
 **Why the review gate is PreToolUse on commit and not PostToolUse on Write.** The point of the stage is that "I reviewed it" must stop being answerable without the work, so alerting-level is not enough — PreToolUse exit 2 denies the call and the gate actually holds. Write is also the wrong *moment*: a dossier is edited dozens of times during SYNTHESIZE, and demanding a review artifact on each one would fire constantly during normal authoring, which trains the reader to ignore it. `git commit` is the delivery act in this skill, which makes it the one moment where the check is both meaningful and rare.
 
