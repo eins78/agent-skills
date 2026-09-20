@@ -1,0 +1,48 @@
+{
+  "name": "@eins78/opencode-skills",
+  "version": "4.4.0",
+  "description": "eins78 agent-skills for opencode — registers the skills/ collection with opencode's native skill tool and ports the dossier PostToolUse/PreToolUse hooks",
+  "license": "MIT",
+  "author": {
+    "name": "Max Albrecht",
+    "email": "1@178.is"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eins78/agent-skills.git",
+    "directory": "opencode-plugin"
+  },
+  "homepage": "https://github.com/eins78/agent-skills#readme",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "agent-skills",
+    "skills"
+  ],
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    "./server": "./index.ts"
+  },
+  "files": [
+    "index.ts",
+    "hooks/",
+    "skills/",
+    "LICENSE"
+  ],
+  "engines": {
+    "opencode": ">=1.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "bash prepack.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.18.18",
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.7.0"
+  }
+}

@@ -1,0 +1,7 @@
+# synced at prepack time from the repo-root canonical copies
+/skills/
+/hooks/
+/LICENSE
+
+node_modules/
+*.tgz
