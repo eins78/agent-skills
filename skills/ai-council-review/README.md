@@ -81,6 +81,112 @@ Exit codes: `0` ok · `1` usage/input · `2` quorum failed · `3` budget-blocked
 `AI_COUNCIL_{MODELS,PRESET,BUDGET_USD,CONFIRM_THRESHOLD_USD,QUORUM}`,
 `REVIEW_BASE_BRANCH`, `XDG_STATE_HOME`.
 
+## Council rosters
+
+Rosters live in `references/presets.json` (data, not code) and are repeated
+here, in `SKILL.md`, and in `tests/live-smoke.test.mjs`; all three move
+together on a roster change. Full swap history, with triggers and
+verification output, is in `references/MODELS-CHANGELOG.md` — models are
+external dependencies and sit outside this skill's semver contract, so their
+history is tracked separately from `CHANGELOG.md` below.
+
+These tables are hand-kept against `presets.json`; nothing enforces the
+sync. A generator (e.g. `council.mjs models --markdown`) is a reasonable
+follow-up if this drifts.
+
+### Presets
+
+**`default`** / **`code`** — code review, the normal use case for this skill; identical rosters, `code` kept as the explicit name.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `openai/gpt-5.3-codex` | OpenAI | 1.75 | 14.00 | 400,000 |
+| `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
+| **Total** | | **3.88** | **26.37** | |
+
+**`prose`** — the pre-2026-09-20 default roster; use for plan docs and prose where a codex-tuned seat is a downgrade.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `openai/gpt-5.5` | OpenAI | 5.00 | 30.00 | 1,050,000 |
+| `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
+| **Total** | | **7.13** | **42.37** | |
+
+**`budget`** — cheapest three-seat council. Three seats, not two, because `quorum: 2` means a two-seat preset fails outright on any single member failure.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
+| **Total** | | **0.28** | **0.84** | |
+
+**`crowd`** — `budget`'s three seats plus three more: many weak independent opinions rather than one strong seat per vendor. Deliberately carries two Alibaba seats (`qwen3.8-flash`, `qwen3.8-27b`) — the exception to the one-seat-per-vendor rule below, because `crowd`'s thesis is opinion count, not per-vendor independence; still six seats but only five vendors. **Effective context cap is 1,000,000 exactly** — the smallest window in the council, set by `qwen3.8-flash`/`qwen3.8-27b` (both 1,000,000, not 1,048,576) — since the dispatch script trims every member's payload to the council's smallest window.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
+| `qwen/qwen3.8-27b` | Alibaba | 0.20 | 2.55 | 1,000,000 |
+| `tencent/hy4-preview` | Tencent | 0.83 | 2.50 | 1,048,576 |
+| `google/gemini-3-flash-preview` | Google | 0.50 | 3.00 | 1,048,576 |
+| **Total** | | **1.81** | **8.89** | |
+
+**`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `anthropic/claude-opus-4.8` | Anthropic | 5.00 | 25.00 | 1,000,000 |
+| `openai/gpt-6-astra` | OpenAI | 10.00 | 50.00 | 1,050,000 |
+| `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
+| **Total** | | **17.13** | **87.37** | |
+
+**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At `outputTokensPerModel: 3000` a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `openai/gpt-6-astra` | OpenAI | 10.00 | 50.00 | 1,050,000 |
+| `anthropic/claude-fable-5.1` | Anthropic | 10.00 | 50.00 | 1,000,000 |
+| `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
+| `qwen/qwen3.8-max-0902` | Alibaba | 2.00 | 6.00 | 1,000,000 |
+| **Total** | | **24.00** | **118.00** | |
+
+**`smoke`** — one member, for the live smoke test only.
+
+| Slug | Vendor | in $/M | out $/M | Context |
+|---|---|---|---|---|
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
+| **Total** | | **0.04** | **0.07** | |
+
+### Models
+
+One row per distinct slug across every preset above. "Last verified" is the
+date `council.mjs models --verify` last confirmed the slug against the live
+OpenRouter catalog.
+
+| Slug | What it's for | Presets | Known failure modes | Last verified |
+|---|---|---|---|---|
+| `openai/gpt-5.3-codex` | Codex-tuned seat for diff review | `default`, `code` | none known | 2026-09-20 |
+| `openai/gpt-5.5` | General-purpose frontier seat for prose/plan review | `prose` | none known | 2026-09-20 |
+| `openai/gpt-6-astra` | Strongest available OpenAI seat | `max`, `flagship` | none known | 2026-09-20 |
+| `anthropic/claude-fable-5.1` | Strongest available Anthropic seat (ranks above `claude-opus-4.8`) | `flagship` | none known | 2026-09-20 |
+| `anthropic/claude-opus-4.8` | Anthropic seat, paired with the synthesizer's own-vendor discount rule | `max` | none known | 2026-09-20 |
+| `google/gemini-3.1-pro-preview` | Google frontier seat | `default`, `code`, `prose`, `max`, `flagship` | none known | 2026-09-20 |
+| `google/gemini-3-flash-preview` | Cheap Google seat for breadth | `crowd` | none known | 2026-09-20 |
+| `deepseek/deepseek-v4-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max`, `smoke` | predecessor `deepseek/deepseek-v4-pro` timed out at 240 s on a ~30k-token diff (2026-09-20) — this flash variant replaced it | 2026-09-20 |
+| `z-ai/glm-5.3-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max` | predecessor `z-ai/glm-5.2` returned an empty completion on the same 2026-09-20 run — this flash variant replaced it | 2026-09-20 |
+| `qwen/qwen3.8-flash` | Cheapest four-vendor `budget` seat | `budget`, `crowd` | none known | 2026-09-20 |
+| `qwen/qwen3.8-27b` | Extra `crowd` seat (second Alibaba seat, deliberate exception to one-seat-per-vendor) | `crowd` | none known | 2026-09-20 |
+| `qwen/qwen3.8-max-0902` | Strongest available Alibaba seat | `flagship` | none known | 2026-09-20 |
+| `tencent/hy4-preview` | `crowd` breadth seat | `crowd` | replaced `tencent/hunyuan-a13b-instruct` in this seat (2026-09-20): hunyuan's 131,072-token window was 8× smaller than every other member and capped `crowd`'s whole payload via the trim ladder before anyone checked context windows | 2026-09-20 |
+
 ## Testing
 
 ```bash
@@ -214,13 +320,10 @@ as of `@eins78/agent-skills` v3.1.0. Grok was removed from the default
 preset by maintainer decision (2026-07-11); `z-ai/glm-5.2` backfills to keep
 a 4-member council (quorum unchanged at 2).
 
-Roster swap 2026-09-20 (maintainer decision): `deepseek/deepseek-v4-pro` →
-`deepseek/deepseek-v4-flash` and `z-ai/glm-5.2` → `z-ai/glm-5.3-flash` in
-every preset that carried them. Trigger: one `code` run on a 30k-token diff
-where the pro model timed out at 240 s and glm-5.2 returned an empty
-completion, leaving a 2/4 degraded council. Both flash slugs verified live
-the same day (`council.mjs models --verify`); both support structured
-output.
+Roster history from 2026-09-20 onward — including the `deepseek-v4-pro` →
+`-flash` swap and the `default`/`prose`/`crowd`/`flagship` overhaul — is
+tracked in `references/MODELS-CHANGELOG.md`, not narrated here, since
+models are external dependencies outside this skill's semver contract.
 
 Hardened 2026-07-12 from a deep-research round on council/ensemble prior
 art (`research/council-prior-art.md`, PR #62): synthesis anonymization

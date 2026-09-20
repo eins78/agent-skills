@@ -1,5 +1,5 @@
 {
-  "$comment": "Council presets for ai-council-review. Data, not code: model slugs churn — fixing a deprecated slug is a one-line patch here. Slugs verified live against https://openrouter.ai/api/v1/models on 2026-07-11; deepseek-v4-flash and glm-5.3-flash re-verified 2026-09-20. Users can override any of this via a repo .ai-council.json or ~/.config/ai-council-review/config.json.",
+  "$comment": "Council presets for ai-council-review. Data, not code: model slugs churn — fixing a deprecated slug is a one-line patch here. All slugs verified live against https://openrouter.ai/api/v1/models on 2026-09-20 (council.mjs models --verify). See references/MODELS-CHANGELOG.md for roster history and the trigger behind each swap — models are external dependencies and sit outside this skill's semver contract. Users can override any of this via a repo .ai-council.json or ~/.config/ai-council-review/config.json.",
   "confirmThresholdUsd": 1,
   "budgetUsd": 5,
   "timeoutMs": 240000,
@@ -8,7 +8,7 @@
   "quorum": 2,
   "presets": {
     "default": [
-      "openai/gpt-5.5",
+      "openai/gpt-5.3-codex",
       "google/gemini-3.1-pro-preview",
       "deepseek/deepseek-v4-flash",
       "z-ai/glm-5.3-flash"
@@ -19,17 +19,37 @@
       "deepseek/deepseek-v4-flash",
       "z-ai/glm-5.3-flash"
     ],
-    "budget": [
-      "x-ai/grok-4.3",
-      "deepseek/deepseek-v4-flash",
-      "z-ai/glm-5.3-flash"
-    ],
-    "max": [
-      "anthropic/claude-opus-4.8",
+    "prose": [
       "openai/gpt-5.5",
       "google/gemini-3.1-pro-preview",
       "deepseek/deepseek-v4-flash",
       "z-ai/glm-5.3-flash"
+    ],
+    "budget": [
+      "qwen/qwen3.8-flash",
+      "deepseek/deepseek-v4-flash",
+      "z-ai/glm-5.3-flash"
+    ],
+    "crowd": [
+      "qwen/qwen3.8-flash",
+      "deepseek/deepseek-v4-flash",
+      "z-ai/glm-5.3-flash",
+      "qwen/qwen3.8-27b",
+      "tencent/hy4-preview",
+      "google/gemini-3-flash-preview"
+    ],
+    "max": [
+      "anthropic/claude-opus-4.8",
+      "openai/gpt-6-astra",
+      "google/gemini-3.1-pro-preview",
+      "deepseek/deepseek-v4-flash",
+      "z-ai/glm-5.3-flash"
+    ],
+    "flagship": [
+      "openai/gpt-6-astra",
+      "anthropic/claude-fable-5.1",
+      "google/gemini-3.1-pro-preview",
+      "qwen/qwen3.8-max-0902"
     ],
     "smoke": [
       "deepseek/deepseek-v4-flash"

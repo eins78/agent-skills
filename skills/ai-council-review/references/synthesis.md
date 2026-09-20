@@ -119,8 +119,9 @@ Rules that override intuition:
 - Member identities stay anonymized through this step (see Inputs). If
   identities are somehow known anyway (custom tooling, an old run layout),
   apply the fallback rule: **discount pairwise agreement between you and
-  any member from your own vendor** (the `max` preset includes an Anthropic
-  model and you are one).
+  any member from your own vendor** (the `max` and `flagship` presets each
+  include an Anthropic model — `claude-opus-4.8` and `claude-fable-5.1`
+  respectively — and you are one).
 - If `--personas` was used (`manifest.personas: true`), agreement counting
   is INVALID — members had different assignments. Switch to coverage mode:
   report per-lens findings without consensus framing.
