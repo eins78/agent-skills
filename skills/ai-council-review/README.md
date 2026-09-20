@@ -137,11 +137,11 @@ follow-up if this drifts.
 | `google/gemini-3-flash-preview` | Google | 0.50 | 3.00 | 1,048,576 |
 | **Total** | | **1.81** | **8.89** | |
 
-**`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion.
+**`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion. The Anthropic seat is the **newest Opus** (`claude-opus-5` since 2026-09-20, previously `claude-opus-4.8`) — deliberately *not* `claude-fable-5.1`, which is `flagship`'s seat. `max` is the broad five-vendor preset at a controlled price, not the strongest-at-any-price one; that is what `flagship` is for. Successive Opus releases have held the same $5/$25 tier, so keeping this seat on the newest Opus costs nothing and the totals below are unchanged.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
-| `anthropic/claude-opus-4.8` | Anthropic | 5.00 | 25.00 | 1,000,000 |
+| `anthropic/claude-opus-5` | Anthropic | 5.00 | 25.00 | 1,000,000 |
 | `openai/gpt-6-astra` | OpenAI | 10.00 | 50.00 | 1,050,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
 | `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
@@ -177,7 +177,8 @@ OpenRouter catalog.
 | `openai/gpt-5.5` | General-purpose frontier seat for prose/plan review | `prose` | none known | 2026-09-20 |
 | `openai/gpt-6-astra` | Strongest available OpenAI seat | `max`, `flagship` | none known | 2026-09-20 |
 | `anthropic/claude-fable-5.1` | Strongest available Anthropic seat (ranks above `claude-opus-4.8`) | `flagship` | none known | 2026-09-20 |
-| `anthropic/claude-opus-4.8` | Anthropic seat, paired with the synthesizer's own-vendor discount rule | `max` | none known | 2026-09-20 |
+| `anthropic/claude-opus-5` | `max`'s Anthropic seat: newest Opus, paired with the synthesizer's own-vendor discount rule. Same $5/$25 tier as the `opus-4.8` it replaces. | `max` | none known | 2026-09-20 |
+| `anthropic/claude-opus-4.8` | Former `max` seat — **retired 2026-09-20**, superseded by `claude-opus-5` at the same price. Kept as the record of a model that was considered and measured. | none | none known | 2026-09-20 |
 | `google/gemini-3.1-pro-preview` | Google frontier seat | `default`, `code`, `prose`, `max`, `flagship` | none known | 2026-09-20 |
 | `google/gemini-3-flash-preview` | Cheap Google seat for breadth | `crowd` | none known | 2026-09-20 |
 | `deepseek/deepseek-v4-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max`, `smoke` | predecessor `deepseek/deepseek-v4-pro` timed out at 240 s on a ~30k-token diff (2026-09-20) — this flash variant replaced it | 2026-09-20 |

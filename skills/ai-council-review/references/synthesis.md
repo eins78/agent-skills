@@ -120,7 +120,7 @@ Rules that override intuition:
   identities are somehow known anyway (custom tooling, an old run layout),
   apply the fallback rule: **discount pairwise agreement between you and
   any member from your own vendor** (the `max` and `flagship` presets each
-  include an Anthropic model — `claude-opus-4.8` and `claude-fable-5.1`
+  include an Anthropic model — `claude-opus-5` and `claude-fable-5.1`
   respectively — and you are one).
 - If `--personas` was used (`manifest.personas: true`), agreement counting
   is INVALID — members had different assignments. Switch to coverage mode:
