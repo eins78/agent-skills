@@ -214,6 +214,14 @@ as of `@eins78/agent-skills` v3.1.0. Grok was removed from the default
 preset by maintainer decision (2026-07-11); `z-ai/glm-5.2` backfills to keep
 a 4-member council (quorum unchanged at 2).
 
+Roster swap 2026-09-20 (maintainer decision): `deepseek/deepseek-v4-pro` →
+`deepseek/deepseek-v4-flash` and `z-ai/glm-5.2` → `z-ai/glm-5.3-flash` in
+every preset that carried them. Trigger: one `code` run on a 30k-token diff
+where the pro model timed out at 240 s and glm-5.2 returned an empty
+completion, leaving a 2/4 degraded council. Both flash slugs verified live
+the same day (`council.mjs models --verify`); both support structured
+output.
+
 Hardened 2026-07-12 from a deep-research round on council/ensemble prior
 art (`research/council-prior-art.md`, PR #62): synthesis anonymization
 (P1), correlated-error and position-bias guardrails (P2/P4), personas
