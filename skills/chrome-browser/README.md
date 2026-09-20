@@ -16,6 +16,10 @@ Developed for qubert-config ([sessionlog](https://github.com/eins78/qubert-confi
 
 ## Key Insight
 
+**Binary choice is version-aware since v1.6.0.** CfT stays preferred for its distinct icon, but the
+launcher falls back to Chrome stable when CfT is a major version behind it — a stale CfT build gets
+rejected by bot-detection vendors on real sign-in pages. `CHROME_CDP_PREFER=testing|stable` overrides.
+
 Chrome enforces a single-instance lock per user-data-dir. When the user's daily Chrome is running, CDP can't bind to the default profile. The solution is a **dedicated `~/.cache/chrome-cdp-profile`** with Chrome for Testing — which also has its own `CFBundleIdentifier` (`com.google.chrome.for.testing`), giving it a distinct icon in the Dock without any hacks.
 
 ## Skill Structure
