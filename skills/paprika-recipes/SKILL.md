@@ -72,7 +72,8 @@ the mechanical part.
 
 **1 — Read the source.** A web page, a note, a PDF (`pdftotext file.pdf -`, or
 the `pandoc` skill), a photo of a cookbook page, a pasted message, a chat
-transcript. Anything you can read.
+transcript. Anything you can read — and, via *Video sources* below, anything
+you can only hear.
 
 > **When the user names a source, find *that* source.** If a search comes back
 > empty, that is evidence about the search, not about the user's memory. Never
@@ -147,6 +148,37 @@ Rules that actually bite:
 - **Link to another recipe with `[recipe:Name]`** — see below. Whenever a
   source says *"serve with X"* or calls for a component the library already
   has, that is a link, not a plain string.
+
+### When the recipe is only spoken — video sources
+
+A reel, short or TikTok may carry no recipe text at all: not in the caption,
+not on the page. The recipe is then in the narration, and you can still get it
+— transcribe the audio (`yt-dlp` to fetch, any speech-to-text to read it).
+The mechanics are ordinary; what is specific to recipes is what you do with
+the result.
+
+- **Read the caption first.** Many food accounts put the whole recipe there,
+  which saves the entire exercise. When they don't, the caption still names
+  the dish and the creator — that is your `source`.
+- **On-screen text is usually auto-subtitles, not an ingredient card.** It
+  looks like a recipe overlay in thumbnails and isn't: it is the narration,
+  one phrase at a time. Check a handful of spread-out frames before deciding
+  the video shows quantities in writing.
+- **Cross-check every amount against what the video shows.** This is the step
+  that makes a heard recipe trustworthy, and it is not optional. Cooking
+  videos put a scale, a jug or a labelled pack on screen at the moment each
+  amount goes in. Confirm the digits against the words. A mis-heard quantity
+  is quiet and plausible — it yields a recipe that reads perfectly and cooks
+  wrong, and nothing downstream will catch it.
+- **Structure, never paste.** Write your own `directions`. A transcript is
+  speech: filler, asides, the same step twice. Keep the technique and the
+  reasons a cook needs; drop the talk.
+- **Expect subtitles burned into the photo.** Every frame of a subtitled video
+  carries text, so there is no clean frame to hunt for. Take the one that best
+  shows the finished dish.
+- **Say so in `notes`.** Record that the amounts came from narration, and what
+  you checked them against, so a later reader knows the recipe was heard
+  rather than read.
 
 ### Choosing an import format — native by default
 
@@ -319,6 +351,36 @@ then a second sheet: **Import Complete** — *Successfully imported 1 recipes.* 
 sheet's own text; anything unexpected is left alone for a human. Without
 `--confirm`, tell the user to click Import — don't report success until the
 database confirms it.
+
+#### When `--confirm` appears to hang
+
+Observed once: the command produced no output and had not exited after about
+five minutes, while Paprika sat with the `Import Recipes` sheet already open.
+The cause was **not** reproduced — so treat the symptom, and don't assume it
+was a denied Automation permission, which fails differently (error `-1743`,
+and promptly).
+
+- **Don't pipe the import through `tail` or `head`.** `tail` emits only at
+  EOF, so killing a stuck pipeline shows you nothing whatsoever — including
+  the `handed to …` and `confirmed: clicked Import` progress lines that tell
+  you how far it actually got. Run it unpiped.
+- **Check for an open sheet before re-running anything.** If a sheet is up,
+  `open` already succeeded, and running the import again just stacks a second
+  sheet behind the first:
+
+  ```bash
+  osascript -e 'tell application "System Events" to tell process "Paprika Recipe Manager 3" \
+    to return value of static text of sheets of windows'
+  ```
+
+  If that prints the import text, click *that* sheet rather than re-importing:
+  `click button "Import" of sheet 1 of window 1`, then `button "OK"` on the
+  completion sheet. Verify against the database either way.
+- **Before killing it, check every PID.** `pgrep -f paprika-recipe.mjs` also
+  matches the shell you typed the command into, because the pattern appears in
+  that shell's own command line. Run `ps -o pid,ppid,command` over the matches
+  and kill only the `node …` process and its wrapper — never the bare `pgrep`
+  output.
 
 ### Editing an existing recipe
 
