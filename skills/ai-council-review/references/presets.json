@@ -39,7 +39,7 @@
       "google/gemini-3-flash-preview"
     ],
     "max": [
-      "anthropic/claude-opus-4.8",
+      "anthropic/claude-opus-5",
       "openai/gpt-6-astra",
       "google/gemini-3.1-pro-preview",
       "deepseek/deepseek-v4-flash",
