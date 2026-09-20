@@ -70,6 +70,13 @@ alone rather than clicked blind.
 No npm packages at runtime. `typescript` and `@types/node` are devDependencies
 of this repo, used only for type checking.
 
+Nothing is required for the video-source guidance in SKILL.md. That section
+deliberately names no tools or flags: fetching and transcribing a video is
+ordinary media work that varies by machine, and the skill's contribution is
+the *judgement* applied to the result (cross-checking amounts, not pasting
+transcripts). Keeping the toolchain out of the skill is what stops it from
+ageing into someone else's environment.
+
 ## Testing
 
 Type check (no build step, no emit):
@@ -77,6 +84,23 @@ Type check (no build step, no emit):
 ```bash
 pnpm exec tsc -p skills/paprika-recipes
 ```
+
+### Video-source path (manual, 2026-09-20)
+
+Validated end to end against a German-language Instagram reel whose caption
+held only a title and three hashtags — no recipe text anywhere in the page.
+
+What the run established:
+
+- The burned-in on-screen text was auto-subtitles of the narration, not an
+  ingredient card. The `fps=1/3` tile montage showed this from one image.
+- `whisper-cli` with `-l de` and `ggml-large-v3-turbo-q5_0` recovered all six
+  quantities from 46 s of audio in ~3 s of compute on Apple silicon.
+- The cross-check paid for itself: two amounts were independently confirmed
+  against kitchen-scale digits visible in the video, and both matched the
+  narration. Without that step there is nothing to catch a misheard number.
+- Import, photo attachment and category reuse behaved exactly as the
+  non-video path does; nothing in the format layer needed to change.
 
 Read path, non-destructive:
 
@@ -177,6 +201,23 @@ paprika-recipes/
 ```
 
 ## Known gaps / future improvements
+
+- **`import --confirm` hung once for ~5 minutes; cause not reproduced.** The
+  process emitted nothing and did not exit, while Paprika already displayed the
+  `Import Recipes` sheet. Killed by hand; a direct System Events click on that
+  same sheet then worked immediately, and the import completed normally. This
+  is *not* explained by a denied Automation permission — that path fails fast
+  with `-1743` — and `confirmImportSheet()` already bounds each `osascript`
+  call at 20 s across at most 15 attempts, so neither a single blocked call nor
+  the loop obviously accounts for five minutes. **Not guessed at further.**
+  Two things that would narrow it: capture `handed to …` unpiped to see whether
+  `open` or the first sheet read is where it stops, and check whether
+  `execFileSync`'s `timeout` actually reaps an `osascript` that is itself
+  blocked on a system dialog. A candidate fix, deliberately *not* implemented
+  without a reproduction: have `cmdImport` detect an already-open import sheet
+  and click it instead of calling `open` again, which would make the command
+  idempotent and remove the stacked-sheet hazard entirely.
+  Recovery steps are documented in SKILL.md → *When `--confirm` appears to hang*.
 
 - **`.yml` import is not automated, deliberately.** The app declares only its own
   two UTIs, so `open` cannot route a `.yml`; it needs the Import screen and its
