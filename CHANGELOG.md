@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.6.0
+
+### Minor Changes
+
+- [#103](https://github.com/eins78/agent-skills/pull/103) [`dcdf9df`](https://github.com/eins78/agent-skills/commit/dcdf9dfb2077015eacc6b4130feda44319188ef2) - **`ai-council-review`** — `default` is now the code-review roster; this is a **behaviour change** for every adopter, not a patch.
+
+  The old `default` roster (`gpt-5.5`) survives as the new `prose` preset. `budget` drops `x-ai/grok-4.3` for a three-vendor, three-seat roster (`qwen/qwen3.8-flash`); `max` upgrades its OpenAI seat to `gpt-6-astra`; two new presets, `crowd` (six cheap seats) and `flagship` (four extravagant seats), round out the set. All slugs verified live against the OpenRouter catalog. README.md now carries per-preset and per-model tables, and roster history moves to a new hand-maintained `references/MODELS-CHANGELOG.md` — models are external dependencies outside this skill's semver contract.
+
 ## 4.5.1
 
 ### Patch Changes
