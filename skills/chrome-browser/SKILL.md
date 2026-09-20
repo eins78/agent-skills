@@ -122,7 +122,7 @@ chrome-cdp-restart
 
 | Decision | Rationale |
 |----------|-----------|
-| Chrome for Testing | Distinct Dock icon ("TEST" badge), own `CFBundleIdentifier`, no auto-update surprises |
+| Chrome for Testing | Distinct Dock icon ("TEST" badge), own `CFBundleIdentifier`, no auto-update surprises — but see "CfT behind stable" below: not auto-updating is also how it drifts into a fingerprint bot detection rejects. The launcher now picks stable automatically when CfT is a major version behind. |
 | `~/.local/Applications/` install path | User-writable, stable path independent of puppeteer cache |
 | Isolated profile (`~/.cache/chrome-cdp-profile`) | Avoids single-instance lock, doesn't interfere with daily browsing |
 | Headed (not headless) | User can log into sites manually, cookies persist for automation |
@@ -156,6 +156,27 @@ No third-party keep-awake app is needed, and neither is `caffeinate`: the flags 
 **Cloudflare challenges:** wait, don't retry. Real blocks are very rare; they need a fresh IP, not another browser restart.
 
 **CfT update:** run `${CLAUDE_SKILL_DIR}/scripts/install-cft.sh` to download/install the latest stable version (it also refreshes the `launch-chrome-cdp` symlink).
+
+**CfT behind stable — a login page refuses to proceed.** Symptom: a site's sign-in
+shows a generic "your browser is behaving strangely" notice and will not accept
+credentials, while the *same* login succeeds in Safari, or in Chrome stable, on the
+same machine and the same network. That last part is the discriminator: it rules
+out the IP, the network and the account, leaving the browser build.
+
+The cause is the property CfT is chosen *for* — it does not auto-update. Left
+alone, it falls behind stable and presents a version/capability combination no
+real user has. The console tell is a probe of a newer web API aborting rather
+than a request failing: for example a built-in-AI API that is present but whose
+model reports `"unavailable"`.
+
+**Do not read a `429` from a bot-defence sensor endpoint as a rate limit.** Some
+vendors answer their sensor endpoint with `429` *plus* a valid token as their
+normal handshake, and it appears in the console as a failed request. Diagnose by
+comparing browsers on one machine, not by reading status codes.
+
+Fix: update CfT (`install-chrome-for-testing.sh`). The launcher also detects this
+now — if CfT's major version is below installed stable it uses stable and says so.
+Force either with `CHROME_CDP_PREFER=testing` or `CHROME_CDP_PREFER=stable`.
 
 **Lost session after CfT update:** the persistent profile at `~/.cache/chrome-cdp-profile` may lose stored cookies/logins after a Chrome for Testing version bump. This is one-time per upgrade — re-login manually in the headed browser, no profile reset needed. Warn the user before any destructive `pkill`/profile-clear, since they may need the existing tab state for re-auth.
 

@@ -4,7 +4,9 @@ set -euo pipefail
 # Ensure Chrome is running with CDP (Chrome DevTools Protocol) on port 9222.
 # Idempotent — safe to call repeatedly.
 # Uses a dedicated user-data-dir so CDP can bind even if Chrome was already open.
-# Prefers Chrome for Testing (distinct icon, no auto-update), falls back to regular Chrome.
+# Prefers Chrome for Testing (distinct icon, no auto-update) *while it is not behind*
+# installed Chrome stable; otherwise uses stable. See pick_binary() for why.
+# Override with CHROME_CDP_PREFER=testing|stable.
 
 PORT=9222
 CDP_URL="http://127.0.0.1:${PORT}"
@@ -73,13 +75,46 @@ fi
 
 mkdir -p "${USER_DATA_DIR}"
 
-if [[ -x "${CFT_BIN}" ]]; then
-  echo "Launching Chrome for Testing with --remote-debugging-port=${PORT}..."
-  "${CFT_BIN}" "${CHROME_FLAGS[@]}" &>/dev/null &
-else
-  echo "Launching Chrome with --remote-debugging-port=${PORT}..."
-  "${CHROME_BIN}" "${CHROME_FLAGS[@]}" &>/dev/null &
-fi
+# Which binary to launch.
+#
+# Chrome for Testing is preferred for its distinct Dock icon and its lack of
+# auto-update — but that second property is a liability as well as a feature. A
+# CfT build left behind stable presents a browser fingerprint no real user has,
+# and bot-detection vendors reject it: the observed symptom is a login page that
+# refuses to proceed with a generic "your browser is behaving strangely" notice
+# while the SAME login succeeds in Safari or in Chrome stable on the same machine
+# and the same network. Console tells: probes of newer web APIs abort, e.g. a
+# built-in-AI API that is present but reports its model "unavailable".
+#
+# So: use CfT while it is current, and stable when CfT has fallen behind.
+version_of() { "$1" --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)*' | head -1; }
+major_of() { version_of "$1" | cut -d. -f1; }
+
+pick_binary() {
+  case "${CHROME_CDP_PREFER:-auto}" in
+    testing) [[ -x "${CFT_BIN}" ]] && { printf '%s' "${CFT_BIN}"; return; } ;;
+    stable)  [[ -x "${CHROME_BIN}" ]] && { printf '%s' "${CHROME_BIN}"; return; } ;;
+  esac
+  if [[ ! -x "${CFT_BIN}" ]]; then printf '%s' "${CHROME_BIN}"; return; fi
+  if [[ ! -x "${CHROME_BIN}" ]]; then printf '%s' "${CFT_BIN}"; return; fi
+  local cft_major stable_major
+  cft_major="$(major_of "${CFT_BIN}")"
+  stable_major="$(major_of "${CHROME_BIN}")"
+  # Unreadable version: keep the historical preference rather than guess.
+  if [[ -z "${cft_major}" || -z "${stable_major}" ]]; then printf '%s' "${CFT_BIN}"; return; fi
+  if (( cft_major < stable_major )); then
+    echo "Chrome for Testing is ${cft_major}, stable is ${stable_major} — using stable." >&2
+    echo "A CfT build behind stable gets rejected by bot detection; run install-chrome-for-testing.sh" >&2
+    echo "to update it, or set CHROME_CDP_PREFER=testing to override." >&2
+    printf '%s' "${CHROME_BIN}"
+  else
+    printf '%s' "${CFT_BIN}"
+  fi
+}
+
+BIN="$(pick_binary)"
+echo "Launching $(basename "${BIN}") $(version_of "${BIN}") with --remote-debugging-port=${PORT}..."
+"${BIN}" "${CHROME_FLAGS[@]}" &>/dev/null &
 disown
 
 # Wait for CDP to become available
