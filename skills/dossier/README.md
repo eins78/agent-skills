@@ -68,6 +68,8 @@ dossier/
 │   └── source-archival.md            # Capture tiers, caps, index schema, Wayback, repo hygiene
 ├── scripts/
 │   └── archive-source.sh             # Depth-0 source capture + index append (no required deps)
+├── tests/
+│   └── test-commit-gate.sh           # Scratch-repo proof of dossier-commit-gate.sh, both directions
 └── templates/
     ├── dossier.md                    # DECISION genre: ranked options + recommendation
     └── report.md                     # RESEARCH genre: survey spine, subject-shaped headings,
@@ -99,7 +101,13 @@ To verify the skill works:
 3. **Template test:** Check that a produced dossier includes all REQUIRED sections (Key Facts, Key Concepts, Management Summary, Evaluations, Sources)
 4. **Ballot filename gate:** Write a file named `DOSSIER-Test-BALLOT.md` (no reviewer) — the `ballot-filename.sh` hook fires, stderr reports the pattern mismatch, exit code 2.
 5. **Review-checklist pass:** After delivering a dossier, walk through `references/review-checklist.md` — each of the 12 items should be actionable against the finished dossier.
-5b. **Review gate:** In a scratch git repo, stage a `DOSSIER-*.md` with no `review-*.md` beside it and pipe `{"tool_input":{"command":"git commit -m x"}}` into `dossier-commit-gate.sh` — expect exit 2 and a "no review artifact" message. Add a `review-*.md` whose finding has no `**Disposition:**` line — expect exit 2 again with the count mismatch. Disposition it — expect exit 0. Ballot files and non-commit Bash calls must pass untouched.
+5b. **Review gate (scripted, not run by `pnpm test`):**
+
+   ```bash
+   bash skills/dossier/tests/test-commit-gate.sh
+   ```
+
+   Builds scratch repos and pipes `{"tool_input":{"command":"git commit …"}}` into `dossier-commit-gate.sh`. Proves both directions of the gate: an unreviewed `DOSSIER-*.md` is denied (exit 2) and a dispositioned review passes; a conflicted merge that only integrates an unreviewed dossier from the other branch is allowed, while a dossier added by hand during that same merge is still denied — and the denial names the hand-added file, not the integrated one. Manual extras not covered by the script: a `review-*.md` whose finding has no `**Disposition:**` line must fail with the count mismatch; ballot files must pass untouched.
 6. **Ballot test:** Ask for a comparison requiring a decision — verify the `ballot` skill's per-reviewer template is used.
 7. **Session test:** After dossier delivery, ask a follow-up question — verify session stays open.
 8. **Source archival (manual, not run by `pnpm test`):**

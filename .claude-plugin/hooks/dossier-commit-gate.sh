@@ -40,6 +40,27 @@ fi
 
 staged=$(git diff --cached --name-only 2>/dev/null || true)
 
+# During a merge the index holds the whole incoming tree, so the staged list is
+# every file the other branch ever touched — a dossier that origin/main
+# committed weeks ago looks exactly like one being authored now, and every
+# session that integrates upstream before pushing gets denied. A merge is not
+# the DELIVER moment. Keep only the paths whose staged content differs from
+# *every* parent (the `git diff-tree --cc` notion of what a merge commit itself
+# contributes): conflict resolutions and files added by hand during the merge.
+# A path identical to a parent was committed by that parent, and that commit
+# already faced this gate. Diffing against the merge base would not do: the
+# incoming dossier differs from the base too, so it would still be flagged.
+merge_head_file=$(git rev-parse --git-path MERGE_HEAD 2>/dev/null || true)
+if [[ -n "$merge_head_file" && -f "$merge_head_file" ]]; then
+  # One line per parent; an octopus merge lists several.
+  while IFS= read -r parent; do
+    [[ -z "$parent" ]] && continue
+    vs_parent=$(git diff --cached --name-only "$parent" 2>/dev/null || true)
+    staged=$(comm -12 <(printf '%s\n' "$staged" | sort -u) \
+                      <(printf '%s\n' "$vs_parent" | sort -u))
+  done < "$merge_head_file"
+fi
+
 # `git commit -a` stages tracked modifications as part of the commit itself, so
 # they are not in the index yet when this hook runs.
 if [[ "$command" == *" -a"* || "$command" == *"--all"* ]]; then
