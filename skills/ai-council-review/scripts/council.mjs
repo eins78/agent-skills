@@ -25,6 +25,7 @@
  *      dispatch, never logged) or OPENROUTER_API_KEY as a fallback,
  *      OPENROUTER_BASE_URL, COUNCIL_TIMEOUT_MS, AI_COUNCIL_MODELS,
  *      AI_COUNCIL_PRESET, AI_COUNCIL_BUDGET_USD, AI_COUNCIL_QUORUM,
+ *      AI_COUNCIL_REASONING_EFFORT, AI_COUNCIL_PROVIDER_SORT,
  *      XDG_STATE_HOME, REVIEW_BASE_BRANCH.
  *
  * The API key is read from the environment ONLY — never a flag (argv leaks
@@ -183,6 +184,8 @@ async function main() {
       quorum: { type: "string" },
       "confirm-threshold": { type: "string" },
       "max-output-tokens": { type: "string" },
+      "reasoning-effort": { type: "string" },
+      "provider-sort": { type: "string" },
     },
   });
 
@@ -414,6 +417,11 @@ async function main() {
       const info = catalog.get(model);
       const structured = Boolean(info?.supportedParameters.includes("response_format"));
       const temperature = info?.supportedParameters.includes("temperature") ? 0.2 : undefined;
+      // Only send reasoning.effort to models that advertise support for it —
+      // the catalog's supported_parameters is the only signal available
+      // without a probe request, and sending it to an unsupporting model is
+      // a 400, not a graceful ignore (would turn one bad seat into a failure).
+      const reasoningSupported = Boolean(info?.supportedParameters.includes("reasoning"));
       // `payload` is the fitted/trimmed string — the same bytes the estimate
       // and input.txt are based on. Never rebuild from the untrimmed input.
       const messages = buildMessages({
@@ -431,6 +439,10 @@ async function main() {
         temperature,
         timeoutMs: config.timeoutMs,
         maxTokens: config.maxOutputTokens, // must match the worst-case gate math
+        reasoningEffort: reasoningSupported ? config.reasoningEffort : undefined,
+        // provider.sort is a routing hint, not a model capability — safe to
+        // send to every member regardless of supported_parameters.
+        providerSort: config.providerSort,
       });
       // The provider response echoes the model slug — scrub identity fields
       // before persisting under a label-named file (raw/ is a synthesis

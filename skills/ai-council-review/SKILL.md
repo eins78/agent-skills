@@ -110,7 +110,7 @@ Show the user the per-model table and total. If the estimate exceeds the
 confirmation threshold (default $1), you MUST get an explicit go-ahead in
 this session before step 3.
 
-### 3. Dispatch (1–4 minutes — run in background)
+### 3. Dispatch (1–10 minutes — run in background)
 
 ```bash
 node ${CLAUDE_SKILL_DIR}/scripts/council.mjs review <same flags> [--yes]
@@ -189,7 +189,17 @@ Precedence: flags > `AI_COUNCIL_*` env > repo `.ai-council.json` >
 `references/presets.json` (presets: `default`, `code`, `prose`, `budget`,
 `crowd`, `max`, `flagship`, `smoke` — see README.md for per-preset rosters
 and pricing; scalars: `budgetUsd`, `confirmThresholdUsd`, `timeoutMs`,
-`quorum`, `preset`).
+`quorum`, `preset`, `reasoningEffort`, `providerSort`).
+
+`reasoningEffort` (`--reasoning-effort` / `AI_COUNCIL_REASONING_EFFORT`,
+bundled default `"medium"`) sets `reasoning.effort` on every request — but
+only to models that advertise `"reasoning"` in the live catalog's
+`supported_parameters`; sending it to a model that doesn't support it is a
+400, not a graceful ignore, so dispatch gates it per-member. Set to `"none"`
+to disable reasoning outright, or `"low"` for the cheapest/fastest council
+presets. `providerSort` (`--provider-sort` / `AI_COUNCIL_PROVIDER_SORT`,
+bundled default `"throughput"`) sets `provider.sort` — a routing hint, not a
+model capability, so it's sent to every member unconditionally.
 
 Useful env: `OPENROUTER_BASE_URL` (testing), `COUNCIL_TIMEOUT_MS`,
 `REVIEW_BASE_BRANCH` (for `--branch`).

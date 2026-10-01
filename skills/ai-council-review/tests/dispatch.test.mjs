@@ -65,8 +65,9 @@ before(async () => {
               id,
               context_length: 100000,
               pricing: { prompt: "0.000001", completion: "0.000002" },
-              // alpha/gamma take the structured path, beta/delta the prompt-enforced path
-              supported_parameters: i % 2 === 0 ? ["response_format", "temperature"] : ["temperature"],
+              // alpha/gamma take the structured path and advertise reasoning support;
+              // beta/delta take the prompt-enforced path and do NOT support reasoning.
+              supported_parameters: i % 2 === 0 ? ["response_format", "temperature", "reasoning"] : ["temperature"],
             })),
             // zero-priced model (like OpenRouter ":free" variants) for the unpriced-gate test
             {
@@ -285,6 +286,73 @@ test("--personas assigns lenses by label order, not roster order", async () => {
       assert.equal(personaRank, expectedRank, `${label} (${req.model}) got persona ${personaRank}, expected label rank ${expectedRank}`);
     }
     r.cleanup();
+  } finally {
+    captureBody = undefined;
+  }
+});
+
+test("reasoning.effort is sent only to models that advertise support; provider.sort is sent to all", async () => {
+  /** @type {Record<string, any>} */
+  const sentByModel = {};
+  behavior = () => ({});
+  completionHits = new Map();
+  captureBody = (raw) => {
+    const req = JSON.parse(raw);
+    sentByModel[req.model] = req;
+  };
+  try {
+    const r = await runCli(REVIEW_ARGS);
+    assert.equal(r.status, 0, r.output);
+    // alpha/gamma advertise "reasoning" in supported_parameters.
+    assert.deepEqual(sentByModel["mock/alpha"].reasoning, { effort: "medium" });
+    assert.deepEqual(sentByModel["mock/gamma"].reasoning, { effort: "medium" });
+    // beta/delta do not — sending it anyway would be a 400 on a real provider.
+    assert.equal(sentByModel["mock/beta"].reasoning, undefined);
+    assert.equal(sentByModel["mock/delta"].reasoning, undefined);
+    // provider.sort is a routing hint, not a model capability — sent to everyone.
+    for (const model of MOCK_MODELS) {
+      assert.equal(sentByModel[model].provider.sort, "throughput", `${model} must carry provider.sort`);
+    }
+    // require_parameters is still scoped to the structured (response_format) path only.
+    assert.equal(sentByModel["mock/alpha"].provider.require_parameters, true);
+    assert.equal(sentByModel["mock/beta"].provider.require_parameters, undefined);
+  } finally {
+    captureBody = undefined;
+  }
+});
+
+test("--reasoning-effort and --provider-sort flags override the bundled defaults", async () => {
+  /** @type {Record<string, any>} */
+  const sentByModel = {};
+  behavior = () => ({});
+  completionHits = new Map();
+  captureBody = (raw) => {
+    const req = JSON.parse(raw);
+    sentByModel[req.model] = req;
+  };
+  try {
+    const r = await runCli([...REVIEW_ARGS, "--reasoning-effort", "low", "--provider-sort", "price"]);
+    assert.equal(r.status, 0, r.output);
+    assert.deepEqual(sentByModel["mock/alpha"].reasoning, { effort: "low" });
+    assert.equal(sentByModel["mock/beta"].provider.sort, "price");
+  } finally {
+    captureBody = undefined;
+  }
+});
+
+test("--reasoning-effort none disables reasoning even for models that support it", async () => {
+  /** @type {Record<string, any>} */
+  const sentByModel = {};
+  behavior = () => ({});
+  completionHits = new Map();
+  captureBody = (raw) => {
+    const req = JSON.parse(raw);
+    sentByModel[req.model] = req;
+  };
+  try {
+    const r = await runCli([...REVIEW_ARGS, "--reasoning-effort", "none"]);
+    assert.equal(r.status, 0, r.output);
+    assert.deepEqual(sentByModel["mock/alpha"].reasoning, { effort: "none" });
   } finally {
     captureBody = undefined;
   }
