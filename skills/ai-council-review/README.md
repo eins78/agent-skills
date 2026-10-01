@@ -67,7 +67,7 @@ node scripts/council.mjs review --branch main --dry-run
 node scripts/council.mjs review docs/plan.md --rubric plan --yes
 
 # custom council, custom cap
-node scripts/council.mjs review --pr 42 --models openai/gpt-5.5,z-ai/glm-5.2 --budget 2
+node scripts/council.mjs review --pr 42 --models openai/gpt-5.5,z-ai/glm-5.3-flash --budget 2
 
 # record synthesis outcomes for a run; show the per-model archive
 node scripts/council.mjs outcomes record --run RUN_DIR --json '{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}}'
@@ -78,7 +78,7 @@ Exit codes: `0` ok · `1` usage/input · `2` quorum failed · `3` budget-blocked
 (nothing sent) · `4` API key missing. Env vars:
 `AI_COUNCIL_OPENROUTER_API_KEY` (fallback: `OPENROUTER_API_KEY`),
 `OPENROUTER_BASE_URL`, `COUNCIL_TIMEOUT_MS`, `COUNCIL_RETRY_BACKOFF_MS`,
-`AI_COUNCIL_{MODELS,PRESET,BUDGET_USD,CONFIRM_THRESHOLD_USD,QUORUM}`,
+`AI_COUNCIL_{MODELS,PRESET,BUDGET_USD,CONFIRM_THRESHOLD_USD,QUORUM,REASONING_EFFORT,PROVIDER_SORT}`,
 `REVIEW_BASE_BRANCH`, `XDG_STATE_HOME`.
 
 ## Council rosters
@@ -102,9 +102,9 @@ follow-up if this drifts.
 |---|---|---|---|---|
 | `openai/gpt-5.3-codex` | OpenAI | 1.75 | 14.00 | 400,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
-| **Total** | | **3.88** | **26.37** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
+| **Total** | | **3.94** | **26.58** | |
 
 **`prose`** — the pre-2026-09-20 default roster; use for plan docs and prose where a codex-tuned seat is a downgrade.
 
@@ -112,30 +112,30 @@ follow-up if this drifts.
 |---|---|---|---|---|
 | `openai/gpt-5.5` | OpenAI | 5.00 | 30.00 | 1,050,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
-| **Total** | | **7.13** | **42.37** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
+| **Total** | | **7.19** | **42.58** | |
 
 **`budget`** — cheapest three-seat council. Three seats, not two, because `quorum: 2` means a two-seat preset fails outright on any single member failure.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
 | `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
-| **Total** | | **0.28** | **0.84** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
+| **Total** | | **0.34** | **1.05** | |
 
 **`crowd`** — `budget`'s three seats plus three more: many weak independent opinions rather than one strong seat per vendor. Deliberately carries two Alibaba seats (`qwen3.8-flash`, `qwen3.8-27b`) — the exception to the one-seat-per-vendor rule below, because `crowd`'s thesis is opinion count, not per-vendor independence; still six seats but only five vendors. **Effective context cap is 1,000,000 exactly** — the smallest window in the council, set by `qwen3.8-flash`/`qwen3.8-27b` (both 1,000,000, not 1,048,576) — since the dispatch script trims every member's payload to the council's smallest window.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
 | `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
-| `qwen/qwen3.8-27b` | Alibaba | 0.20 | 2.55 | 1,000,000 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
+| `qwen/qwen3.8-27b` | Alibaba | 0.42 | 3.00 | 1,000,000 |
 | `tencent/hy4-preview` | Tencent | 0.83 | 2.50 | 1,048,576 |
 | `google/gemini-3-flash-preview` | Google | 0.50 | 3.00 | 1,048,576 |
-| **Total** | | **1.81** | **8.89** | |
+| **Total** | | **2.09** | **9.55** | |
 
 **`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion. The Anthropic seat is the **newest Opus** (`claude-opus-5` since 2026-09-20, previously `claude-opus-4.8`) — deliberately *not* `claude-fable-5.1`, which is `flagship`'s seat. `max` is the broad five-vendor preset at a controlled price, not the strongest-at-any-price one; that is what `flagship` is for. Successive Opus releases have held the same $5/$25 tier, so keeping this seat on the newest Opus costs nothing and the totals below are unchanged.
 
@@ -144,9 +144,9 @@ follow-up if this drifts.
 | `anthropic/claude-opus-5` | Anthropic | 5.00 | 25.00 | 1,000,000 |
 | `openai/gpt-6-astra` | OpenAI | 10.00 | 50.00 | 1,050,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.09 | 0.30 | 1,310,720 |
-| **Total** | | **17.13** | **87.37** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
+| **Total** | | **17.19** | **87.58** | |
 
 **`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At `outputTokensPerModel: 3000` a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
 
@@ -162,8 +162,8 @@ follow-up if this drifts.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.07 | 1,048,576 |
-| **Total** | | **0.04** | **0.07** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
+| **Total** | | **0.04** | **0.08** | |
 
 ### Models
 
@@ -307,6 +307,30 @@ directions.
   belong to `ai-review`; plural-model and stakes vocabulary ("council",
   "panel", "multi-model", "third opinion", "high-stakes") belong here. Both
   descriptions cross-point.
+- **`reasoningEffort` + `providerSort` per request, `timeoutMs` 240s → 600s**
+  (2026-10-01): measured cause of the GLM/DeepSeek flash-seat timeouts —
+  `z-ai/glm-5.3-flash`'s catalog `default_effort` is `"max"` (mandatory
+  reasoning, no way to opt out short of an explicit override) and it has 26
+  provider endpoints, the cheapest around 13 tok/s; `deepseek-v4-flash`
+  defaults to `"high"`. Neither was bounded by anything the dispatch request
+  sent — `chatCompletion()` sent no `reasoning` field and no `provider.sort`,
+  so OpenRouter's default load-balanced routing could land either seat on
+  its slowest provider while reasoning ran at its most expensive default.
+  Fix: `reasoning.effort` defaults to `"medium"`, sent only to models whose
+  catalog `supported_parameters` includes `"reasoning"` (sending it to a
+  model that doesn't support it is a 400, not a graceful ignore — gated
+  per-member in `council.mjs`, same pattern as the existing
+  `response_format`/`temperature` gates). `provider.sort: "throughput"` is a
+  routing hint, not a model capability, so it is sent to every member
+  unconditionally. Both are configurable scalars (`--reasoning-effort`
+  / `AI_COUNCIL_REASONING_EFFORT`, `--provider-sort` /
+  `AI_COUNCIL_PROVIDER_SORT`) at the same precedence tier as `timeoutMs` and
+  `budgetUsd` — not per-preset-member, since presets are plain slug arrays
+  and every current roster member advertises reasoning support, so a global
+  scalar covers the real failure without restructuring `presets.json` into
+  objects. `timeoutMs` default also raised 240s → 600s ("we can wait a bit
+  for review" — Max's local config already ran at 600s); the per-model
+  timeout is still a hard abort, not a budget override.
 
 ## Provenance
 
@@ -364,6 +388,12 @@ outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
 
 ## Changelog
 
+- 0.4.0 (2026-10-01): `reasoning.effort` (default `"medium"`, gated per-model
+  on catalog `supported_parameters`) and `provider.sort` (default
+  `"throughput"`) sent per request; `timeoutMs` default raised 240s → 600s.
+  Fixes the GLM-5.3-flash/deepseek-v4-flash timeout failures — see Design
+  Decisions. Also corrected stale pricing/context for `glm-5.3-flash`,
+  `deepseek-v4-flash`, `qwen3.8-27b`, and a leftover `z-ai/glm-5.2` example.
 - 0.1.0 (2026-07-11, hardened 2026-07-12): initial release, plus the
   prior-art hardening round — anonymized synthesis, cluster fingerprints,
   outcome archive, synthesis guardrails, personas coverage mode, triage

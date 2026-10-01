@@ -29,6 +29,8 @@ export class UsageError extends Error {}
  * @property {number} budgetUsd  hard cap; WORST-CASE cost (all members exhausting max_tokens) above this refuses outright, even with --yes
  * @property {number} confirmThresholdUsd  estimate above this requires --yes
  * @property {number} timeoutMs  per-model request timeout
+ * @property {string|undefined} reasoningEffort  reasoning.effort sent to models that support it ("none" disables)
+ * @property {string|undefined} providerSort  provider.sort routing hint (e.g. "throughput")
  * @property {number} outputTokensPerModel  working estimate for cost math
  * @property {number} maxOutputTokens  max_tokens per request; worst-case cost basis
  * @property {number} quorum     minimum successful members for a usable run
@@ -145,6 +147,12 @@ export function resolveConfig({ flags, env, cwd }) {
     timeoutMs: flags.timeout !== undefined
       ? num(flags.timeout, "timeout") * 1000
       : num(pick("timeout-ms", "COUNCIL_TIMEOUT_MS", "timeoutMs"), "timeout"),
+    reasoningEffort: /** @type {string|undefined} */ (
+      pick("reasoning-effort", "AI_COUNCIL_REASONING_EFFORT", "reasoningEffort")
+    ),
+    providerSort: /** @type {string|undefined} */ (
+      pick("provider-sort", "AI_COUNCIL_PROVIDER_SORT", "providerSort")
+    ),
     outputTokensPerModel: num(presetsFile.outputTokensPerModel ?? 3000, "outputTokensPerModel"),
     maxOutputTokens: num(pick("max-output-tokens", "AI_COUNCIL_MAX_OUTPUT_TOKENS", "maxOutputTokens") ?? 24000, "maxOutputTokens"),
     quorum: num(pick("quorum", "AI_COUNCIL_QUORUM", "quorum"), "quorum"),

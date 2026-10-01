@@ -129,10 +129,15 @@ export function validateSlugs(models, catalog) {
  * @param {number|undefined} opts.temperature
  * @param {number} opts.timeoutMs
  * @param {number} [opts.maxTokens]
+ * @param {string} [opts.reasoningEffort] reasoning.effort value — caller must gate this on the
+ *   model's `supported_parameters` including "reasoning"; sending it to a model that doesn't
+ *   support it is a 400, not a graceful ignore
+ * @param {string} [opts.providerSort] provider.sort value (e.g. "throughput") — a routing hint,
+ *   not a model capability, so it is safe to send unconditionally
  * @returns {Promise<{content: string, finishReason: string, usage: {prompt_tokens?: number, completion_tokens?: number, cost?: number}, raw: unknown}>}
  */
 export async function chatCompletion(opts) {
-  const { baseUrl, apiKey, model, messages, responseFormat, temperature, timeoutMs } = opts;
+  const { baseUrl, apiKey, model, messages, responseFormat, temperature, timeoutMs, reasoningEffort, providerSort } = opts;
   /** @type {Record<string, unknown>} */
   const body = {
     model,
@@ -142,11 +147,14 @@ export async function chatCompletion(opts) {
     max_tokens: opts.maxTokens ?? 24000,
     usage: { include: true },
   };
-  if (responseFormat) {
-    body.response_format = responseFormat;
-    body.provider = { require_parameters: true };
-  }
+  if (responseFormat) body.response_format = responseFormat;
   if (temperature !== undefined) body.temperature = temperature;
+  if (reasoningEffort) body.reasoning = { effort: reasoningEffort };
+  /** @type {Record<string, unknown>} */
+  const provider = {};
+  if (responseFormat) provider.require_parameters = true;
+  if (providerSort) provider.sort = providerSort;
+  if (Object.keys(provider).length > 0) body.provider = provider;
 
   /** @type {Error|undefined} */
   let lastError;
