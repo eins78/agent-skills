@@ -1,5 +1,34 @@
 # @eins78/agent-skills
 
+## 4.7.0
+
+### Minor Changes
+
+- [#108](https://github.com/eins78/agent-skills/pull/108) [`9e3df4c`](https://github.com/eins78/agent-skills/commit/9e3df4c123c61b97aed03254d32af1c6ab4dcec1) - **`ai-council-review`** — GLM/DeepSeek flash-seat timeouts fixed: reasoning effort and throughput provider sort are now sent per request, and the default per-model timeout rose from 240s to 600s.
+
+  `z-ai/glm-5.3-flash` and `deepseek/deepseek-v4-flash` were timing out in council
+  runs because neither request bounded reasoning effort or provider routing —
+  both now default to `reasoning.effort: "medium"` (sent only to models whose
+  catalog entry supports it) and `provider.sort: "throughput"`, both
+  configurable. Also corrects stale pricing/context for `glm-5.3-flash`,
+  `deepseek-v4-flash`, and `qwen3.8-27b` in the README, and a leftover
+  `z-ai/glm-5.2` usage example.
+
+- [#106](https://github.com/eins78/agent-skills/pull/106) [`8dffffc`](https://github.com/eins78/agent-skills/commit/8dffffc904b4ede1f52de6cde7d2e9dba807758f) - **`chrome-browser`** — the launcher now uses Chrome stable when Chrome for Testing is a major version behind it.
+
+  CfT is still preferred for its distinct Dock icon, but a CfT build left behind
+  stable presents a browser fingerprint that bot-detection vendors reject, so sign-in
+  pages refuse to proceed while the same login works in Safari. Override with
+  `CHROME_CDP_PREFER=testing` or `CHROME_CDP_PREFER=stable`.
+
+### Patch Changes
+
+- [#105](https://github.com/eins78/agent-skills/pull/105) [`2a1846f`](https://github.com/eins78/agent-skills/commit/2a1846fedbf0f1efcbea55f6ec695bfc5419571f) - **`ai-council-review`** — the `max` preset's Anthropic seat moves from `claude-opus-4.8` to `claude-opus-5`.
+
+  `max` takes the newest Opus, not the strongest Anthropic model — the strongest is
+  `claude-fable-5.1`, and that is `flagship`'s seat. Successive Opus releases share
+  the same $5/$25 tier, so the preset's cost is unchanged.
+
 ## 4.6.0
 
 ### Minor Changes
