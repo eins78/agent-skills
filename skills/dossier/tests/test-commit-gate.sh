@@ -8,6 +8,8 @@
 #     incoming branch is allowed, even when that dossier has no review beside it
 #   - a dossier added by hand *during* a merge is still denied, and the denial
 #     names that file and not the integrated one
+#   - a pure rename (R100) of an unreviewed dossier is allowed; a rename that
+#     also edits the dossier is still denied
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -121,6 +123,30 @@ write_review research/mine
 git add research/mine
 run_gate "git commit -m 'merge incoming'"
 expect_status "reviewing the hand-added dossier unblocks the merge" 0
+
+echo "4. Renames: pure move passes, move-with-edit is gated"
+new_repo rename
+write_dossier research/old Moved
+git add research
+git commit -q -m "predates the gate"          # committed without a review
+git mv research/old research/new
+run_gate "git commit -m 'move folder'"
+expect_status "pure rename of an unreviewed dossier is allowed" 0
+git commit -q -m "move folder"
+echo "edited" >> research/new/DOSSIER-Moved.md
+git mv research/new research/newer
+git add research/newer
+run_gate "git commit -m 'move and edit'"
+expect_status "rename with an edit is still denied" 2
+expect_stderr_has "denial names the renamed dossier" "DOSSIER-Moved.md"
+git reset -q --hard
+write_dossier research/fresh Fresh
+git mv research/new research/moved2
+git add research
+run_gate "git commit -m 'move plus new dossier'"
+expect_status "new dossier alongside a pure rename is still denied" 2
+expect_stderr_has "denial names the new dossier" "DOSSIER-Fresh.md"
+expect_stderr_lacks "denial does not name the moved dossier" "DOSSIER-Moved.md"
 
 echo
 if [[ "$fail" -eq 0 ]]; then
