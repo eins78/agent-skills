@@ -38,7 +38,26 @@ if ! root=$(git rev-parse --show-toplevel 2>/dev/null); then
   exit 0
 fi
 
-staged=$(git diff --cached --name-only 2>/dev/null || true)
+# Staged paths, with pure renames left out. A `git mv` of a folder stages its
+# dossier as a new path, but the content is byte-identical to a blob that was
+# already committed (or predates this gate), so the DELIVER moment is not now —
+# the same reasoning as the merge exemption below. Only `R100` is exempt: a
+# rename that also edits the dossier (`Rnn`, nn < 100) is authoring and still
+# gated. `-z` keeps odd filenames intact; output is one path per line.
+staged=""
+while IFS= read -r -d '' status; do
+  case "$status" in
+    R*|C*)
+      IFS= read -r -d '' _old || break
+      IFS= read -r -d '' path || break
+      [[ "$status" == R100 ]] && continue
+      ;;
+    *)
+      IFS= read -r -d '' path || break
+      ;;
+  esac
+  staged+="$path"$'\n'
+done < <(git diff --cached -M --name-status -z 2>/dev/null || true)
 
 # During a merge the index holds the whole incoming tree, so the staged list is
 # every file the other branch ever touched — a dossier that origin/main
