@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.7.1
+
+### Patch Changes
+
+- [#110](https://github.com/eins78/agent-skills/pull/110) [`1453663`](https://github.com/eins78/agent-skills/commit/1453663c4346d6aed228f950052edbe111e2fe3b) - **`dossier`** — the commit gate no longer denies pure renames of an existing dossier.
+
+  Moving a folder with `git mv` staged its `DOSSIER-*.md` as a new path, so the commit was blocked although the content was unchanged. Renames detected as `R100` now pass, like merges; a rename that also edits the dossier is still gated. Fixes [#109](https://github.com/eins78/agent-skills/issues/109).
+
 ## 4.7.0
 
 ### Minor Changes
