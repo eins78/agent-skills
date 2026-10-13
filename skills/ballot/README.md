@@ -8,7 +8,7 @@ Extracted from the `dossier` skill on 2026-04-18. Pairs with `dossier` when SYNT
 
 ## Tier
 
-Publishable — project-agnostic. Works without `dossier`; works with any project convention that keeps a sessionlog.
+Publishable — project-agnostic. Works without `dossier`; works with any project convention that keeps a sessionlog. The optional artifact mode is Claude-specific (Claude Code `Artifact` tool or claude.ai, `db` capability); the markdown ballot stays tool-agnostic.
 
 ## Provenance
 
@@ -29,8 +29,10 @@ skills/ballot/
 ├── SKILL.md                          # ~130 lines
 ├── README.md                         # this file
 ├── templates/
-│   └── ballot-per-reviewer.md        # Must/Should/Could scaffold
+│   ├── ballot-per-reviewer.md        # Must/Should/Could scaffold
+│   └── ballot-artifact.html          # Claude-only artifact page (config + DECS array)
 └── references/
+    ├── artifact-mode.md              # Claude-only artifact mode: steps, write discipline, limits
     ├── ballot-conventions.md         # long-form rationale per rule
     └── review-checklist.md           # reviewer audit checklist
 ```
@@ -68,8 +70,19 @@ The one mechanical hook (`ballot-filename.sh`) fires `PostToolUse` on Write/Edit
 1. Run the review-checklist against a completed ballot before handing off.
 2. Each item in the checklist should be actionable — if a reviewer can't perform the check, the checklist item is broken.
 
+### Scenario 5: Artifact mode (Claude only, manual)
+
+1. In Claude Code, copy `templates/ballot-artifact.html`, keep the placeholder DECs, publish with `capabilities: {db: {}}`.
+2. `ArtifactData` `list` on `ballots` returns an empty store.
+3. Open the page, pick the Must options: Send enables only once every `gateTiers` DEC is answered.
+4. Press Send, then `ArtifactData` `get` on `ballots/<voter>`: `choices`, `words`, `notes` and `submittedAt` are present.
+5. Change a pick: the page shows "Send again"; reload keeps the picks.
+
+The page's script was only syntax-checked (`node --check`) when added; the live `db` round trip is covered solely by this manual run.
+
 ## Known Gaps
 
+- **Artifact mode has no automated test.** It depends on the claude.ai runtime; Scenario 5 is manual. One record per voter, no push notification on send, and the page is private unless shared.
 - **Filename gate is alerting-level, not blocking.** PostToolUse fires *after* file write. A motivated agent can ignore. True blocking requires PreToolUse with content inspection. Planned; `ballot-filename.sh` is the cheapest candidate for a PreToolUse upgrade since the filename is in `tool_input.file_path` before write.
 - **Must-tier blocker not shipped.** Parsing ballot state (final vs. draft) to detect an unticked Must at delivery is too fragile. Kept as a prose rule; flag in sessionlog.
 - **No automated Must/Should/Could tier validator.** Agents can mis-tier (e.g. put a launch-blocking item in Could). Convention-only; caught by the reviewer checklist.
