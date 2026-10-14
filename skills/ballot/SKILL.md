@@ -45,6 +45,10 @@ Extracted from the `dossier` skill — pairs with it when SYNTHESIZE produces de
 
 Template: `${CLAUDE_SKILL_DIR}/templates/ballot-per-reviewer.md`.
 
+## Artifact mode (Claude-specific, optional)
+
+Claude only: needs Claude Code's `Artifact` tool (or claude.ai) with the runtime `db` capability. The decider picks options on a published web page instead of editing markdown; the agent reads the record back and copies the answers into the repo. The markdown ballot stays the default and the durable record. Other agents: ignore this section. Details, steps and limits: `${CLAUDE_SKILL_DIR}/references/artifact-mode.md`; page template: `${CLAUDE_SKILL_DIR}/templates/ballot-artifact.html`.
+
 ## Conventions
 
 These rules are empirical — each came from a concrete ballot that went wrong before it was fixed. Full rationale: `${CLAUDE_SKILL_DIR}/references/ballot-conventions.md`.

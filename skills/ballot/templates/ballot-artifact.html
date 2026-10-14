@@ -1,0 +1,268 @@
+<title>Decision Ballot</title>
+<style>
+/* Claude-only: published with the Artifact tool, capabilities: {db: {}}. Fragment, not a full document: the tool adds the skeleton. */
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --fg: #1b2129; --muted: #5a6573; --line: #d7dde4;
+  --accent: #2f5fa7; --accent-soft: #e3ecf8; --must: #a3412b; --should: #7a5a0e; --could: #5b5f86;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif; --mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161b; --surface: #1a2028; --fg: #e4e9ef; --muted: #98a3b0; --line: #2b333e;
+  --accent: #7fa8e6; --accent-soft: #1d2a3c; --must: #e48f7b; --should: #d8b45c; --could: #a9adda; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161b; --surface: #1a2028; --fg: #e4e9ef; --muted: #98a3b0; --line: #2b333e;
+  --accent: #7fa8e6; --accent-soft: #1d2a3c; --must: #e48f7b; --should: #d8b45c; --could: #a9adda; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body); }
+.wrap { max-width: 740px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 20px; }
+header h1 { font: 650 28px/1.15 var(--body); margin: 0; text-wrap: balance; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 64ch; }
+header a { color: var(--accent); }
+.meta { font: 12px var(--mono); color: var(--muted); letter-spacing: .02em; }
+.tier { display: flex; align-items: center; gap: 10px; font: 600 12px var(--body); text-transform: uppercase; letter-spacing: .08em; margin-top: 10px; }
+.tier::after { content: ""; flex: 1; border-top: 2px solid var(--line); }
+.tier.must { color: var(--must); } .tier.should { color: var(--should); } .tier.could { color: var(--could); }
+.dec { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.dec h2 { margin: 0; font: 600 17px/1.3 var(--body); text-wrap: balance; }
+.dec h2 .id { font: 500 12px var(--mono); color: var(--muted); margin-right: 6px; }
+.ctx { font-size: 14px; margin: 0; max-width: 66ch; }
+.rec { font-size: 13px; color: var(--muted); }
+.rec strong { color: var(--accent); font-weight: 600; }
+.opts { display: grid; gap: 6px; }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.opt:hover { border-color: var(--accent); }
+.opt input { margin-top: 4px; accent-color: var(--accent); flex: none; }
+.opt.on { background: var(--accent-soft); border-color: var(--accent); }
+.opt .t { font-weight: 600; }
+.opt .d { display: block; font-size: 13px; color: var(--muted); }
+.opt .tag { font: 500 11px var(--mono); color: var(--accent); margin-left: 6px; }
+.word { display: grid; gap: 4px; }
+.word label { font: 500 12px var(--mono); color: var(--muted); }
+input[type=text], textarea { width: 100%; box-sizing: border-box; font: 14px var(--body); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+textarea { min-height: 48px; resize: vertical; }
+input[type=text]:focus, textarea:focus, .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bar { position: sticky; bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--bg); border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+.status { font: 12px var(--mono); color: var(--muted); }
+button { font: 600 14px var(--body); padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+button.ghost { background: transparent; color: var(--accent); }
+button:disabled { opacity: .5; cursor: default; }
+.banner { padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); border: 1px solid var(--accent); font-size: 14px; }
+@media (prefers-reduced-motion: no-preference) { .opt { transition: background .15s, border-color .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="meta" id="meta"></div>
+    <h1 id="title"></h1>
+    <p id="intro"></p>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+  <main id="decs" style="display:grid;gap:14px"></main>
+
+  <section class="dec">
+    <h2>Free text</h2>
+    <p class="ctx">Anything else for the author.</p>
+    <textarea id="free" aria-label="Free text"></textarea>
+  </section>
+
+  <div class="bar">
+    <span id="status" class="status">Loading saved answers…</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button id="recs" class="ghost" type="button" hidden>Fill recommendations</button>
+      <button id="send" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- Config: edit this block per ballot; the code below is data-driven. ---- */
+const CONFIG = {
+  title: "Example decision ballot",
+  meta: "Ballot · Reviewer name · project · 2026-01-01",   // one line; reviewer, project, date
+  intro: "Three decisions. Pick one option per card, fill the word field where a card asks for one, and add a note if you like. Your picks save as you go. Press Send when the Must questions are answered; the rest can follow later.",
+  voter: "reviewer",                 // record id: ballots/<voter>. One record per voter; use a distinct id per reviewer.
+  sendLabel: "Send",                 // button text before sending
+  gateTiers: ["must"],               // tiers that must be answered before Send enables; [] = no gate
+  recsButton: false,                 // true adds a "Fill recommendations" button (the decider's own click; never pre-ticks)
+  tiers: { must: "Must · blocks delivery", should: "Should · blocks only if reviewers disagree", could: "Could · informational" },
+};
+
+/* id, tier (key of CONFIG.tiers), q, ctx, opts [{t, d}], rec (index into opts), recText, optional word (label of a free-text field). */
+const DECS = [
+  { id: "DEC-001", tier: "must", q: "Which approach do we take?", rec: 1,
+    ctx: "Placeholder context: the facts the reviewer needs to decide without opening anything else.",
+    recText: "b: one-line reason.",
+    opts: [
+      { t: "Option A", d: "What it means and what it costs." },
+      { t: "Option B", d: "What it means and what it costs." },
+      { t: "Option C", d: "What it means and what it costs." } ] },
+  { id: "DEC-002", tier: "must", q: "What should the thing be called?", rec: 0,
+    ctx: "Placeholder context for a decision that takes a short free-text answer.",
+    recText: "a: one-line reason.",
+    word: "Other name (optional)",
+    opts: [
+      { t: "first-name", d: "Detail." },
+      { t: "second-name", d: "Detail." },
+      { t: "Other", d: "Write it in the field below." } ] },
+  { id: "DEC-003", tier: "should", q: "Which rollout order?", rec: 0,
+    ctx: "Placeholder context.",
+    recText: "a: one-line reason.",
+    opts: [
+      { t: "Staged", d: "Detail." },
+      { t: "All at once", d: "Detail." } ] },
+  { id: "DEC-004", tier: "could", q: "Which follow-up later?", rec: 0,
+    ctx: "Placeholder context.",
+    recText: "a: one-line reason.",
+    opts: [
+      { t: "Not now", d: "Decide after the first release." },
+      { t: "Schedule it", d: "Detail." } ] },
+];
+/* ---- End config. ---- */
+
+const state = { choices: {}, words: {}, notes: {}, free: "", submittedAt: null, updatedAt: null };
+let db = null, docRef = null, exists = false, ready = false, writing = Promise.resolve();
+const timers = {};
+
+const $ = (s) => document.querySelector(s);
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === "class") n.className = v; else if (k === "text") n.textContent = v; else n.setAttribute(k, v); }
+  for (const k of kids) n.append(k);
+  return n;
+}
+// Debounced field write (notes, words): one pending timer per field, flushed on Send.
+function debounced(key, field, id, value) {
+  clearTimeout(timers[key]);
+  timers[key] = setTimeout(() => { delete timers[key]; write({ [field]: { [id]: value } }); }, 700);
+}
+
+function render() {
+  $("#meta").textContent = CONFIG.meta; $("#title").textContent = CONFIG.title; $("#intro").textContent = CONFIG.intro;
+  $("#recs").hidden = !CONFIG.recsButton;
+  const main = $("#decs"); main.replaceChildren();
+  let lastTier = null;
+  for (const d of DECS) {
+    if (d.tier !== lastTier) { main.append(el("div", { class: "tier " + d.tier, text: CONFIG.tiers[d.tier] })); lastTier = d.tier; }
+    const card = el("section", { class: "dec", id: d.id });
+    const h = el("h2"); h.append(el("span", { class: "id", text: d.id }), d.q); card.append(h);
+    card.append(el("p", { class: "ctx", text: d.ctx }));
+    const r = el("div", { class: "rec" }); r.append(el("strong", { text: "Recommended: " }), d.recText); card.append(r);
+    const opts = el("div", { class: "opts", role: "radiogroup", "aria-label": d.q });
+    d.opts.forEach((o, i) => {
+      const id = d.id + "-o" + i;
+      const input = el("input", { type: "radio", name: d.id, id, value: String(i) });
+      input.addEventListener("change", () => { state.choices[d.id] = i; sync(); write({ choices: { [d.id]: i } }); });
+      const label = el("label", { class: "opt", for: id });
+      const box = el("span");
+      box.append(el("span", { class: "t", text: String.fromCharCode(97 + i) + ") " + o.t }));
+      if (d.rec === i) box.append(el("span", { class: "tag", text: "rec" }));
+      box.append(el("span", { class: "d", text: o.d }));
+      label.append(input, box); opts.append(label);
+    });
+    card.append(opts);
+    if (d.word) {
+      const w = el("div", { class: "word" });
+      w.append(el("label", { for: d.id + "-word", text: d.word }));
+      const inp = el("input", { type: "text", id: d.id + "-word", autocomplete: "off" });
+      inp.addEventListener("input", () => { state.words[d.id] = inp.value; debounced("w" + d.id, "words", d.id, inp.value); });
+      w.append(inp); card.append(w);
+    }
+    const ta = el("textarea", { id: d.id + "-note", placeholder: "Note (optional)", "aria-label": d.id + " note" });
+    ta.addEventListener("input", () => { state.notes[d.id] = ta.value; debounced("n" + d.id, "notes", d.id, ta.value); });
+    card.append(ta);
+    main.append(card);
+  }
+  sync();
+}
+
+function sync() {
+  for (const d of DECS) {
+    d.opts.forEach((_, i) => {
+      const input = document.getElementById(d.id + "-o" + i);
+      input.checked = state.choices[d.id] === i;
+      input.closest(".opt").classList.toggle("on", input.checked);
+      input.disabled = !ready;
+    });
+    // Never overwrite the field the voter is typing in.
+    const ta = document.getElementById(d.id + "-note");
+    if (document.activeElement !== ta) ta.value = state.notes[d.id] || "";
+    const w = document.getElementById(d.id + "-word");
+    if (w && document.activeElement !== w) w.value = state.words[d.id] || "";
+  }
+  const free = $("#free"); if (document.activeElement !== free) free.value = state.free || "";
+  const answered = DECS.filter((d) => state.choices[d.id] !== undefined).length;
+  const gateOpen = DECS.filter((d) => CONFIG.gateTiers.includes(d.tier) && state.choices[d.id] === undefined).length;
+  const sent = !!state.submittedAt;
+  const changed = sent && state.updatedAt && state.updatedAt > state.submittedAt;
+  const send = $("#send");
+  send.disabled = !ready || !db || gateOpen > 0;
+  send.textContent = !sent ? CONFIG.sendLabel : changed ? "Send again" : "Sent ✓";
+  const b = $("#banner");
+  b.hidden = !sent;
+  if (sent) b.textContent = "Sent at " + new Date(state.submittedAt).toLocaleTimeString() + (changed ? ". You changed answers after that; press \"Send again\"." : ".");
+  let s = `${answered} of ${DECS.length} answered`;
+  if (gateOpen) s += ` · ${gateOpen} required open`;
+  if (!ready) s = "Loading saved answers…";
+  else if (!db) s += " · not saving here";
+  else if (sent) s += changed ? " · changed since send" : " · sent " + new Date(state.submittedAt).toLocaleTimeString();
+  $("#status").textContent = s;
+}
+
+// All writes go through one queue: one write at a time, only the changed fields (merge), updatedAt on each.
+function write(fields) {
+  if (!db) return Promise.resolve();
+  const now = new Date().toISOString();
+  const body = { ...fields, updatedAt: fields.submittedAt || now };
+  if (!fields.submittedAt) state.updatedAt = now;
+  sync();
+  writing = writing.then(async () => {
+    try {
+      if (exists) await docRef.update(body);
+      else { await docRef.set({ choices: {}, words: {}, notes: {}, free: "", ...state, ...body }); exists = true; }
+    } catch (e) { $("#status").textContent = "Could not save (" + (e && e.code ? e.code : "error") + "). Your picks stay on screen."; }
+  });
+  return writing;
+}
+
+$("#free").addEventListener("input", (e) => {
+  state.free = e.target.value; clearTimeout(timers.free);
+  timers.free = setTimeout(() => { delete timers.free; write({ free: e.target.value }); }, 700);
+});
+$("#recs").addEventListener("click", () => {
+  const add = {};
+  for (const d of DECS) if (state.choices[d.id] === undefined) { state.choices[d.id] = d.rec; add[d.id] = d.rec; }
+  if (Object.keys(add).length) write({ choices: add });
+});
+// Send pushes nothing: it records submittedAt plus a full copy of the picks for the agent to read.
+$("#send").addEventListener("click", async () => {
+  for (const k of Object.keys(timers)) { clearTimeout(timers[k]); delete timers[k]; }
+  const at = new Date().toISOString();
+  state.submittedAt = at; state.updatedAt = at;
+  await write({ choices: { ...state.choices }, words: { ...state.words }, notes: { ...state.notes }, free: state.free, submittedAt: at });
+  sync();
+});
+
+render();
+(async () => {
+  try {
+    db = await claude.use("db");
+    if (!db) { ready = true; sync(); return; }
+    docRef = db.doc("ballots/" + CONFIG.voter);
+    docRef.onSnapshot((snap) => {
+      exists = !!snap.exists;
+      const data = snap.exists ? snap.data() : null;
+      if (data) {
+        // Keep text the voter has typed but not yet written (pending debounce timers).
+        const pending = (p) => Object.keys(timers).filter((k) => k.startsWith(p)).map((k) => k.slice(1));
+        state.choices = { ...(data.choices || {}) };
+        state.notes = { ...(data.notes || {}), ...Object.fromEntries(pending("n").map((id) => [id, state.notes[id]])) };
+        state.words = { ...(data.words || {}), ...Object.fromEntries(pending("w").map((id) => [id, state.words[id]])) };
+        if (!("free" in timers)) state.free = data.free || "";
+        state.submittedAt = data.submittedAt || null;
+        state.updatedAt = data.updatedAt || null;
+      }
+      ready = true; sync();
+    }, () => { ready = true; sync(); $("#status").textContent = "Live sync stopped. Reload the page."; });
+  } catch (e) { db = null; ready = true; sync(); }
+})();
+</script>
