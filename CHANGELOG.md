@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.8.0
+
+### Minor Changes
+
+- [#112](https://github.com/eins78/agent-skills/pull/112) [`54856a1`](https://github.com/eins78/agent-skills/commit/54856a153899708f3dbf6ec4cd0f96555fc7f1c4) - **`ballot`** — adds an optional, Claude-specific artifact mode: the decider picks options on a published page instead of editing markdown.
+
+  It needs Claude Code's `Artifact` tool (or claude.ai) with the `db` capability; the markdown ballot stays the default and works with any agent. The skill gains a short pointer section, a reference with the agent's steps and limits, and a data-driven `ballot-artifact.html` template.
+
 ## 4.7.1
 
 ### Patch Changes
