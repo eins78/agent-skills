@@ -27,6 +27,11 @@ jobs:
       - name: Validate skill frontmatter
         run: pnpm run validate
 
+      - name: Typecheck opencode plugin
+        run: |
+          pnpm --dir opencode-plugin install --frozen-lockfile
+          pnpm --dir opencode-plugin typecheck
+
       - name: Check for changeset
         if: github.event_name == 'pull_request'
         run: |

@@ -18,6 +18,7 @@ sync_file() {
 
 sync_file "$REPO_ROOT/.claude-plugin/plugin.json"      '.version = $v'
 sync_file "$REPO_ROOT/.cursor-plugin/plugin.json"       '.version = $v'
+sync_file "$REPO_ROOT/opencode-plugin/package.json"     '.version = $v'
 
 echo "Done. Plugin metadata files now at version $VERSION"
 
