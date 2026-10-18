@@ -1,0 +1,303 @@
+# Where Workspaces Differ
+
+The skeleton in `structure.md` is a set of defaults. Working workspaces built on this pattern —
+even ones kept by the same person — make different choices on the points below, and each
+choice works in its setting. This file names the options and says when each fits. It does not
+pick a winner.
+
+**For an agent:** the workspace's `CLAUDE.md` decides. Look for its answer to each question
+below before acting. If it gives none, follow what the existing files show, and if they don't
+show it either, ask — then suggest writing the answer into `CLAUDE.md` so the next session
+does not have to ask.
+
+**For a human setting one up:** answer each question once, in `CLAUDE.md`. An unanswered one
+gets answered differently by every session.
+
+This list is expected to grow and change. Add a question when two workspaces turn out to do
+the same thing differently on purpose.
+
+---
+
+## 1. Shared directories: under `docs/` or at the root
+
+| Option | Fits when |
+|---|---|
+| `docs/stories/`, `docs/sessionlogs/`, `docs/plans/` | The repo also holds code or tooling at the root, and docs should stay out of the way |
+| `stories/`, `sessionlogs/`, `plans/` at the root | The repo is mostly knowledge; the work dirs *are* the content, and a `docs/` prefix only adds depth |
+
+Some knowledge-first workspaces keep `docs/` for durable reference only (rules, templates,
+topical docs) and put the work directories at the root.
+
+## 2. Unit of multi-session work: stories or projects
+
+| Option | Shape | Fits when |
+|---|---|---|
+| **Stories** | `stories/{slug}/STORY-{slug}.md` (slug often prefixed with a ticket ID), status in frontmatter, `author:` when several people and agents write, finished ones moved to `stories/archived/` | Several people share the work; ticket links matter; a story-tracking skill is in use |
+| **Projects** | `projects/{name}/` with `README.md` (goal) + `status.md` (phase, next actions); lifecycle by folder: `projects/_paused/`, `projects/_done/` | Single owner; work includes non-software things (hardware, admin, purchases); `ls projects/` should show what is live |
+
+Folder-based lifecycle makes state visible in a listing and in `git log --follow`. Frontmatter
+status keeps paths stable while work is live; moving finished stories to `archived/` costs the
+same link fix-up as folder lifecycle, once per story. Both are fine; mixing them in one
+workspace is not.
+
+## 3. Where action items live
+
+| Option | Fits when |
+|---|---|
+| Only inside each story/project status file | Work is fully covered by stories; few loose items |
+| A central `TODO.md` index (links to each project's status, plus orphaned items) | Many small items fall outside any project; one place to answer "what's open?" is worth the upkeep |
+| Also a separate agent backlog | Agents generate follow-ups the human hasn't triaged yet, and should not clutter the human's list |
+
+Whichever is chosen, sessionlogs are a record, not a tracker: an open item goes to the tracker, not a
+checkbox in a log.
+
+## 4. Where session narrative lives
+
+| Option | Fits when |
+|---|---|
+| `sessionlogs/` is the one home; stories hold decisions and a pointer | Many sessions touch several stories; one chronological place to read |
+| A "Session Log" section inside each story | Work is almost always within one story |
+| Sessionlogs per sub-unit (`clients/{x}/sessionlogs/`) next to a root one | The workspace contains sub-units with their own audiences |
+
+Continuations differ: the default appends a dated section to the topic's existing file (one
+file per topic); some workspaces write a new dated file beside the predecessor instead (one
+file per session, grouped by topic slug). Pick one and say which.
+
+The rule that matters in every variant: **one thread, one home** — a log lives with the unit
+that owns the work, and a continuation stays next to what it continues. Never write a log below a
+submodule boundary; log that work in the submodule's own repo.
+
+Rollups differ too — see item 18.
+
+## 5. Rules: inline or imported
+
+| Option | Fits when |
+|---|---|
+| All rules inline in `CLAUDE.md` | One owner; the file is the single thing every session reads in full |
+| `docs/rules/{topic}.md`, imported with `@./docs/rules/...` | Rules are long, per-product, or edited by different people |
+
+Inline `CLAUDE.md` files in practice grow to many hundreds of lines. That is workable for one
+owner and painful for a team. When a section starts being edited separately from the rest, it
+wants its own rule file.
+
+## 6. Compiled knowledge layer
+
+| Option | Fits when |
+|---|---|
+| None — `docs/` holds topical reference, sessionlogs hold history | Small or young workspace |
+| `context/` — curated facts (team, glossary, infrastructure index, structured data with a schema) | Facts are asked for often and must be right; structured data benefits from validation |
+| `wiki/` — entity pages compiled from sessionlogs and docs, with an index, regenerated by an agent | History has grown too long to search; current-state questions ("what runs on host X?") dominate |
+
+A wiki needs a stated source of truth (does the wiki or `docs/` own current-state facts?) and
+a compile routine, or it goes stale silently. Larger wikis add a schema document that governs
+the compiling agent (entity types, page layout, how human edits are treated, what data may
+appear) and a manifest of what was compiled from where.
+
+## 7. Where plans go
+
+Tools disagree on defaults (story folders, `docs/plans/`, `docs/superpowers/plans/`,
+`~/.claude/plans/`). Options:
+
+- **One plan directory per repo**, and other tools are told to write there. Easiest to find.
+- **Per-tool directories**, tolerated. Less config, more places to look.
+
+Narrative or analysis plans often stay in the story/project folder; actionable plans go to
+the plan directory. Plot users: see the Plot config section of the workspace's `CLAUDE.md`.
+
+## 8. Code inside the workspace
+
+| Option | Fits when |
+|---|---|
+| No code; pointers to repos elsewhere | Knowledge workspace |
+| Repos as git submodules (`products/`, `apps/`, `infra/`, `clients/`) | Cross-repo search and navigation from one root is the point |
+| Nested clones, not submodules, managed by the human | The code repos have their own reviewers and release rules |
+| Other workspaces mounted as submodules (read-through) | One person works across several workspaces and wants one view |
+
+An umbrella that aggregates dozens of repos also needs a sync routine (scheduled update of
+the submodule pointers and local checkouts) and somewhere to see whether it ran — a generated
+status file with a "last run" line works, and its age is the health check.
+
+The decision that must be written down is **who commits inside the nested repos**: the agent
+(commits go to *that* repo's remote and follow *its* rules), or nobody but the human (the
+agent may read and edit, never commit). A submodule is a pointer, so mounting another
+workspace does not move its data into this one's history.
+
+## 9. Git workflow for the agent
+
+| Option | Fits when |
+|---|---|
+| Commit and push to `main` after every unit of work | Single owner, private repo, several machines or sessions must see the latest state |
+| Branch + PR for everything | Shared or public repo; review matters more than freshness |
+| Agent never commits; the human does | The repo is shared with people who did not agree to agent commits |
+
+If the workspace wants the first option, `CLAUDE.md` has to say so loudly — see
+"Composing with the system prompt" in `concept.md`. Agent tools ship with a "don't commit
+unless asked" default, and a quiet bullet loses to it.
+
+## 10. Where agent memory goes
+
+| Option | Fits when |
+|---|---|
+| Project knowledge goes into the workspace (story files, `context/`, rules); per-machine agent memory holds only machine-local or cross-project behaviour | More than one person or machine uses the workspace — the workspace *is* the shared memory |
+| Agent memory used freely | Single owner, single machine, and nobody else needs to pick the work up |
+
+Test: would a teammate or a fresh subagent cloning the repo need this fact? Then it goes in
+the workspace.
+
+## 11. Raw evidence
+
+Some operations-heavy workspaces keep `logs/raw/YYYY-MM-DD-*.txt` — full command output,
+setup scripts, state snapshots — and redact secrets before committing. Others keep only the
+sessionlog summary. Raw logs pay off when you need the exact error from three months ago; they
+cost a redaction pass every session.
+
+## 12. Secrets
+
+| Option | Fits when |
+|---|---|
+| Nothing secret in the repo; a secret manager holds everything | Default; shared repos |
+| Encrypted at rest in the repo (e.g. SOPS, age), key in a secret manager | Config travels with the repo and is needed on several machines |
+
+Never plaintext. If encrypted secrets are allowed, `CLAUDE.md` says where the key lives and
+how to decrypt. Workspaces that pull in many repos or let agents write freely add a
+credential scan (with a reviewed baseline of known false positives) as a gate before commit
+or in CI.
+
+## 13. Customer and other-scope content
+
+The boundary is the same everywhere (see `concept.md`): content lives in the repo whose
+readers may see it. How workspaces realise it differs:
+
+- One repo per customer, and shared workspaces only hold pointers.
+- A company-internal workspace with a `clients/` directory, where each client is its own
+  workspace submodule or a short context doc with no confidential detail.
+- A personal workspace with a scoped, documented exception (e.g. the owner's own career
+  record), with a written test for what belongs on which side.
+- A function workspace that holds per-client folders of methodology work, with rules about
+  what client detail may go there.
+- A workspace that is **public by design** (or meant to become so), with a name gate: a check
+  that blocks client and person names before commit, and an intake rule for what may enter.
+- A restricted workspace mounted in the umbrella as an **opt-in** submodule (e.g. git's
+  `update = none`), so routine syncs and full checkouts never fetch it.
+- A client workspace with a section on **real client data**: what may be stored, where, and
+  what must stay in the client's own systems.
+
+Whichever applies, write the test down in `CLAUDE.md`. "Don't mix scopes" without a test gets
+interpreted.
+
+## 14. Research outputs
+
+Research reports (see the `dossier` skill) go either to a top-level `research/` directory, to
+`docs/research/{date-topic}/`, or into the project/story they serve. Same question as plans:
+pick one, say which.
+
+## 15. Entry file: `CLAUDE.md`, `AGENTS.md`, or both
+
+| Option | Fits when |
+|---|---|
+| `CLAUDE.md` only | Everyone uses one agent tool |
+| `AGENTS.md` only | Every tool in use reads `AGENTS.md`; check that yours does before relying on it |
+| `AGENTS.md` holds the content; `CLAUDE.md` is a one-line import (`@AGENTS.md`) | Several agent tools are in use; one file, no drift |
+| Both as full copies | Works only while someone keeps them byte-identical; a check script or a symlink is safer |
+| Both with separate content | Avoid — they drift |
+
+Per-tool configuration (`.claude/`, `.cursor/`, an MCP server config at the root) sits beside
+the entry file either way. Workspaces used with several tools often grow parallel copies of
+the same skills and rules in each tool's directory; say which copy is the source.
+
+A long entry file can act as a **hub**: a short "if X, go to Y" list pointing at spoke
+documents, each owning one topic. That keeps the always-loaded file small. Keep shared rules in the entry file or `docs/rules/`, not in one
+tool's directory.
+
+## 16. Sub-units: folder or own workspace
+
+An umbrella workspace (a company, a department) contains units — clients, products,
+functions. Each unit is either a **folder** in the umbrella, with its own `sessionlogs/`,
+`stories/` and a context README, or **its own workspace repo**, mounted as a submodule.
+
+A separate repo is a real cost. Measured differences:
+
+| | Folder unit | Workspace submodule |
+|---|---|---|
+| Links to umbrella plans/stories | relative paths that resolve | URLs across the submodule boundary, unverifiable |
+| A session touching both layers | one commit | two commits plus a pointer bump |
+| Visible to search from the umbrella root | always | only when initialized |
+| Editing | normal | in a separate checkout or worktree, never in place |
+
+A unit earns its own workspace when at least one holds: it aggregates many repos that benefit
+from unified search; it needs its own `.claude/` layer (skills, agents, rules) that would be
+noise elsewhere; it has a different audience or access restriction; or it has its own build
+spanning several repos. Otherwise it stays a folder. Promoting a folder later is mechanical
+(new repo, move with history, add as submodule), so the cheap choice is also the reversible
+one.
+
+## 17. Conventions: local or inherited
+
+| Option | Fits when |
+|---|---|
+| Each workspace states its conventions in full | Standalone workspace; no siblings |
+| An umbrella workspace owns the convention docs; unit workspaces link to them and state only their local settings | Several related workspaces should behave the same |
+
+Inherited conventions need two things to hold: the link must be reachable from the unit
+workspace on its own (a web URL to the umbrella's file, not a relative path across a
+submodule boundary), and settings that tools read mechanically must stay **literal**. Some
+skills parse fixed `CLAUDE.md` sections — e.g. a "Plot Config" or "Session Wrap Up" heading
+with exact keys such as `Sessionlog directory:`. Rewording those headings or keys breaks the
+tool silently; say so next to them.
+
+## 18. Rollups, reports and generated files
+
+| Option | Fits when |
+|---|---|
+| Monthly `changelogs/YYYY-MM.md` | Someone reads "what happened this month" |
+| One yearly summary file in `sessionlogs/`, a section per month | Low volume; one file to scan |
+| Weekly reports (`reports/YYYY-Www.md`), generated by a script or agent | A team or stakeholder gets a regular digest |
+| None — git log and sessionlogs suffice | Single owner, small workspace |
+
+Single append-only logs at the root (a maintenance or incident log) are a lighter form of
+the same thing: one file, newest entry on top, no per-session files.
+
+Generated files (repo indexes, sync status, report drafts, README maps) are committed in some
+workspaces so they are searchable without running anything. Mark each with the script that
+produces it, never hand-edit it, and add a check script where structure must stay consistent
+(e.g. every unit has a context README, every story is in the index). Those checks are the
+workspace's gates.
+
+## 19. Language of the structure
+
+| Option | Fits when |
+|---|---|
+| English for structure (directory names, filenames, headings, frontmatter keys); content in the team's language | Skills and agents are shared across workspaces or organisations |
+| The team's language throughout, structure included | The workspace is read by one team in one language, and its own skills are written for it |
+| Mixed, with templates in both languages | A team moving between the two |
+
+What must stay literal in every case: keys and headings that tools parse — frontmatter keys
+such as `status:`, and fixed `CLAUDE.md` sections a skill reads. Translate those and the tool
+silently stops working. Everything else is the team's choice; say it in `CLAUDE.md`.
+
+## 20. Top-level taxonomy
+
+| Option | Fits when |
+|---|---|
+| Functional directories (`stories/`, `sessionlogs/`, `docs/`, `plans/`) | Work-tracking workspace; agents navigate by role of content |
+| Numbered area folders (`00_system/`, `10_tooling/`, `20_<client>/`, `90_internal/`) | A document collection that people browse in a file manager; order matters |
+| Topical files at the root (one file per subject) plus a few directories | Small operations workspace; `ls` should read like a table of contents |
+
+Numbered or topical layouts usually have no sessionlog or story home yet. When such a
+workspace adopts the pattern, add the work directories beside the existing taxonomy rather
+than reshuffling it (see "Migrating an existing repo" in `bootstrapping.md`).
+
+## 21. What workspace agents are, and how much they may do alone
+
+`.claude/agents/` holds very different things across workspaces:
+
+| Kind | Example | What to write down |
+|---|---|---|
+| Specialist tools | a production log analyser | Its tool limits — ideally a hook that enforces read-only access |
+| Role personas | reviewer, architect, product owner, devil's advocate | When to invoke each; they advise, they don't act |
+| Domain workers | finance, recruiting, email triage | Autonomy levels per action, an approval workflow, and an escalation path |
+
+Domain workers act on systems outside the repo (mail, accounting, calendars), so the
+approval rules are the important part. One shape: numbered **autonomy levels** (draft only →
+act with approval → act and report), each action class assigned a level, and every step up
+approved by a named human. Write these as gates where possible, not prose.
