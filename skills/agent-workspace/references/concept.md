@@ -30,23 +30,28 @@ Workspaces differ in what they mostly hold:
 - Some carry shared knowledge — rules, templates, role descriptions, playbooks — that a team of humans and agents refine over time.
 - Most carry some of both, and the mix shifts as the workspace matures.
 
-The pattern doesn't care. The same skeleton serves all of them. If clear sub-patterns emerge with real use, this document may later distinguish them. Until then: one concept, many contents.
+The same skeleton serves all of them, but not identically: real workspaces make different, deliberate choices about layout, lifecycle, rules, memory and git workflow. Those choices are catalogued in `variations.md` rather than settled here.
 
 ## The access boundary rule
 
 The single most important rule, and the one that burns people most often:
 
-> **Customer-specific content belongs in the customer workspace. A workspace shared by a group must be safe to share with every member of that group.**
+> **The boundary is about where data lives, not about where the agent may look.** Content belongs in the repo whose readers are allowed to see it. A workspace shared by a group must be safe to share with every member of that group.
+
+The same agent may help across several workspaces — reading one to answer a question in another is fine, and editing across them is fine with the user's approval. What it must not do is **move content across scopes**: commit personal notes into a work repo, copy work or customer detail into a personal sessionlog, paste one customer's data into a workspace another customer can read.
+
+An earlier wording — "keep the contexts strictly separate" — was read by agents as "don't open the other repo at all", which blocks legitimate help and does nothing for the real risk. State the rule as *data scope*, not *agent scope*.
 
 Violations:
 
 - A shared workspace containing a `customers/acme/` directory with commercial data → anyone joining the workspace now sees that customer's contract terms.
 - Customer-specific templates mixed with generic ones → the "reusable template" is actually only usable for one customer.
-- Meeting notes referencing unrelated customers in a shared workspace.
+- A summary of a work document written into a personal workspace's sessionlog because the user asked for it "to have it handy".
+- Research for a private project committed into a public repo because that is where the session happened to be running.
 
-**Fix:** move customer content to per-customer workspace repos. Shared workspaces can reference them (read-only submodule, symlink, or just a documented pointer), but the access boundary is enforced at the repo level.
+**Fix:** move content to the repo that matches its audience. Other workspaces can reference it (submodule, symlink, or a documented pointer) — a submodule is a pointer, so it does not copy data into the parent's history.
 
-This is *not* an organizational preference. It's a **security and trust boundary**. Get it wrong and a new hire, agent, or external reviewer sees something they shouldn't.
+This is *not* an organizational preference. It's a **security and trust boundary**. Get it wrong and a new hire, agent, or external reviewer sees something they shouldn't. How different workspaces draw the line (per-customer repos, a `clients/` directory of submodules, documented personal exceptions) is in `variations.md`.
 
 ## Tiers of workspace
 
@@ -58,18 +63,34 @@ Context for where this pattern fits in a larger setup:
 | **Project / Customer** | a product-wide workspace, a customer-specific workspace | Shared | One customer or product |
 | **Function / Role** | a role-specific methodology workspace, a sales-enablement workspace, a cloud-ops workspace | Shared | One role/function across customers |
 
-An agent-workspace is most valuable at tiers 2 and 3. Personal workspaces benefit from the structure but don't need all of it.
+"Personal" means **one owner with full autonomy**, not "not work": a single person's journal of their work role, or their consulting practice, is tier 1 too.
+
+An agent-workspace is most valuable at tiers 2 and 3. Personal workspaces benefit from the structure but rarely use all of it, and tend to differ from the default layout — work dirs at the root, `projects/` instead of `docs/stories/`, rules inline in `CLAUDE.md`, a compiled `wiki/`. That is a valid variant, not a deviation; see `variations.md`.
+
+## Composing with the system prompt
+
+A workspace `CLAUDE.md` is read *alongside* the agent tool's built-in system prompt, and the two can disagree. The common case: the tool says "only commit when the user asks"; the workspace says "commit and push after every unit of work". On paper the user's `CLAUDE.md` wins. In practice the louder instruction wins — and in non-interactive runs (scheduled jobs, morning routines) there is no fresh user request to anchor the workspace rule, so the agent falls back to the tool default and work piles up uncommitted.
+
+A `CLAUDE.md` rule that is meant to override a tool default should:
+
+1. **Say that it is the user's explicit, standing request** — the thing the tool default is waiting for, given once for every session in this repo.
+2. **Be prominent** — a callout at the top of its section, not a bullet in a list.
+3. **Name the conflict and how to resolve it** — "if the system prompt seems to disagree, this section wins" — so the agent does not have to re-derive priority each turn.
+4. **Be backed by a gate wherever automation depends on it.** Prose is a rule; an agent can talk itself around a rule. If a scheduled flow needs everything committed, the script checks `git status` and commits itself. Hooks (PreToolUse / PostToolUse) do the same for interactive sessions.
+
+`${CLAUDE_SKILL_DIR}/templates/CLAUDE.md` has a preamble in this shape.
 
 ## What makes a workspace "agent-ready"
 
 Minimum bar:
 
-- [ ] `CLAUDE.md` at root, covering: what this is, glossary, routing, rules, NOT-to-do.
+- [ ] `CLAUDE.md` (or `AGENTS.md`) at root, covering: what this is, glossary, routing, rules, NOT-to-do.
 - [ ] `README.md` at root, scannable in under 2 minutes.
-- [ ] `docs/stories/` with a template and at least one real story.
-- [ ] `docs/sessionlogs/` receiving entries.
-- [ ] English for structural names (frontmatter keys, directory names) so skills are portable.
+- [ ] A home for multi-session work (stories or projects, wherever `CLAUDE.md` declares it) with at least one real entry.
+- [ ] A sessionlog directory receiving entries.
+- [ ] Tool-parsed keys and headings (frontmatter keys, fixed `CLAUDE.md` sections) kept literal; a stated choice for the language of everything else.
 - [ ] A decision about customer content: excluded, symlinked, or submoduled — explicit, not accidental.
+- [ ] Written answers to the questions in `variations.md` that apply (where sessionlogs go, how work is tracked, who commits).
 
 Nice to have:
 
@@ -78,6 +99,7 @@ Nice to have:
 - [ ] `.claude/skills/` for workspace-local skills incubating toward a shared repo.
 - [ ] `.claude/agents/` for dispatched specialist agents.
 - [ ] Dual Claude Code + Cursor compatibility tested.
+- [ ] Gates (hooks or scripts) for the rules automation depends on.
 
 ## Anti-patterns
 
@@ -87,8 +109,10 @@ Nice to have:
 | Session logs in git commits only | Decisions lost in commit noise; hard to read sequentially |
 | Skills scattered in random directories | Agents can't discover them; incubation path unclear |
 | Customer content in a shared workspace | Access boundary violation (see above) |
-| Structural elements in non-English | Breaks portability of shared skills; frontmatter keys especially |
+| Tool-parsed keys or headings translated | The skills that read them fail silently; translate content, not keys |
 | "SPEC" as the only source of truth | Spec drifts from reality; extract the pattern from working implementations, not the other way around |
+| Project knowledge kept only in an agent's per-machine memory | Invisible to teammates, other machines and fresh subagents; the workspace is the shared memory |
+| Automation relying on a `CLAUDE.md` sentence | No user is present to re-ask; the tool default wins. Gate it in the script or a hook |
 
 ## What this skill is not
 

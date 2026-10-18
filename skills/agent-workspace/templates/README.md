@@ -12,7 +12,7 @@ cd {{workspace}}
 
 ## What's In Here
 
-{{Simple ASCII diagram or bullet list — 5-7 top-level items max}}
+{{Simple ASCII diagram or bullet list — 5-7 top-level items max. Match the layout this workspace chose in CLAUDE.md "Workspace Choices"; the tree below is the default.}}
 
 ```
 workspace/
@@ -41,16 +41,16 @@ workspace/
 
 | Area | Contents |
 |---|---|
-| `docs/rules/` | {{e.g. agent behavior rules, commit conventions}} |
-| `docs/templates/` | {{e.g. artifact templates, role personas}} |
+| `{{rules dir}}` | {{e.g. agent behavior rules, commit conventions}} |
+| `{{templates dir}}` | {{e.g. artifact templates, role personas}} |
 | `context/` | {{e.g. role knowledge, stakeholder maps}} |
 
 ## Working in This Workspace
 
 ⚠️ {{Any constraints: read-only submodules, approval gates, customer access restrictions, etc.}}
 
-- Story tracking → see `docs/stories/README.md`
-- Session logs → add yours to `docs/sessionlogs/`
+- Work tracking → see `{{stories or projects index}}`
+- Session logs → add yours to `{{sessionlogs dir}}`
 - AI routing guide → [CLAUDE.md](./CLAUDE.md)
 
 ## Related Workspaces

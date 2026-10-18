@@ -1,6 +1,8 @@
 # Canonical Structure
 
-The agent-workspace skeleton. Not every workspace needs every directory — start with the minimum and grow.
+The agent-workspace skeleton, with its default paths. Not every workspace needs every directory — start with the minimum and grow.
+
+These are defaults, not rules. Many workspaces put `stories/`, `sessionlogs/` and `plans/` at the root instead of under `docs/`, or use `projects/` with `_paused/` / `_done/` folders instead of stories. The workspace's `CLAUDE.md` says which; `variations.md` lists the options.
 
 ## Tree
 
@@ -19,10 +21,7 @@ workspace-root/
 │   │   └── products/{name}.md
 │   ├── templates/                   # Reusable artifact templates
 │   │   └── STORY-template.md
-│   ├── plans/                       # (optional, Plot convention) actionable plans
-│   │   ├── active/
-│   │   └── delivered/
-│   └── changelogs/                  # (optional) YYYY-MM.md rollups
+│   └── plans/                       # (optional) actionable plans
 ├── .claude/
 │   ├── skills/                      # Workspace-local skills (incubating)
 │   │   └── {skill-name}/SKILL.md
@@ -40,7 +39,7 @@ workspace-root/
 |---|---|
 | New multi-session work item | `docs/stories/{slug}/STORY-{slug}.md` |
 | Story analysis (narrative) | `docs/stories/{slug}/analysis-{topic}.md` |
-| Story implementation plan (actionable, Plot-style) | `docs/plans/active/{plan}.md`, cross-referenced from story |
+| Story implementation plan (actionable, Plot-style) | `docs/plans/{plan}.md` (Plot keeps its own subfolders), cross-referenced from story |
 | Per-session notes | `docs/sessionlogs/YYYY-MM-DD-topic-slug.md` |
 | Meeting notes | `docs/sessionlogs/YYYY-MM-DD-meeting-topic.md` **or** `docs/stories/{slug}/meeting-{date}.md` |
 | Agent behavior rule that applies repo-wide | `docs/rules/{topic}.md`, import from `CLAUDE.md` |
@@ -48,8 +47,11 @@ workspace-root/
 | Reusable template for an artifact | `docs/templates/{artifact}-template.md` |
 | Workspace-local skill (incubating) | `.claude/skills/{skill-name}/SKILL.md` |
 | Workspace-local specialist agent | `.claude/agents/{agent-name}.md` |
-| Customer-specific knowledge | **Not in this workspace.** Move to customer workspace. |
-| Secrets, credentials | **Never.** Use a secret manager. |
+| Customer-specific knowledge | **Not in this workspace** unless its readers are that customer's. Move to the customer workspace. |
+| Research report | Inside the story/project it serves; else wherever `CLAUDE.md` says — if it says nothing, ask |
+| Fact a teammate or fresh subagent would need | The workspace (story file, `context/`, rules) — not an agent's per-machine memory |
+| Content that came from another workspace or customer repo | **Not here.** Answer in chat, write it in its own repo, or leave a pointer. |
+| Secrets, credentials | **Never in plaintext.** A secret manager, or encrypted at rest with the key in a manager — if the workspace documents that. |
 
 ## Frontmatter conventions
 
@@ -79,18 +81,19 @@ participants: [name1, name2]
 
 ### Skill frontmatter
 
-Follows Agent Skills convention — see existing skills in this repo for examples. Key fields: `name`, `description` (triggers!), `compatibility`, `metadata.version`.
+Follows the Agent Skills convention (agentskills.io/specification). Key fields: `name`, `description` (triggers!), `compatibility`, `metadata.version`.
 
 ## Language conventions
 
 - **Structural elements in English:** filenames, frontmatter keys, directory names, template section headings.
 - **Content in the team's language:** German, French, whatever. Mixed is fine within a file.
 - Reason: skills and agents are often shared across workspaces and orgs. English structure keeps them portable. Content stays natural.
+- This is the default, not a rule: some workspaces use the team's language for structure too (`variations.md`, item 19). The part that is a rule: keys and headings that tools parse stay literal.
 
 ## Naming conventions
 
 - **Stories:** `{slug}/` or `{TICKET-ID}-{slug}/` — e.g. `wcag-audit/`, `PROJ-1234-wcag-audit/`.
-- **Sessionlogs:** `YYYY-MM-DD-topic-slug.md` — one file per topic (not per session). Always today's date at creation.
+- **Sessionlogs:** `YYYY-MM-DD-topic-slug.md` — one file per topic (not per session). Always today's date at creation. A later session on the same topic appends a dated section to the existing file and never rewrites earlier entries. (Some workspaces start a new dated file beside the predecessor instead — `variations.md`, item 4.)
 - **Templates:** `{artifact}-template.md` — `STORY-template.md`, `sessionlog-template.md`.
 - **Rules:** descriptive slug — `git-workflow.md`, `commit-messages.md`, `products/{name}.md`.
 
@@ -116,9 +119,9 @@ Example:
 ```markdown
 ## What This Workspace Is NOT For
 
-- **Code** — lives in `~/CODE/{product}-workspace`
+- **Code** — lives in the `{product}` repos (linked as submodules, or listed here)
 - **Customer-specific content** — lives in `{customer}-workspace`
-- **Secrets** — use 1Password / vault
+- **Secrets** — use the team's secret manager
 ```
 
 This is worth more than it looks. Explicit exclusions save agents (and humans) from guessing.
