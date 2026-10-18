@@ -81,6 +81,18 @@ else
   done
 fi
 
+# opencode compatibility: skill directory names must satisfy opencode's name
+# rule (lowercase alnum with single hyphens), else the native skill loader
+# rejects the skill when @eins78/opencode-skills registers the collection.
+for skill_dir in "$REPO_ROOT"/skills/*/; do
+  [ ! -d "$skill_dir" ] && continue
+  skill="$(basename "$skill_dir")"
+  if ! printf '%s' "$skill" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+    echo "  ERROR: skill '$skill' fails opencode name rule (lowercase alnum, single hyphens)"
+    errors=$((errors + 1))
+  fi
+done
+
 echo ""
 if [ $errors -gt 0 ]; then
   echo "Validation failed: $errors error(s), $warnings warning(s)"

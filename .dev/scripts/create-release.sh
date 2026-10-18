@@ -69,4 +69,36 @@ else
   echo "  Run manually: gh release create v${VERSION} --title 'v${VERSION}' --notes-file CHANGELOG.md"
 fi
 
+# Publish @eins78/opencode-skills to npm.
+#
+# Auth: NPM_TOKEN (CI secret, written to a temp .npmrc) or ambient npm login
+# (local release). Both absent → skip with a warning rather than fail the
+# release; the tarball content is identical every release, so a missed publish
+# can be re-run manually with `cd opencode-plugin && npm publish`.
+PLUGIN_DIR="$REPO_ROOT/opencode-plugin"
+if [ ! -d "$PLUGIN_DIR" ]; then
+  echo "  WARN: $PLUGIN_DIR missing — skipping npm publish"
+elif ! command -v npm >/dev/null 2>&1; then
+  echo "  WARN: npm not available — skipping @eins78/opencode-skills publish"
+else
+  npmrc_tmp=""
+  if [ -n "${NPM_TOKEN:-}" ]; then
+    npmrc_tmp="$PLUGIN_DIR/.npmrc"
+    printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$npmrc_tmp"
+    trap 'rm -f "$npmrc_tmp"' EXIT
+  fi
+  if npm whoami >/dev/null 2>&1; then
+    PLUGIN_VERSION=$(jq -r '.version' "$PLUGIN_DIR/package.json")
+    if npm view "@eins78/opencode-skills@${PLUGIN_VERSION}" >/dev/null 2>&1; then
+      echo "  @eins78/opencode-skills@${PLUGIN_VERSION} already on npm — skipping"
+    else
+      (cd "$PLUGIN_DIR" && npm publish)
+      echo "  ✓ Published @eins78/opencode-skills@${PLUGIN_VERSION}"
+    fi
+  else
+    echo "  WARN: no npm auth (NPM_TOKEN or npm login) — skipping @eins78/opencode-skills publish"
+  fi
+  rm -f "$npmrc_tmp" 2>/dev/null || true
+fi
+
 echo "Done."
