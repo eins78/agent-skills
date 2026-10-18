@@ -9,8 +9,18 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "4.7.1",
+      "version": "4.8.0",
       "source": "./",
+      "author": {
+        "name": "Max Albrecht",
+        "email": "1@178.is"
+      }
+    },
+    {
+      "name": "agent-workspace",
+      "description": "Use when entering, bootstrapping, migrating, or working inside a shared repo organized as an \"agent-workspace\" — a workspace designed for humans and AI agents to collaborate, with conventions for s...",
+      "version": "0.1.0-alpha.1",
+      "source": "./skills/agent-workspace",
       "author": {
         "name": "Max Albrecht",
         "email": "1@178.is"
@@ -59,7 +69,7 @@
     {
       "name": "ballot",
       "description": "Use when decisions happen async — reviewer(s) look at it over chat, on a PR, on a train, or any time outside the agent session. Triggers: async decision, PR review, pull request, remote reviewer, h...",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "source": "./skills/ballot",
       "author": {
         "name": "Max Albrecht",

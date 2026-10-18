@@ -1,5 +1,17 @@
 # @eins78/agent-skills
 
+## 4.8.0
+
+### Minor Changes
+
+- [#112](https://github.com/eins78/agent-skills/pull/112) [`54856a1`](https://github.com/eins78/agent-skills/commit/54856a153899708f3dbf6ec4cd0f96555fc7f1c4) - **`ballot`** — adds an optional, Claude-specific artifact mode: the decider picks options on a published page instead of editing markdown.
+
+  It needs Claude Code's `Artifact` tool (or claude.ai) with the `db` capability; the markdown ballot stays the default and works with any agent. The skill gains a short pointer section, a reference with the agent's steps and limits, and a data-driven `ballot-artifact.html` template.
+
+- [#47](https://github.com/eins78/agent-skills/pull/47) [`2f6c60d`](https://github.com/eins78/agent-skills/commit/2f6c60d66943c5a201bb048070289e6329f7aa59) - **`agent-workspace`** — new alpha skill for shared git repos where humans and agents work together.
+
+  It gives agents a protocol for landing in such a repo (orient, locate, contribute), a data-scope boundary that keeps content from crossing between workspaces, and a guide for bootstrapping or migrating one. Where real workspaces disagree — stories or projects, root or `docs/`, who commits — it lists the options instead of picking one. Alpha and a living document: expect it to change.
+
 ## 4.7.1
 
 ### Patch Changes
