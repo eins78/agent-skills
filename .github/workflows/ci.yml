@@ -16,7 +16,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -59,3 +59,30 @@ jobs:
           done
 
           echo "All changeset bumps references are valid."
+
+  # Published with engines.node "^22.11 || ^24 || >=26": run the checks on every supported even line.
+  # The `validate` job above (Node 26) keeps its name because it is a required status check.
+  validate-node-compat:
+    name: Validate on Node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate skills parse
+        run: pnpm test
+
+      - name: Validate skill frontmatter
+        run: pnpm run validate
