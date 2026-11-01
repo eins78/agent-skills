@@ -45,6 +45,8 @@ input[type=text]:focus, textarea:focus, .opt:focus-within { outline: 2px solid v
 button { font: 600 14px var(--body); padding: 9px 16px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
 button.ghost { background: transparent; color: var(--accent); }
 button:disabled { opacity: .5; cursor: default; }
+button.clear { justify-self: start; padding: 4px 10px; font-size: 13px; }
+button[hidden] { display: none; }
 .banner { padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); border: 1px solid var(--accent); font-size: 14px; }
 @media (prefers-reduced-motion: no-preference) { .opt { transition: background .15s, border-color .15s; } }
 </style>
@@ -79,10 +81,10 @@ button:disabled { opacity: .5; cursor: default; }
 const CONFIG = {
   title: "Example decision ballot",
   meta: "Ballot · Reviewer name · project · 2026-01-01",   // one line; reviewer, project, date
-  intro: "Three decisions. Pick one option per card, fill the word field where a card asks for one, and add a note if you like. Your picks save as you go. Press Send when the Must questions are answered; the rest can follow later.",
+  intro: "Three decisions. Pick one option per card, fill the word field where a card asks for one, and add a note if you like. Your picks save as you go. Press Send whenever you like: a question you leave open is sent as open, with its note.",
   voter: "reviewer",                 // record id: ballots/<voter>. One record per voter; use a distinct id per reviewer.
   sendLabel: "Send",                 // button text before sending
-  gateTiers: ["must"],               // tiers that must be answered before Send enables; [] = no gate
+  warnTiers: ["must"],               // tiers that show a warning (never block Send) while unanswered; [] = no warning
   recsButton: false,                 // true adds a "Fill recommendations" button (the decider's own click; never pre-ticks)
   tiers: { must: "Must · blocks delivery", should: "Should · blocks only if reviewers disagree", could: "Could · informational" },
 };
@@ -160,6 +162,9 @@ function render() {
       label.append(input, box); opts.append(label);
     });
     card.append(opts);
+    const clr = el("button", { type: "button", class: "ghost clear", id: d.id + "-clear", text: "Clear choice" });
+    clr.addEventListener("click", () => { state.choices[d.id] = null; sync(); write({ choices: { [d.id]: null } }); });
+    card.append(clr);
     if (d.word) {
       const w = el("div", { class: "word" });
       w.append(el("label", { for: d.id + "-word", text: d.word }));
@@ -183,6 +188,8 @@ function sync() {
       input.closest(".opt").classList.toggle("on", input.checked);
       input.disabled = !ready;
     });
+    const clr = document.getElementById(d.id + "-clear");
+    clr.hidden = state.choices[d.id] == null; clr.disabled = !ready;
     // Never overwrite the field the voter is typing in.
     const ta = document.getElementById(d.id + "-note");
     if (document.activeElement !== ta) ta.value = state.notes[d.id] || "";
@@ -190,18 +197,19 @@ function sync() {
     if (w && document.activeElement !== w) w.value = state.words[d.id] || "";
   }
   const free = $("#free"); if (document.activeElement !== free) free.value = state.free || "";
-  const answered = DECS.filter((d) => state.choices[d.id] !== undefined).length;
-  const gateOpen = DECS.filter((d) => CONFIG.gateTiers.includes(d.tier) && state.choices[d.id] === undefined).length;
+  const answered = DECS.filter((d) => state.choices[d.id] != null).length;
+  const openIds = DECS.filter((d) => CONFIG.warnTiers.includes(d.tier) && state.choices[d.id] == null).map((d) => d.id);
+  const gateOpen = openIds.length;
   const sent = !!state.submittedAt;
   const changed = sent && state.updatedAt && state.updatedAt > state.submittedAt;
   const send = $("#send");
-  send.disabled = !ready || !db || gateOpen > 0;
+  send.disabled = !ready || !db;
   send.textContent = !sent ? CONFIG.sendLabel : changed ? "Send again" : "Sent ✓";
   const b = $("#banner");
   b.hidden = !sent;
   if (sent) b.textContent = "Sent at " + new Date(state.submittedAt).toLocaleTimeString() + (changed ? ". You changed answers after that; press \"Send again\"." : ".");
   let s = `${answered} of ${DECS.length} answered`;
-  if (gateOpen) s += ` · ${gateOpen} required open`;
+  if (gateOpen) s += ` · ${openIds.join(", ")} ${gateOpen === 1 ? "has" : "have"} no choice yet; you can send anyway`;
   if (!ready) s = "Loading saved answers…";
   else if (!db) s += " · not saving here";
   else if (sent) s += changed ? " · changed since send" : " · sent " + new Date(state.submittedAt).toLocaleTimeString();
@@ -230,7 +238,7 @@ $("#free").addEventListener("input", (e) => {
 });
 $("#recs").addEventListener("click", () => {
   const add = {};
-  for (const d of DECS) if (state.choices[d.id] === undefined) { state.choices[d.id] = d.rec; add[d.id] = d.rec; }
+  for (const d of DECS) if (state.choices[d.id] == null && d.rec >= 0) { state.choices[d.id] = d.rec; add[d.id] = d.rec; }
   if (Object.keys(add).length) write({ choices: add });
 });
 // Send pushes nothing: it records submittedAt plus a full copy of the picks for the agent to read.
@@ -238,7 +246,8 @@ $("#send").addEventListener("click", async () => {
   for (const k of Object.keys(timers)) { clearTimeout(timers[k]); delete timers[k]; }
   const at = new Date().toISOString();
   state.submittedAt = at; state.updatedAt = at;
-  await write({ choices: { ...state.choices }, words: { ...state.words }, notes: { ...state.notes }, free: state.free, submittedAt: at });
+  const unanswered = DECS.filter((d) => state.choices[d.id] == null).map((d) => d.id);
+  await write({ choices: { ...state.choices }, words: { ...state.words }, notes: { ...state.notes }, free: state.free, unanswered, submittedAt: at });
   sync();
 });
 
