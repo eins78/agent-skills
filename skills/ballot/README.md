@@ -74,7 +74,7 @@ The one mechanical hook (`ballot-filename.sh`) fires `PostToolUse` on Write/Edit
 
 1. In Claude Code, copy `templates/ballot-artifact.html`, keep the placeholder DECs, publish with `capabilities: {db: {}}`.
 2. `ArtifactData` `list` on `ballots` returns an empty store.
-3. Open the page, pick the Must options: Send enables only once every `gateTiers` DEC is answered.
+3. Open the page, pick the Must options: Send is always enabled; an unanswered `warnTiers` DEC only shows a warning, and a send records it in `unanswered`.
 4. Press Send, then `ArtifactData` `get` on `ballots/<voter>`: `choices`, `words`, `notes` and `submittedAt` are present.
 5. Change a pick: the page shows "Send again"; reload keeps the picks.
 

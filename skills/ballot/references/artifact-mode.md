@@ -33,7 +33,7 @@ Copy this checklist:
 - [ ] Copy the answers into the repo, next to the markdown ballot
 ```
 
-**Template.** `${CLAUDE_SKILL_DIR}/templates/ballot-artifact.html` is data-driven. Edit only the `CONFIG` block (title, voter id, tier labels, send gate) and the `DECS` array (`id`, `tier`, `q`, `ctx`, `opts` with label and detail, `rec` index, `recText`, optional `word` field). The same DECs go in the markdown ballot; keep both in step.
+**Template.** `${CLAUDE_SKILL_DIR}/templates/ballot-artifact.html` is data-driven. Edit only the `CONFIG` block (title, voter id, tier labels, `warnTiers`) and the `DECS` array (`id`, `tier`, `q`, `ctx`, `opts` with label and detail, `rec` index, `recText`, optional `word` field). The same DECs go in the markdown ballot; keep both in step.
 
 **Publish.** Write the file to the scratchpad, then call `Artifact` with `file_path`, an `icon`, and `capabilities: {db: {}}`. Load the `artifact-design` and `artifact-capabilities` skills first, as the tool requires. Republish to the same `url` to change questions; stored answers survive.
 
