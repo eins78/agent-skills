@@ -1,5 +1,13 @@
 # @eins78/agent-skills
 
+## 4.9.1
+
+### Patch Changes
+
+- [#117](https://github.com/eins78/agent-skills/pull/117) [`2fd46ad`](https://github.com/eins78/agent-skills/commit/2fd46ad28067101f1b3883bbcefd91e4383bb772) - **`ballot`** — the artifact ballot's Send button no longer blocks while a Must question is open.
+
+  A voter can always send: an open Must question shows a warning next to the button, each card gets a "Clear choice" button, and the record lists the questions sent without a choice in `unanswered`. `CONFIG.gateTiers` is renamed `warnTiers`.
+
 ## 4.9.0
 
 ### Minor Changes
