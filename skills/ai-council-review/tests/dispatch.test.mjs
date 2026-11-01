@@ -13,6 +13,7 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { estimateTokens } from "../scripts/lib/budget.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CLI = join(HERE, "..", "scripts", "council.mjs");
@@ -38,7 +39,7 @@ const REVIEW_JSON = JSON.stringify({
 });
 
 /**
- * @typedef {(model: string, hitCount: number) => {status?: number, body?: string, content?: string, cost?: number, delayMs?: number}} Behavior
+ * @typedef {(model: string, hitCount: number) => {status?: number, body?: string, content?: string, cost?: number, delayMs?: number, rawBody?: string, finishReason?: string, usage?: Record<string, unknown>}} Behavior
  */
 
 /** @type {ReturnType<typeof createServer>} */
@@ -106,6 +107,11 @@ before(async () => {
             res.end(b.body ?? JSON.stringify({ error: { message: `mock ${b.status}` } }));
             return;
           }
+          if (b.rawBody !== undefined) {
+            res.writeHead(200, { "content-type": "text/html" });
+            res.end(b.rawBody);
+            return;
+          }
           res.writeHead(200, { "content-type": "application/json" });
           // Echo model/provider like the real OpenRouter API — the response
           // body itself is an anonymization-leak vector the tests must cover.
@@ -114,8 +120,8 @@ before(async () => {
               id: "gen-mock",
               model,
               provider: "MockCloud",
-              choices: [{ message: { role: "assistant", content: b.content ?? REVIEW_JSON } }],
-              usage: { prompt_tokens: 100, completion_tokens: 50, cost: b.cost ?? 0.01 },
+              choices: [{ message: { role: "assistant", content: b.content ?? REVIEW_JSON }, finish_reason: b.finishReason ?? "stop" }],
+              usage: { prompt_tokens: 100, completion_tokens: 50, cost: b.cost ?? 0.01, ...b.usage },
             }),
           );
         };
@@ -431,6 +437,215 @@ test("persistent 404 on one member: run continues 3/4, degraded, failure reporte
   assert.equal(/** @type {any} */ (failed)?.model, "mock/delta");
   assert.equal(manifest.degraded, true);
   assert.match(r.output, /✗ mock\/delta/, "failure is reported, never silently dropped");
+  r.cleanup();
+});
+
+test("happy path leaves no failures/ dir", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  assert.ok(!existsSync(join(String(r.runDir), "failures")), "no failed attempt, no failure record");
+  r.cleanup();
+});
+
+test("empty completion then success: one retry, both attempts recorded, both billed", async () => {
+  behavior = (model, hits) => (model === "mock/beta" && hits === 1 ? { content: "" } : {});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  assert.equal(completionHits.get("mock/beta"), 2, "an empty completion gets exactly one retry");
+  const runDir = String(r.runDir);
+  const label = labelOf(runDir, "mock/beta");
+  const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
+  assert.equal(manifest.degraded, false);
+  assert.equal(manifest.members[label].status, "ok");
+  assert.ok(!JSON.stringify(manifest.members[label]).includes("mock/"), "a delivered member stays anonymous in the manifest");
+  // The recovered empty is the evidence a flaky seat needs — keep it.
+  const record = JSON.parse(readFileSync(join(runDir, manifest.members[label].diagnostics), "utf8"));
+  assert.equal(record.attempts.length, 2);
+  assert.equal(record.attempts[0].response.choices[0].message.content, "");
+  // Both attempts were 200s at $0.01 each in the mock.
+  const costs = JSON.parse(readFileSync(join(runDir, "costs.json"), "utf8"));
+  assert.ok(Math.abs(costs["mock/beta"] - 0.02) < 1e-9, `costs.json: ${JSON.stringify(costs)}`);
+  assert.ok(Math.abs(manifest.actualUsd - 0.05) < 1e-9, `actualUsd ${manifest.actualUsd}`);
+  r.cleanup();
+});
+
+test("empty completion then output-limit hit: the failure record keeps both attempts", async () => {
+  behavior = (model, hits) =>
+    model === "mock/alpha" ? (hits === 1 ? { content: "" } : { content: '{"verdict": "appr', finishReason: "length" }) : {};
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+  const record = JSON.parse(readFileSync(join(runDir, "failures", `${labelOf(runDir, "mock/alpha")}.json`), "utf8"));
+  assert.equal(record.finishReason, "length");
+  assert.deepEqual(
+    record.attempts.map((/** @type {any} */ a) => a.response.choices[0].finish_reason),
+    ["stop", "length"],
+  );
+  r.cleanup();
+});
+
+test("malformed 200 body: status and body kept in the attempt record", async () => {
+  behavior = (model) => (model === "mock/delta" ? { rawBody: "<html>502 Bad Gateway</html>" } : {});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  assert.equal(completionHits.get("mock/delta"), 2, "a malformed body keeps its one retry");
+  const runDir = String(r.runDir);
+  const label = labelOf(runDir, "mock/delta");
+  const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
+  assert.match(manifest.members[label].error, /^Malformed response from mock\/delta \(HTTP 200, not JSON\)/);
+  const record = JSON.parse(readFileSync(join(runDir, "failures", `${label}.json`), "utf8"));
+  assert.deepEqual(record.attempts[0], { httpStatus: 200, body: "<html>502 Bad Gateway</html>" });
+  r.cleanup();
+});
+
+test("empty-completion retry must fit under the hard cap: no headroom → no second request", async () => {
+  // First run only to learn the exact payload; worst case is computed from it
+  // with the mock catalog prices, the same math the gate uses.
+  behavior = () => ({});
+  completionHits = new Map();
+  const probe = await runCli(REVIEW_ARGS);
+  assert.equal(probe.status, 0, probe.output);
+  const inputTokens = estimateTokens(readFileSync(join(String(probe.runDir), "input.txt"), "utf8"));
+  probe.cleanup();
+  const perMember = inputTokens * 0.000001 + 24000 * 0.000002;
+  const worstCase = MOCK_MODELS.length * perMember;
+
+  behavior = (model) => (model === "mock/beta" ? { content: "" } : {});
+  completionHits = new Map();
+  // Headroom of half a member's worst case: the gate passes, a retry cannot.
+  const r = await runCli([...REVIEW_ARGS, "--budget", String(worstCase + perMember / 2), "--yes"]);
+  assert.equal(r.status, 0, r.output);
+  assert.equal(completionHits.get("mock/beta"), 1, "no retry without budget headroom");
+  const manifest = JSON.parse(readFileSync(join(String(r.runDir), "manifest.json"), "utf8"));
+  const failed = /** @type {any} */ (Object.values(manifest.members).find((m) => /** @type {any} */ (m).status === "failed"));
+  assert.match(failed.error, /not retried: no budget headroom/);
+  r.cleanup();
+});
+
+test("empty completion twice: member fails, both attempts persisted to failures/, cost counted", async () => {
+  behavior = (model) =>
+    model === "mock/beta"
+      ? { content: "", finishReason: "length", cost: 0.003, usage: { completion_tokens: 3000, completion_tokens_details: { reasoning_tokens: 3000 } } }
+      : {};
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  assert.equal(completionHits.get("mock/beta"), 2, "retried once, then gave up");
+  const runDir = String(r.runDir);
+  const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
+  const [label, entry] = /** @type {[string, any]} */ (Object.entries(manifest.members).find(([, m]) => /** @type {any} */ (m).status === "failed"));
+  assert.equal(entry.model, "mock/beta");
+  assert.match(entry.error, /^Empty completion from mock\/beta \(finish_reason=length, completion_tokens=3000, reasoning_tokens=3000\)$/);
+  assert.equal(entry.diagnostics, join("failures", `${label}.json`));
+
+  const record = JSON.parse(readFileSync(join(runDir, entry.diagnostics), "utf8"));
+  assert.equal(record.model, "mock/beta");
+  assert.equal(record.attempts.length, 2);
+  for (const a of record.attempts) {
+    // Unscrubbed on purpose: provider and generation id are the diagnosis.
+    assert.equal(a.response.provider, "MockCloud");
+    assert.equal(a.response.id, "gen-mock");
+    assert.equal(a.response.choices[0].finish_reason, "length");
+  }
+  // Billed empties are real spend — the run's actual cost must include them.
+  const costs = JSON.parse(readFileSync(join(runDir, "costs.json"), "utf8"));
+  assert.ok(Math.abs(costs["mock/beta"] - 0.006) < 1e-9, `costs.json: ${JSON.stringify(costs)}`);
+  assert.ok(Math.abs(manifest.actualUsd - 0.036) < 1e-9, `actualUsd ${manifest.actualUsd}`);
+  r.cleanup();
+});
+
+test("an echoed key cut by a truncation boundary is redacted before the cut", async () => {
+  // 486 + 14: the 500-char error snippet would end inside the key, and the
+  // 20,000-char body cap likewise. Redact-then-slice leaves no fragment.
+  const KEY_TAIL = TEST_KEY.slice(6); // "test-SECRET-…" — the placeholder starts with "sk-or" too
+  behavior = (model) =>
+    model === "mock/delta"
+      ? { status: 404, body: `${"x".repeat(486)}${TEST_KEY} ${"y".repeat(19_470)}${TEST_KEY}` }
+      : model === "mock/beta"
+        ? { rawBody: `${"x".repeat(186)}${TEST_KEY}` }
+        : {};
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+  assert.ok(!r.output.includes(KEY_TAIL.slice(0, 6)), "no key fragment on stdout/stderr");
+  assert.ok(!readFileSync(join(runDir, "manifest.json"), "utf8").includes(KEY_TAIL.slice(0, 6)), "no key fragment in the manifest");
+  for (const model of ["mock/delta", "mock/beta"]) {
+    const text = readFileSync(join(runDir, "failures", `${labelOf(runDir, model)}.json`), "utf8");
+    assert.ok(!text.includes(KEY_TAIL.slice(0, 6)), `no key fragment in ${model}'s failure record`);
+  }
+  r.cleanup();
+});
+
+test("the inactive key variable is redacted before truncation too", async () => {
+  const OTHER_KEY = "sk-or-other-INACTIVE-DO-NOT-PRINT";
+  behavior = (model) =>
+    model === "mock/delta" ? { status: 404, body: `${"x".repeat(486)}${OTHER_KEY} ${"y".repeat(19_467)}${OTHER_KEY}` } : {};
+  completionHits = new Map();
+  // AI_COUNCIL_OPENROUTER_API_KEY (TEST_KEY) is the one sent; OPENROUTER_API_KEY sits unused in the env.
+  const r = await runCli(REVIEW_ARGS, { OPENROUTER_API_KEY: OTHER_KEY });
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+  const fragment = "other-I";
+  assert.ok(!r.output.includes(fragment), "no inactive-key fragment on stdout/stderr");
+  assert.ok(!readFileSync(join(runDir, "manifest.json"), "utf8").includes(fragment), "no inactive-key fragment in the manifest");
+  const text = readFileSync(join(runDir, "failures", `${labelOf(runDir, "mock/delta")}.json`), "utf8");
+  assert.ok(!text.includes(fragment), "no inactive-key fragment in the failure record");
+  r.cleanup();
+});
+
+test("non-retryable HTTP error: status and body persisted to failures/, key redacted", async () => {
+  behavior = (model) =>
+    model === "mock/delta" ? { status: 404, body: JSON.stringify({ error: { message: `No endpoints for key ${TEST_KEY}` } }) } : {};
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+  const label = labelOf(runDir, "mock/delta");
+  const text = readFileSync(join(runDir, "failures", `${label}.json`), "utf8");
+  assert.ok(!text.includes(TEST_KEY), "failure records must never contain the API key");
+  const record = JSON.parse(text);
+  assert.equal(record.attempts.length, 1);
+  assert.equal(record.attempts[0].httpStatus, 404);
+  assert.match(record.attempts[0].body, /No endpoints/);
+  r.cleanup();
+});
+
+test("timeout: failures/ records the aborted attempt", async () => {
+  behavior = (model) => (model === "mock/gamma" ? { delayMs: 3000 } : {});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS, { COUNCIL_TIMEOUT_MS: "400" });
+  assert.equal(r.status, 0, r.output);
+  const runDir = String(r.runDir);
+  const record = JSON.parse(readFileSync(join(runDir, "failures", `${labelOf(runDir, "mock/gamma")}.json`), "utf8"));
+  assert.match(record.error, /^Timeout after/);
+  assert.deepEqual(record.attempts, [{ error: "timeout after 400 ms" }]);
+  r.cleanup();
+});
+
+test("output-limit hit: member still delivers, full response goes to failures/, raw/ stays scrubbed", async () => {
+  behavior = (model) => (model === "mock/alpha" ? { content: '{"verdict": "approve", "summ', finishReason: "length" } : {});
+  completionHits = new Map();
+  const r = await runCli(REVIEW_ARGS);
+  assert.equal(r.status, 0, r.output);
+  assert.equal(completionHits.get("mock/alpha"), 1, "a truncated answer is not retried");
+  const runDir = String(r.runDir);
+  const label = labelOf(runDir, "mock/alpha");
+  const manifest = JSON.parse(readFileSync(join(runDir, "manifest.json"), "utf8"));
+  assert.equal(manifest.members[label].status, "parse_failed");
+  assert.match(manifest.members[label].parse, /truncated at max_tokens/);
+  assert.equal(manifest.members[label].diagnostics, join("failures", `${label}.json`));
+  assert.ok(!JSON.stringify(manifest.members[label]).includes("mock/"), "a delivered member stays anonymous in the manifest");
+  const record = JSON.parse(readFileSync(join(runDir, "failures", `${label}.json`), "utf8"));
+  assert.equal(record.finishReason, "length");
+  assert.equal(record.attempts.length, 1);
+  assert.equal(record.attempts[0].response.provider, "MockCloud");
+  assert.ok(!readFileSync(join(runDir, "raw", `${label}.json`), "utf8").includes("mock/"), "raw/ is still identity-scrubbed");
   r.cleanup();
 });
 

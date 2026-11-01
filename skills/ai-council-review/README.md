@@ -91,7 +91,8 @@ external dependencies and sit outside this skill's semver contract, so their
 history is tracked separately from `CHANGELOG.md` below.
 
 These tables are hand-kept against `presets.json`; nothing enforces the
-sync. A generator (e.g. `council.mjs models --markdown`) is a reasonable
+sync. Prices and context windows were re-checked against the live catalog on
+2026-11-01 (`council.mjs models --verify`). A generator (e.g. `council.mjs models --markdown`) is a reasonable
 follow-up if this drifts.
 
 ### Presets
@@ -102,9 +103,9 @@ follow-up if this drifts.
 |---|---|---|---|---|
 | `openai/gpt-5.3-codex` | OpenAI | 1.75 | 14.00 | 400,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
-| **Total** | | **3.94** | **26.58** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
+| **Total** | | **3.86** | **26.36** | |
 
 **`prose`** — the pre-2026-09-20 default roster; use for plan docs and prose where a codex-tuned seat is a downgrade.
 
@@ -112,30 +113,30 @@ follow-up if this drifts.
 |---|---|---|---|---|
 | `openai/gpt-5.5` | OpenAI | 5.00 | 30.00 | 1,050,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
-| **Total** | | **7.19** | **42.58** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
+| **Total** | | **7.11** | **42.36** | |
 
 **`budget`** — cheapest three-seat council. Three seats, not two, because `quorum: 2` means a two-seat preset fails outright on any single member failure.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
 | `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
-| **Total** | | **0.34** | **1.05** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
+| **Total** | | **0.26** | **0.83** | |
 
 **`crowd`** — `budget`'s three seats plus three more: many weak independent opinions rather than one strong seat per vendor. Deliberately carries two Alibaba seats (`qwen3.8-flash`, `qwen3.8-27b`) — the exception to the one-seat-per-vendor rule below, because `crowd`'s thesis is opinion count, not per-vendor independence; still six seats but only five vendors. **Effective context cap is 1,000,000 exactly** — the smallest window in the council, set by `qwen3.8-flash`/`qwen3.8-27b` (both 1,000,000, not 1,048,576) — since the dispatch script trims every member's payload to the council's smallest window.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
 | `qwen/qwen3.8-flash` | Alibaba | 0.15 | 0.47 | 1,000,000 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
-| `qwen/qwen3.8-27b` | Alibaba | 0.42 | 3.00 | 1,000,000 |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
+| `qwen/qwen3.8-27b` | Alibaba | 0.15 | 1.88 | 1,000,000 |
 | `tencent/hy4-preview` | Tencent | 0.83 | 2.50 | 1,048,576 |
 | `google/gemini-3-flash-preview` | Google | 0.50 | 3.00 | 1,048,576 |
-| **Total** | | **2.09** | **9.55** | |
+| **Total** | | **1.74** | **8.21** | |
 
 **`max`** — five seats, one vendor per seat, for high-stakes review. `gpt-6-astra` replaces (not adds to) the OpenAI seat that `gpt-5.5` held before 2026-09-20, keeping vendor independence rather than buying a correlated second OpenAI opinion. The Anthropic seat is the **newest Opus** (`claude-opus-5` since 2026-09-20, previously `claude-opus-4.8`) — deliberately *not* `claude-fable-5.1`, which is `flagship`'s seat. `max` is the broad five-vendor preset at a controlled price, not the strongest-at-any-price one; that is what `flagship` is for. Successive Opus releases have held the same $5/$25 tier, so keeping this seat on the newest Opus costs nothing and the totals below are unchanged.
 
@@ -144,9 +145,9 @@ follow-up if this drifts.
 | `anthropic/claude-opus-5` | Anthropic | 5.00 | 25.00 | 1,000,000 |
 | `openai/gpt-6-astra` | OpenAI | 10.00 | 50.00 | 1,050,000 |
 | `google/gemini-3.1-pro-preview` | Google | 2.00 | 12.00 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| `z-ai/glm-5.3-flash` | Z-AI | 0.15 | 0.50 | 1,048,576 |
-| **Total** | | **17.19** | **87.58** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
+| **Total** | | **17.11** | **87.36** | |
 
 **`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At `outputTokensPerModel: 3000` a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
 
@@ -162,8 +163,8 @@ follow-up if this drifts.
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
-| `deepseek/deepseek-v4-flash` | DeepSeek | 0.04 | 0.08 | 1,048,576 |
-| **Total** | | **0.04** | **0.08** | |
+| `deepseek/deepseek-v4-flash` | DeepSeek | 0.09 | 0.18 | 1,048,576 |
+| **Total** | | **0.09** | **0.18** | |
 
 ### Models
 
@@ -181,8 +182,8 @@ OpenRouter catalog.
 | `anthropic/claude-opus-4.8` | Former `max` seat — **retired 2026-09-20**, superseded by `claude-opus-5` at the same price. Kept as the record of a model that was considered and measured. | none | none known | 2026-09-20 |
 | `google/gemini-3.1-pro-preview` | Google frontier seat | `default`, `code`, `prose`, `max`, `flagship` | none known | 2026-09-20 |
 | `google/gemini-3-flash-preview` | Cheap Google seat for breadth | `crowd` | none known | 2026-09-20 |
-| `deepseek/deepseek-v4-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max`, `smoke` | predecessor `deepseek/deepseek-v4-pro` timed out at 240 s on a ~30k-token diff (2026-09-20) — this flash variant replaced it | 2026-09-20 |
-| `z-ai/glm-5.3-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max` | predecessor `z-ai/glm-5.2` returned an empty completion on the same 2026-09-20 run — this flash variant replaced it | 2026-09-20 |
+| `deepseek/deepseek-v4-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max`, `smoke` | **Intermittent empty completions:** a 200 with no content in 4 of 11 real runs in October 2026, independent of input size (62–274 KB failed, 38–261 KB succeeded). Cause unknown — no evidence was kept; since 0.5.0 an empty completion is retried once and every attempt is saved to `failures/`. Timed out at 240 s in late September 2026; none since the 0.4.0 timeout/routing fix. Its predecessor `deepseek-v4-pro` timed out at 240 s on a ~30k-token diff (2026-09-20). | 2026-11-01 |
+| `z-ai/glm-5.3-flash` | Cheap, fast seat present in nearly every preset | `default`, `code`, `prose`, `budget`, `crowd`, `max` | **Runs into the 24k `max_tokens` limit** in 3 of 11 real runs in October 2026 (`parse_failed`, opinion kept as unstructured text): twice a degenerate loop (counting integers, a run of tabs), once reasoning used 23,877 of the 24,000 tokens. Timed out at 240 s in 4 of 4 runs in late September 2026; none in 11 runs since the 0.4.0 fix. Its predecessor `glm-5.2` returned an empty completion (2026-09-20). | 2026-11-01 |
 | `qwen/qwen3.8-flash` | Cheapest four-vendor `budget` seat | `budget`, `crowd` | none known | 2026-09-20 |
 | `qwen/qwen3.8-27b` | Extra `crowd` seat (second Alibaba seat, deliberate exception to one-seat-per-vendor) | `crowd` | none known | 2026-09-20 |
 | `qwen/qwen3.8-max-0902` | Strongest available Alibaba seat | `flagship` | none known | 2026-09-20 |
@@ -331,6 +332,28 @@ directions.
   objects. `timeoutMs` default also raised 240s → 600s ("we can wait a bit
   for review" — Max's local config already ran at 600s); the per-model
   timeout is still a hard abort, not a budget override.
+- **Failure evidence in `failures/`, one retry on an empty completion**
+  (2026-11-01): `deepseek-v4-flash` returned a 200 with no content in 4 of
+  11 real runs in October 2026, and none of them could be diagnosed, because
+  `chatCompletion()` threw before anything was written — no
+  `finish_reason`, no usage, no provider, no generation id. Now every
+  attempt is recorded (`CompletionError.attempts`: the parsed response, or
+  the HTTP status and body — also for a 200 whose body is not JSON — or the
+  network/timeout error) and dispatch writes every attempt to
+  `failures/<label>.json` for a failed member, for a delivered member that
+  needed a retry, and for one whose answer ended at
+  `finish_reason: "length"`. Unlike `raw/`, the record is **not**
+  identity-scrubbed — provider and generation id are the diagnosis — so it
+  is not a synthesis input: `synthesis.md` forbids opening it before step 7,
+  like `roster-key.json`. An empty completion is now retried once (same
+  backoff as 429/5xx), because the same seat delivered in the other 7 runs,
+  some with larger inputs. An empty completion can be billed in full, so the
+  retry must fit under the hard cap: the gate checks one worst-case request
+  per member, and each retry first reserves its own worst case from what
+  the cap leaves over (`createRetryAllowance`); without that headroom the
+  member fails instead. A truncated answer is not retried: it delivers text,
+  and the same request would hit the same limit. Every billed attempt now
+  counts toward `actualUsd` and `costs.json`, the recovered ones included.
 
 ## Provenance
 
@@ -388,6 +411,11 @@ outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
 
 ## Changelog
 
+- 0.5.0 (2026-11-01): failed and output-limited members leave their full
+  responses in `failures/<label>.json`; an empty completion is retried once
+  when the budget cap has room; every billed attempt counts toward the actual cost. README prices and the
+  DeepSeek/GLM failure notes updated from October's runs — see Design
+  Decisions.
 - 0.4.0 (2026-10-01): `reasoning.effort` (default `"medium"`, gated per-model
   on catalog `supported_parameters`) and `provider.sort` (default
   `"throughput"`) sent per request; `timeoutMs` default raised 240s → 600s.

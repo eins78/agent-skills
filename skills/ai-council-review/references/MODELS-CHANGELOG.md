@@ -9,6 +9,27 @@ first. Each entry carries the date, the exact swap, the trigger (measured
 failure, price change, deprecation, or a scheduled review), and the
 verification command output.
 
+## 2026-11-01 — no roster change; prices refreshed, two failure patterns recorded
+
+**Trigger:** the scheduled monthly model review.
+
+**Swap:** none. All 13 pinned slugs are live; no `expiration_date` is set on
+any of them, including the three `-preview` ids.
+
+**Measured (11 real runs, October 2026):** `deepseek/deepseek-v4-flash`
+returned an empty completion in 4 runs; `z-ai/glm-5.3-flash` ended at the
+24k `max_tokens` limit in 3 runs (opinion kept as unstructured text). Quorum
+held in every run. No swap: each seat still delivered in at least 7 of 11
+runs, and the DeepSeek failures left no evidence to tell a model fault from
+a provider fault. The 0.5.0 dispatch change keeps that evidence
+(`failures/`) and retries an empty completion once; decide on a swap from
+that data. GLM timeouts: 0 of 11, down from 4 of 4 in September — the 0.4.0
+fix held.
+
+**Price changes** (in/out $/M): `deepseek-v4-flash` 0.04/0.08 → 0.09/0.18;
+`glm-5.3-flash` 0.15/0.50 → 0.02/0.18; `qwen3.8-27b` 0.42/3.00 → 0.15/1.88.
+All other seats unchanged.
+
 ## 2026-09-20 — roster overhaul: `default` becomes the code roster, new `prose`/`crowd`/`flagship` presets, astra into `max`, grok out of `budget`
 
 **Trigger:** the first scheduled monthly model review (`docs/launchd-agents.md`
