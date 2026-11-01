@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { estimateTokens, estimateCost, budgetGate } from "../scripts/lib/budget.mjs";
+import { estimateTokens, estimateCost, budgetGate, createRetryAllowance, worstCaseRequestUsd } from "../scripts/lib/budget.mjs";
 
 /** @returns {Map<string, import("../scripts/lib/openrouter.mjs").ModelInfo>} */
 function catalog() {
@@ -77,4 +77,20 @@ test("gate: worst case above hard cap refuses even with --yes and even when esti
 test("gate: custom budget respected", () => {
   const g = budgetGate({ estimateUsd: 9, worstCaseUsd: 15, budgetUsd: 20, confirmThresholdUsd: 10, yes: false });
   assert.equal(g.outcome, "proceed");
+});
+
+test("retry allowance: only what the hard cap leaves over the worst case, reserved once", () => {
+  const allowance = createRetryAllowance(1.0, 0.7);
+  assert.equal(allowance.reserve(0.2), true);
+  assert.equal(allowance.reserve(0.2), false, "0.1 left: a second 0.2 retry would breach the cap");
+  assert.equal(allowance.reserve(0.1), true);
+  assert.ok(Math.abs(allowance.remaining()) < 1e-12);
+  assert.equal(createRetryAllowance(0.5, 0.7).reserve(0.01), false, "no negative headroom");
+});
+
+test("worst case of one request matches the per-member term of estimateCost", () => {
+  const cat = catalog();
+  const pricey = worstCaseRequestUsd({ model: "mock/pricey", inputTokens: 1150, catalog: cat, maxOutputTokens: 24000 });
+  assert.ok(Math.abs(pricey - (1150 * 5e-6 + 24000 * 25e-6)) < 1e-12);
+  assert.equal(worstCaseRequestUsd({ model: "mock/unknown", inputTokens: 1150, catalog: cat, maxOutputTokens: 24000 }), 0);
 });

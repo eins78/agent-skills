@@ -39,8 +39,8 @@ import { join, basename } from "node:path";
 import process from "node:process";
 
 import { resolveConfig, gitToplevel } from "./lib/config.mjs";
-import { getModelsCatalog, validateSlugs, chatCompletion, redact } from "./lib/openrouter.mjs";
-import { estimateCost, budgetGate, estimateTokens } from "./lib/budget.mjs";
+import { getModelsCatalog, validateSlugs, chatCompletion, redact, CompletionError } from "./lib/openrouter.mjs";
+import { estimateCost, budgetGate, estimateTokens, createRetryAllowance, worstCaseRequestUsd } from "./lib/budget.mjs";
 import { gatherInput, fitPayload, UsageError } from "./lib/input.mjs";
 import { buildMessages, loadRubric, assembleUserPayload } from "./lib/prompts.mjs";
 import { RESPONSE_FORMAT, extractJson, validateReview } from "./lib/schema.mjs";
@@ -412,6 +412,10 @@ async function main() {
   // → model via request-meta.json's roster list.
   const sortedLabels = [...labels].sort();
 
+  // The gate above covered one worst-case request per member; a retried
+  // empty completion is a second one and must fit under the same hard cap.
+  const retryAllowance = createRetryAllowance(config.budgetUsd, estimate.worstCaseUsd);
+
   const results = await Promise.allSettled(
     config.models.map(async (model, i) => {
       const info = catalog.get(model);
@@ -433,6 +437,8 @@ async function main() {
       const res = await chatCompletion({
         baseUrl: config.baseUrl,
         apiKey,
+        // the other candidate key variable is key material too (redactKeys)
+        redactAlso: API_KEY_VARS.map((name) => env[name]),
         model,
         messages,
         responseFormat: structured ? RESPONSE_FORMAT : undefined,
@@ -443,6 +449,10 @@ async function main() {
         // provider.sort is a routing hint, not a model capability — safe to
         // send to every member regardless of supported_parameters.
         providerSort: config.providerSort,
+        mayRetryEmpty: () =>
+          retryAllowance.reserve(
+            worstCaseRequestUsd({ model, inputTokens: estimate.inputTokens, catalog, maxOutputTokens: config.maxOutputTokens }),
+          ),
       });
       // The provider response echoes the model slug — scrub identity fields
       // before persisting under a label-named file (raw/ is a synthesis
@@ -465,7 +475,7 @@ async function main() {
     estimateUsd: estimate.totalUsd,
     actualUsd: 0,
     degraded: false,
-    members: /** @type {Record<string, {status: string, model?: string, costUsd?: number, error?: string, parse?: string}>} */ ({}),
+    members: /** @type {Record<string, {status: string, model?: string, costUsd?: number, error?: string, parse?: string, diagnostics?: string}>} */ ({}),
     finishedAt: "",
   };
 
@@ -479,19 +489,49 @@ async function main() {
   const memberLines = [];
   /** @type {Record<string, number>} */
   const costsByModel = {};
+  // failures/ keeps the unscrubbed evidence of what went wrong (provider,
+  // generation id, finish_reason, usage) so a flaky seat can be diagnosed
+  // after the run. It names models and providers, so it is NOT a synthesis
+  // input — references/synthesis.md says not to open it, like roster-key.json.
+  /** @param {string} label @param {unknown} record @returns {string} */
+  const writeFailure = (label, record) => {
+    mkdirSync(join(runDir, "failures"), { recursive: true, mode: 0o700 });
+    const rel = join("failures", `${label}.json`);
+    writeFileSync(join(runDir, rel), redactKeys(JSON.stringify(record, null, 2), env), { mode: 0o600 });
+    return rel;
+  };
+  // Every attempt that got a 200 may have been billed — an empty completion
+  // included — so a member's spend is the sum over its attempts.
+  /** @param {import("./lib/openrouter.mjs").AttemptRecord[]} attempts */
+  const spentOn = (attempts) =>
+    attempts.reduce((sum, a) => sum + Number(/** @type {any} */ (a).response?.usage?.cost ?? 0), 0);
   results.forEach((result, i) => {
     const model = config.models[i];
     const label = labels[i];
     if (result.status === "rejected") {
       const msg = redactKeys(String(result.reason?.message ?? result.reason), env);
+      const attempts = result.reason instanceof CompletionError ? result.reason.attempts : [];
+      const diagnostics = writeFailure(label, { model, error: msg, attempts });
+      const spent = spentOn(attempts);
+      if (spent > 0) {
+        manifest.actualUsd += spent;
+        costsByModel[model] = spent;
+      }
       // Failed members delivered no opinion — naming them carries no finding
       // bias, and the failure report needs the model to fix the roster.
-      manifest.members[label] = { status: "failed", model, error: msg };
+      manifest.members[label] = { status: "failed", model, error: msg, diagnostics };
       memberLines.push({ label, line: `  ✗ ${model}: ${msg}`, err: true });
       return;
     }
-    const { content, usage, finishReason } = result.value;
-    const cost = Number(usage?.cost ?? 0);
+    const { content, finishReason, attempts } = result.value;
+    // A delivered member stays anonymous in the manifest, but if it needed a
+    // retry or hit the output limit, every attempt goes to failures/ — a
+    // recovered empty completion is exactly the evidence a flaky seat needs.
+    const diagnostics =
+      finishReason === "length" || attempts.length > 1
+        ? writeFailure(label, { model, finishReason, attempts })
+        : undefined;
+    const cost = spentOn(attempts);
     manifest.actualUsd += cost;
     costsByModel[model] = cost;
 
@@ -500,14 +540,14 @@ async function main() {
     if (extractedJson.ok && validated?.ok) {
       writeFileSync(join(runDir, "reviews", `${label}.json`), JSON.stringify(validated.review, null, 2), { mode: 0o600 });
       parsed.push({ model: label, review: validated.review });
-      manifest.members[label] = { status: "ok" };
+      manifest.members[label] = diagnostics ? { status: "ok", diagnostics } : { status: "ok" };
       memberLines.push({ label, line: `  ✓ ${label}: ${validated.review.findings.length} findings, verdict ${validated.review.verdict}`, err: false });
     } else {
       // The opinion is never discarded: keep the raw text for the synthesizer.
       writeFileSync(join(runDir, "reviews", `${label}.json`), JSON.stringify({ unstructured: content }, null, 2), { mode: 0o600 });
       let why = extractedJson.ok ? (validated && !validated.ok ? validated.error : "invalid review") : extractedJson.error;
       if (finishReason === "length") why += "; response truncated at max_tokens";
-      manifest.members[label] = { status: "parse_failed", parse: why };
+      manifest.members[label] = diagnostics ? { status: "parse_failed", parse: why, diagnostics } : { status: "parse_failed", parse: why };
       memberLines.push({ label, line: `  ⚠ ${label}: response kept as unstructured text (${why})`, err: true });
     }
   });

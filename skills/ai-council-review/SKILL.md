@@ -116,9 +116,13 @@ this session before step 3.
 node ${CLAUDE_SKILL_DIR}/scripts/council.mjs review <same flags> [--yes]
 ```
 
-The script fans out in parallel, retries once on 429/5xx, aborts hung
-members at the timeout, persists everything, and prints `RUN_DIR=<path>` as
-its last line.
+The script fans out in parallel, retries once on 429/5xx or an empty
+completion (the latter only if the budget cap leaves room for it), aborts
+hung members at the timeout, persists everything, and prints
+`RUN_DIR=<path>` as its last line. A member that failed, needed a retry or
+hit the output limit leaves its full responses in `failures/` (named in its
+manifest entry as `diagnostics`). That file names models: it is for diagnosing a
+flaky seat, not for synthesis.
 
 | Exit | Meaning | Your move |
 |---|---|---|

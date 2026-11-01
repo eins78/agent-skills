@@ -20,6 +20,11 @@ From `RUN_DIR` (printed by the dispatch script):
   read anytime; per-label costs would correlate with the per-model estimate
   and break the blind)
 - `request-meta.json` — what was reviewed, config snapshot, cost estimate
+- `failures/member-X.json` — present only for a member that failed, needed a
+  retry or hit the output limit (`diagnostics` in its manifest entry points here): every
+  attempt's unscrubbed response, HTTP status or error, with provider and
+  generation id. It is for diagnosing a flaky seat, not for synthesis, and it
+  names models — **do not open it before step 7**, same as `roster-key.json`.
 - `roster-key.json` — the member-label → model mapping. **Do NOT open this
   before step 7.** Members are anonymized (`member-A`, `member-B`, …)
   because you, the synthesizer, are an LLM with documented brand- and

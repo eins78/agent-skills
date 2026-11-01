@@ -57,11 +57,49 @@ export function estimateCost({ payload, models, catalog, outputTokensPerModel, m
     return { model, inputTokens, outputTokens: outputTokensPerModel, usd, priced };
   });
   const totalUsd = perModel.reduce((sum, m) => sum + m.usd, 0);
-  const worstCaseUsd = models.reduce((sum, model) => {
-    const info = catalog.get(model);
-    return sum + (info ? inputTokens * info.promptPrice + maxOutputTokens * info.completionPrice : 0);
-  }, 0);
+  const worstCaseUsd = models.reduce(
+    (sum, model) => sum + worstCaseRequestUsd({ model, inputTokens, catalog, maxOutputTokens }),
+    0,
+  );
   return { perModel, totalUsd, worstCaseUsd, inputTokens };
+}
+
+/**
+ * Worst-case cost of ONE request to one model: the full payload plus
+ * maxOutputTokens. Zero for a model the catalog does not price.
+ *
+ * @param {object} opts
+ * @param {string} opts.model
+ * @param {number} opts.inputTokens
+ * @param {Map<string, import("./openrouter.mjs").ModelInfo>} opts.catalog
+ * @param {number} opts.maxOutputTokens
+ */
+export function worstCaseRequestUsd({ model, inputTokens, catalog, maxOutputTokens }) {
+  const info = catalog.get(model);
+  return info ? inputTokens * info.promptPrice + maxOutputTokens * info.completionPrice : 0;
+}
+
+/**
+ * Budget headroom for second attempts. The hard cap is checked against one
+ * worst-case request per member; a retried empty completion can bill a
+ * second full request, so each retry must first reserve its own worst case
+ * from what the cap leaves over. Dispatch is single-threaded JS, so a
+ * synchronous reserve() is race-free across parallel members.
+ *
+ * @param {number} budgetUsd     hard cap
+ * @param {number} worstCaseUsd  the gate's one-request-per-member ceiling
+ * @returns {{reserve: (usd: number) => boolean, remaining: () => number}}
+ */
+export function createRetryAllowance(budgetUsd, worstCaseUsd) {
+  let remaining = Math.max(0, budgetUsd - worstCaseUsd);
+  return {
+    reserve(usd) {
+      if (usd > remaining) return false;
+      remaining -= usd;
+      return true;
+    },
+    remaining: () => remaining,
+  };
 }
 
 /**
