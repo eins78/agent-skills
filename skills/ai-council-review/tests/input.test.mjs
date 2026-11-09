@@ -1,7 +1,7 @@
 // @ts-check
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -42,6 +42,25 @@ test("reviewing another file still includes the plan as context", () => {
     assert.match(result.context, /IMPLEMENTATION PLAN/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("auto-context never follows a symlink that leaves the repository", () => {
+  const dir = mkdtempSync(join(tmpdir(), "council-input-"));
+  const outside = mkdtempSync(join(tmpdir(), "council-outside-"));
+  try {
+    writeFileSync(join(outside, "secret.txt"), "TOP-SECRET-VALUE\n");
+    symlinkSync(join(outside, "secret.txt"), join(dir, "CLAUDE.md"));
+    symlinkSync(join(outside, "secret.txt"), join(dir, "PLAN.md"));
+    writeFileSync(join(dir, "AGENTS.md"), "# Real instructions\n");
+    symlinkSync(join(dir, "AGENTS.md"), join(dir, "GEMINI.md")); // a link INSIDE the repo is fine
+    writeFileSync(join(dir, "code.js"), "export const x = 1;\n");
+    const result = gatherInput({ flags: {}, positionals: ["code.js"], cwd: dir, env: {} });
+    assert.ok(!result.context.includes("TOP-SECRET-VALUE"), "outside-repo symlink must not be read");
+    assert.match(result.context, /Real instructions/, "an in-repo symlink and a regular file still work");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
   }
 });
 

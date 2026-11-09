@@ -5,9 +5,9 @@
  * auto-context assembly) and adds --pr via the gh CLI.
  */
 
-import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync, statSync, realpathSync } from "node:fs";
 import { execFileSync } from "node:child_process";
-import { join, relative, resolve } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 import { gitToplevel, UsageError } from "./config.mjs";
 import { estimateTokens } from "./budget.mjs";
 
@@ -135,7 +135,7 @@ export function buildAutoContext({ flags, cwd, reviewedPaths = [] }) {
 
   for (const name of ["CLAUDE.md", "GEMINI.md", "AGENTS.md"]) {
     const p = join(repoRoot, name);
-    if (existsSync(p)) {
+    if (existsSync(p) && insideRepo(p, repoRoot)) {
       parts.push(`--- PROJECT INSTRUCTIONS (${name}) ---\n${capRead(p)}`);
       break;
     }
@@ -161,16 +161,39 @@ function findPlanFile(planFlag, repoRoot) {
     return planFlag;
   }
   const rootPlan = join(repoRoot, "PLAN.md");
-  if (existsSync(rootPlan)) return rootPlan;
+  if (existsSync(rootPlan) && insideRepo(rootPlan, repoRoot)) return rootPlan;
   const plansDir = join(repoRoot, ".claude", "plans");
   if (existsSync(plansDir)) {
     const newest = readdirSync(plansDir)
       .filter((f) => f.endsWith(".md"))
       .map((f) => join(plansDir, f))
+      .filter((f) => insideRepo(f, repoRoot))
       .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0];
     if (newest) return newest;
   }
   return undefined;
+}
+
+/**
+ * Auto-context files are picked by name from the repository being reviewed,
+ * which may be someone else's: a symlink named CLAUDE.md or PLAN.md that
+ * points at a secret outside the repo would be sent to the model providers.
+ * A file counts only if its real path stays inside the repository's real path.
+ * (An explicit --plan path is the user's own choice and is not checked.)
+ *
+ * @param {string} file
+ * @param {string} repoRoot
+ */
+function insideRepo(file, repoRoot) {
+  try {
+    const root = realpathSync(repoRoot);
+    const real = realpathSync(file);
+    if (real === root || real.startsWith(root + sep)) return true;
+  } catch {
+    return false;
+  }
+  console.error(`Skipping ${relative(repoRoot, file)} as context: it is a symbolic link that resolves outside the repository.`);
+  return false;
 }
 
 /** @param {string} file */
