@@ -10,6 +10,17 @@ where `ai-review`'s single second opinion is not enough.
 
 **Tier:** Publishable — reusable across projects and machines.
 
+## Shared library — `ai-review` copies `scripts/lib/`
+
+`ai-review` runs on the same OpenRouter library as this skill. **The files in `scripts/lib/` here are canonical; the council wins.** `skills/ai-review/scripts/lib/` holds byte-for-byte copies of `config`, `openrouter`, `budget`, `input`, `prompts` and `schema`, so that `ai-review` works when installed alone.
+
+- **Always keep the copies in sync.** Edit the library here only. Then run `pnpm run sync:lib` (copies these files over the copies) and commit both skills' `scripts/lib/` together. Never edit the copies by hand.
+- **`pnpm run validate` fails on any drift** (`.dev/scripts/sync-shared-lib.sh --check`); CI runs it on every pull request.
+- A change to a shared file therefore reaches `ai-review` too: run `pnpm run test:council` and `pnpm run test:review`, and bump both skills in the changeset. `chatCompletionStream` (in `openrouter.mjs`) is used only by `ai-review`; its tests are `tests/stream.test.mjs`.
+- To share another file, add it to `SHARED` in the sync script.
+
+Details and the reasoning: [`../ai-review/README.md`](../ai-review/README.md).
+
 ## Components
 
 ```
@@ -40,6 +51,7 @@ ai-council-review/
     ├── budget.test.mjs         # offline: estimate math, gate arithmetic
     ├── dispatch.test.mjs       # mock OpenRouter server (node:http)
     ├── outcomes.test.mjs       # offline: outcome archive record/show
+    ├── stream.test.mjs         # offline: the streamed completion ai-review uses
     └── live-smoke.test.mjs     # optional live test, skips without key
 ```
 
@@ -363,7 +375,7 @@ Model roster slugs and per-token pricing verified live against the
 OpenRouter API on 2026-07-11 (`GET /api/v1/models`), including
 `deepseek/deepseek-v4-flash` (~$0.077/M input) for the live smoke test.
 Input-gathering semantics (diff modes, auto-context) ported from this repo's
-`ai-review` skill (`scripts/review.sh`). Packaging follows repo conventions
+`ai-review` skill (`scripts/review.sh`, replaced by `review.mjs` in `ai-review` 1.0.0). Packaging follows repo conventions
 as of `@eins78/agent-skills` v3.1.0. Grok was removed from the default
 preset by maintainer decision (2026-07-11); `z-ai/glm-5.2` backfills to keep
 a 4-member council (quorum unchanged at 2).

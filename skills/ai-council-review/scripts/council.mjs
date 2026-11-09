@@ -591,7 +591,7 @@ async function main() {
   if (delivered < config.quorum) {
     console.error(
       `Quorum not met (${delivered} < ${config.quorum}). Do not synthesize from this run alone — ` +
-        `report the failure and consider the single-model ai-review skill as a fallback.`,
+        `report the failure and ask your human partner how to proceed (fewer members, another preset, or retry later).`,
     );
     process.exit(EXIT.QUORUM);
   }

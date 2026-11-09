@@ -655,7 +655,8 @@ test("quorum failure: 3 of 4 members down → exit 2", async () => {
   const r = await runCli(REVIEW_ARGS);
   assert.equal(r.status, 2, r.output);
   assert.match(r.output, /Quorum not met/);
-  assert.match(r.output, /ai-review/, "points at the single-model fallback");
+  assert.doesNotMatch(r.output, /ai-review skill|as a fallback/, "ai-review shares the backend, so it is no fallback");
+  assert.match(r.output, /ask your human partner how to proceed/);
   r.cleanup();
 });
 

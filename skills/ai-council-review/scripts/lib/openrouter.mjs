@@ -143,6 +143,8 @@ export class CompletionError extends Error {
     super(message);
     this.name = "CompletionError";
     this.attempts = attempts;
+    /** Text already received when a streamed completion failed midway ("" otherwise). */
+    this.partial = "";
   }
 }
 
@@ -314,6 +316,194 @@ export async function chatCompletion(opts) {
       lastMessage = e.message;
     } finally {
       clearTimeout(timer);
+    }
+  }
+  throw fail(lastMessage ?? `Request to ${model} failed`);
+}
+
+/** Internal signal: a retryable error arrived inside the stream before any text. */
+class StreamRetry extends Error {}
+
+/**
+ * One STREAMED chat completion: `onText` receives each text delta as it
+ * arrives. Same failure classes as chatCompletion (400/401/404 fail fast;
+ * one retry after 429/5xx/network error/empty completion), with one added
+ * rule: once text has reached `onText` there is no retry, because a second
+ * attempt would repeat text the caller already showed. A failure after
+ * partial text throws a CompletionError whose `partial` holds that text.
+ * `timeoutMs` bounds one whole attempt (not idle time).
+ *
+ * Used by ai-review (one reviewer, text output, no JSON schema).
+ *
+ * @param {object} opts
+ * @param {string} opts.baseUrl
+ * @param {string} opts.apiKey
+ * @param {string} opts.model
+ * @param {{role: string, content: string}[]} opts.messages
+ * @param {number|undefined} [opts.temperature]
+ * @param {number} opts.timeoutMs
+ * @param {number} [opts.maxTokens]
+ * @param {string} [opts.reasoningEffort] gate on the model's `supported_parameters` including "reasoning"
+ * @param {string} [opts.providerSort]
+ * @param {string} [opts.appTitle] X-Title attribution header (default: ai-council-review)
+ * @param {(string|undefined)[]} [opts.redactAlso]
+ * @param {(delta: string) => void} opts.onText
+ * @param {() => boolean} [opts.mayRetryEmpty] asked before retrying an empty completion
+ * @returns {Promise<{content: string, finishReason: string, usage: {prompt_tokens?: number, completion_tokens?: number, cost?: number}, attempts: AttemptRecord[]}>}
+ */
+export async function chatCompletionStream(opts) {
+  const { baseUrl, apiKey, model, messages, temperature, timeoutMs, reasoningEffort, providerSort, onText } = opts;
+  /** @type {Record<string, unknown>} */
+  const body = {
+    model,
+    messages,
+    max_tokens: opts.maxTokens ?? 24000,
+    stream: true,
+    usage: { include: true },
+  };
+  if (temperature !== undefined) body.temperature = temperature;
+  if (reasoningEffort) body.reasoning = { effort: reasoningEffort };
+  if (providerSort) body.provider = { sort: providerSort };
+
+  const secrets = [apiKey, ...(opts.redactAlso ?? [])];
+  /** @param {string} text @returns {string} */
+  const scrub = (text) => {
+    for (const key of secrets) text = redact(text, key);
+    return text;
+  };
+  /** @type {AttemptRecord[]} */
+  const attempts = [];
+  /** @param {string} message @param {string} [partial] */
+  const fail = (message, partial = "") => {
+    const err = new CompletionError(scrub(message), attempts);
+    err.partial = partial;
+    return err;
+  };
+
+  /** @type {string|undefined} */
+  let lastMessage;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt > 0) {
+      const raw = Number(process.env.COUNCIL_RETRY_BACKOFF_MS ?? NaN);
+      const backoff = Number.isFinite(raw) && raw >= 0 ? raw : 2000 + Math.random() * 6000;
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    let text = "";
+    let finishReason = "unknown";
+    /** @type {{prompt_tokens?: number, completion_tokens?: number, cost?: number}} */
+    let usage = {};
+    try {
+      /** @type {Response} */
+      let res;
+      try {
+        res = await fetch(`${baseUrl}/chat/completions`, {
+          method: "POST",
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+            ...ATTRIBUTION_HEADERS,
+            ...(opts.appTitle ? { "X-Title": opts.appTitle } : {}),
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (err) {
+        const e = /** @type {Error} */ (err);
+        if (e.name === "AbortError") throw e;
+        attempts.push({ error: scrub(e.message) });
+        lastMessage = e.message;
+        continue;
+      }
+
+      if (!res.ok) {
+        const errText = scrub(await res.text().catch(() => ""));
+        attempts.push({ httpStatus: res.status, body: errText.slice(0, ATTEMPT_BODY_LIMIT) });
+        if (res.status === 429 || res.status >= 500) {
+          lastMessage = `HTTP ${res.status} from ${model}: ${errText.slice(0, 500)}`;
+          continue;
+        }
+        throw fail(`HTTP ${res.status} from ${model} (not retryable): ${errText.slice(0, 500)}`);
+      }
+      if (!res.body) throw fail(`No response body from ${model}`);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let done = false;
+      /** @param {string} line */
+      const handleLine = (line) => {
+        // SSE comment lines (": OPENROUTER PROCESSING") are keep-alives.
+        if (!line.startsWith("data:")) return;
+        const data = line.slice(5).trim();
+        if (data === "") return;
+        if (data === "[DONE]") {
+          done = true;
+          return;
+        }
+        /** @type {any} */
+        let json;
+        try {
+          json = JSON.parse(data);
+        } catch {
+          return; // a malformed chunk is skipped, not fatal
+        }
+        if (json.error) {
+          const code = Number(json.error.code);
+          const err = fail(`API error from ${model}: ${scrub(JSON.stringify(json.error)).slice(0, 500)}`, text);
+          // retryable only while nothing has been shown yet
+          if (text !== "" || !(code === 429 || code >= 500)) throw err;
+          lastMessage = err.message;
+          throw new StreamRetry();
+        }
+        const choice = json.choices?.[0];
+        const delta = choice?.delta?.content;
+        if (typeof delta === "string" && delta.length > 0) {
+          text += delta;
+          onText(delta);
+        }
+        if (choice?.finish_reason) finishReason = String(choice.finish_reason);
+        if (json.usage) usage = json.usage;
+      };
+      while (!done) {
+        const { value, done: eof } = await reader.read();
+        if (eof) break;
+        buffer += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          handleLine(buffer.slice(0, nl).replace(/\r$/, ""));
+          buffer = buffer.slice(nl + 1);
+        }
+      }
+      if (buffer.trim() !== "") handleLine(buffer.trim());
+      attempts.push({ response: { finish_reason: finishReason, usage, chars: text.length } });
+
+      if (text === "") {
+        lastMessage = `Empty completion from ${model} (finish_reason=${finishReason})`;
+        if (attempt === 0 && opts.mayRetryEmpty && !opts.mayRetryEmpty()) {
+          throw fail(`${lastMessage}; not retried: no budget headroom for a second attempt`);
+        }
+        continue;
+      }
+      return { content: text, finishReason, usage, attempts };
+    } catch (err) {
+      if (err instanceof StreamRetry) continue;
+      if (err instanceof CompletionError) throw err;
+      const e = /** @type {Error} */ (err);
+      if (e.name === "AbortError") {
+        attempts.push({ error: `timeout after ${timeoutMs} ms` });
+        throw fail(`Timeout after ${Math.round(timeoutMs / 1000)}s waiting for ${model}`, text);
+      }
+      attempts.push({ error: scrub(e.message) });
+      lastMessage = e.message;
+      // the connection dropped: a retry is safe only if nothing was shown
+      if (text !== "") throw fail(`Stream from ${model} broke after partial text: ${e.message}`, text);
+    } finally {
+      clearTimeout(timer);
+      // Close the connection of an attempt we are leaving (a retry, an error
+      // chunk, a parse failure); on success the stream is already finished.
+      controller.abort();
     }
   }
   throw fail(lastMessage ?? `Request to ${model} failed`);

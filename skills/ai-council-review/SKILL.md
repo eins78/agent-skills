@@ -26,7 +26,7 @@ other — via one API (OpenRouter). A dispatch script handles fan-out, cost
 gating, and clustering; **you** synthesize, because you can do the one thing
 the council cannot: verify findings against the actual repository.
 
-This is the heavyweight sibling of `ai-review` (single model, ~$0.03). A
+This is the heavyweight sibling of `ai-review` (one model, streamed, ~$0.06 by default). A
 council run costs real money — from well under a cent (`budget`) to over $1
 (`flagship`, which trips the confirmation gate on anything beyond a small
 diff). See the per-preset tables in README.md for exact pricing. Use it for
@@ -63,7 +63,7 @@ proprietary code this means unreleased source leaves the machine.
 ## CRITICAL rules
 
 - **Never fabricate or substitute a council opinion.** If members fail or
-  quorum is not met, report that and offer the `ai-review` fallback — do not
+  quorum is not met, report that and ask your human partner how to proceed — do not
   write "what the model would probably say", and do not pass your own review
   off as a member's.
 - **Never pass `--yes` on your own.** `--yes` asserts that your human partner
@@ -128,7 +128,7 @@ flaky seat, not for synthesis.
 |---|---|---|
 | 0 | Quorum met (check `degraded` in manifest) | Synthesize (step 4) |
 | 1 | Usage/input error (bad slug, empty diff, oversized payload) | Fix per the message; slug errors include suggestions — update roster, retry |
-| 2 | Quorum failed | Report which members failed and why; offer `ai-review` fallback; do NOT synthesize or self-substitute |
+| 2 | Quorum failed | Report which members failed and why; ask your human partner (fewer members, another preset, retry later); do NOT synthesize or self-substitute. `ai-review` uses the same API and key, so it is not a fallback for an OpenRouter outage |
 | 3 | Budget gate blocked (nothing sent) | Relay the estimate to your human partner; only proceed how they decide |
 | 4 | API key missing/rejected | Ask your human partner to set `AI_COUNCIL_OPENROUTER_API_KEY` (or `OPENROUTER_API_KEY`) |
 
