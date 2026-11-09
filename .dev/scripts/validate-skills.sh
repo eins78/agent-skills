@@ -81,6 +81,12 @@ else
   done
 fi
 
+# ai-review ships copies of ai-council-review's library; they must stay equal (the council wins)
+echo "Checking the shared library copies..."
+if ! bash "$(dirname "$0")/sync-shared-lib.sh" --check; then
+  errors=$((errors + 1))
+fi
+
 echo ""
 if [ $errors -gt 0 ]; then
   echo "Validation failed: $errors error(s), $warnings warning(s)"

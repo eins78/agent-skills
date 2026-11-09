@@ -1,0 +1,10 @@
+diff --git a/src/greet.js b/src/greet.js
+index 1111111..2222222 100644
+--- a/src/greet.js
++++ b/src/greet.js
+@@ -1,5 +1,6 @@
+ export function greet(name) {
+-  return "Hello, " + name;
++  if (name = "") return "Hello, stranger";
++  return `Hello, ${name}`;
+ }

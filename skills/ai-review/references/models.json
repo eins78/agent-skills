@@ -1,0 +1,11 @@
+{
+  "$comment": "Defaults for ai-review (one reviewer). Data, not code: a slug that is gone is a one-line fix here. ai-review stops before spending when the slug is not in the live OpenRouter catalog. Override per run with --model or AI_REVIEW_MODEL, or in ~/.config/ai-review/config.json (keys: model, timeoutMs, budgetUsd, confirmThresholdUsd, reasoningEffort, providerSort, maxOutputTokens).",
+  "model": "google/gemini-3.1-pro-preview",
+  "timeoutMs": 600000,
+  "budgetUsd": 5,
+  "confirmThresholdUsd": 1,
+  "reasoningEffort": "medium",
+  "providerSort": "throughput",
+  "outputTokensPerModel": 3000,
+  "maxOutputTokens": 24000
+}
