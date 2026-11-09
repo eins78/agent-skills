@@ -180,7 +180,8 @@ function findPlanFile(planFlag, repoRoot) {
  * points at a secret outside the repo would be sent to the model providers.
  * A file counts only if its real path is a regular file inside the
  * repository's real path and not under a hidden directory or file such as
- * `.git/` or `.env` (the one exception is `.claude/`, where plan files live).
+ * `.git/`, `.env` or `.claude/settings.local.json` (the one exception is
+ * `.claude/plans/<name>.md`, where plan files live).
  * (An explicit --plan path is the user's own choice and is not checked.)
  *
  * @param {string} file
@@ -191,7 +192,10 @@ function insideRepo(file, repoRoot) {
     const root = realpathSync(repoRoot);
     const real = realpathSync(file);
     const inside = real.startsWith(root + sep);
-    const hidden = relative(root, real).split(sep).some((seg) => seg.startsWith(".") && seg !== ".claude");
+    const segs = relative(root, real).split(sep);
+    // the only hidden location allowed: .claude/plans/<name>.md
+    const isPlanFile = segs.length === 3 && segs[0] === ".claude" && segs[1] === "plans" && segs[2].endsWith(".md");
+    const hidden = !isPlanFile && segs.some((seg) => seg.startsWith("."));
     if (inside && !hidden && statSync(real).isFile()) return true;
   } catch {
     return false;

@@ -72,10 +72,14 @@ test("auto-context skips a symlink that points at a hidden file inside the repos
     writeFileSync(join(dir, ".git", "config"), "[remote]\nurl=HIDDEN-GIT-CONFIG\n");
     symlinkSync(join(dir, ".env"), join(dir, "CLAUDE.md"));
     symlinkSync(join(dir, ".git", "config"), join(dir, "PLAN.md"));
+    mkdirSync(join(dir, ".claude"));
+    writeFileSync(join(dir, ".claude", "settings.local.json"), '{"token":"HIDDEN-CLAUDE-SETTINGS"}\n');
+    symlinkSync(join(dir, ".claude", "settings.local.json"), join(dir, "AGENTS.md"));
     writeFileSync(join(dir, "code.js"), "export const x = 1;\n");
     const result = gatherInput({ flags: {}, positionals: ["code.js"], cwd: dir, env: {} });
     assert.ok(!result.context.includes("HIDDEN-SECRET"));
     assert.ok(!result.context.includes("HIDDEN-GIT-CONFIG"));
+    assert.ok(!result.context.includes("HIDDEN-CLAUDE-SETTINGS"), ".claude is allowed for plans only");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
