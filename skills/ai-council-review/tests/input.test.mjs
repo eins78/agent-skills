@@ -64,6 +64,23 @@ test("auto-context never follows a symlink that leaves the repository", () => {
   }
 });
 
+test("auto-context skips a symlink that points at a hidden file inside the repository (.env, .git)", () => {
+  const dir = mkdtempSync(join(tmpdir(), "council-input-"));
+  try {
+    writeFileSync(join(dir, ".env"), "API_TOKEN=HIDDEN-SECRET\n");
+    mkdirSync(join(dir, ".git"));
+    writeFileSync(join(dir, ".git", "config"), "[remote]\nurl=HIDDEN-GIT-CONFIG\n");
+    symlinkSync(join(dir, ".env"), join(dir, "CLAUDE.md"));
+    symlinkSync(join(dir, ".git", "config"), join(dir, "PLAN.md"));
+    writeFileSync(join(dir, "code.js"), "export const x = 1;\n");
+    const result = gatherInput({ flags: {}, positionals: ["code.js"], cwd: dir, env: {} });
+    assert.ok(!result.context.includes("HIDDEN-SECRET"));
+    assert.ok(!result.context.includes("HIDDEN-GIT-CONFIG"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("fitPayload drops lockfiles first and reports blind spots in the payload", () => {
   const payload = [
     `diff --git a/src/app.js b/src/app.js\n+real change\n`,

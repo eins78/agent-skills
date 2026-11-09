@@ -178,7 +178,9 @@ function findPlanFile(planFlag, repoRoot) {
  * Auto-context files are picked by name from the repository being reviewed,
  * which may be someone else's: a symlink named CLAUDE.md or PLAN.md that
  * points at a secret outside the repo would be sent to the model providers.
- * A file counts only if its real path stays inside the repository's real path.
+ * A file counts only if its real path is a regular file inside the
+ * repository's real path and not under a hidden directory or file such as
+ * `.git/` or `.env` (the one exception is `.claude/`, where plan files live).
  * (An explicit --plan path is the user's own choice and is not checked.)
  *
  * @param {string} file
@@ -188,11 +190,13 @@ function insideRepo(file, repoRoot) {
   try {
     const root = realpathSync(repoRoot);
     const real = realpathSync(file);
-    if (real === root || real.startsWith(root + sep)) return true;
+    const inside = real.startsWith(root + sep);
+    const hidden = relative(root, real).split(sep).some((seg) => seg.startsWith(".") && seg !== ".claude");
+    if (inside && !hidden && statSync(real).isFile()) return true;
   } catch {
     return false;
   }
-  console.error(`Skipping ${relative(repoRoot, file)} as context: it is a symbolic link that resolves outside the repository.`);
+  console.error(`Skipping ${relative(repoRoot, file)} as context: it resolves outside the repository, to a hidden file, or to something that is not a regular file.`);
   return false;
 }
 
