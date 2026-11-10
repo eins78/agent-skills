@@ -66,7 +66,7 @@ pnpm run typecheck:review                         # tsc, needs `pnpm install` on
 pnpm run validate                                 # frontmatter + the shared-library drift check
 ```
 
-To try a real review (costs about $0.06): `AI_COUNCIL_OPENROUTER_API_KEY=... review.mjs --branch`.
+To try a real review (costs about $0.15 for a small diff, more for a big one): `AI_COUNCIL_OPENROUTER_API_KEY=... review.mjs --branch`.
 
 ## Design Decisions
 
@@ -78,6 +78,7 @@ To try a real review (costs about $0.06): `AI_COUNCIL_OPENROUTER_API_KEY=... rev
 - **No automatic fallback model.** A second model is a second charge and a different answer. The exit code tells the agent to ask.
 - **Plain markdown output, not JSON.** The old `ERROR/WARNING/INFO` labels became `blocker/major/minor/nit` to match the council's severities; text streams naturally, JSON does not.
 - **Default model `google/gemini-3.1-pro-preview`.** Chosen for its window (1M tokens), no known delivery failures in the council's model notes, and a different vendor from the host agent. Check the slug against the catalog with `--dry-run`.
+- **Estimate from measured runs, price from the live catalog.** Expected output tokens per model live in `references/models.json` (`expectedOutputTokens`, means of 51 earlier runs with reasoning effort medium; a reasoning model writes about 9,000 tokens, most of them thinking). A new model is a one-line change. The price is fetched from OpenRouter on every run and never cached. The hard cap still uses the worst case (`maxOutputTokens`).
 - **Gemini and Codex removed at once** (1.0.0), including `REVIEW_PROVIDER`; a set `REVIEW_PROVIDER` gets one notice on stderr.
 
 ## Provenance
@@ -88,7 +89,6 @@ Created 2026-03-14 as a Gemini CLI wrapper (`review.sh`). Rebuilt on the OpenRou
 
 - The 600 s per-request limit is the council's value; a reasoning model on a large diff can use all of it.
 - No cached or incremental reviews; every run sends the whole payload.
-- The model catalog is cached 24 h under `~/.local/state/ai-review/` (`--no-cache` refetches).
 
 ## Changelog
 
@@ -98,6 +98,7 @@ Created 2026-03-14 as a Gemini CLI wrapper (`review.sh`). Rebuilt on the OpenRou
 - Gemini and Codex CLIs removed; `REVIEW_PROVIDER` is ignored with a notice.
 - Key preflight with exit code 4; exit codes 0–4 as in `ai-council-review`.
 - Cost estimate and budget gate before any request; `--dry-run`, `--pr`, `--input-file`, `--model`.
+- Cost estimate calibrated on measured runs; the catalog (and so the price) is fetched fresh on every run.
 - Shared library copied from `ai-council-review`, with a drift check in `pnpm run validate`.
 
 ### 0.0.2

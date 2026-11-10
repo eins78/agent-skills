@@ -9,7 +9,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -37,6 +37,7 @@ let baseUrl = "";
 let behavior = () => ({ chunks: [{ text: "ok" }] });
 let chatHits = 0;
 let anyHits = 0;
+let modelsHits = 0;
 /** @type {Record<string, unknown>|undefined} */
 let lastBody;
 
@@ -44,6 +45,7 @@ before(async () => {
   server = createServer((req, res) => {
     anyHits++;
     if (req.method === "GET" && req.url === "/models") {
+      modelsHits++;
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
         JSON.stringify({
@@ -53,6 +55,12 @@ before(async () => {
               context_length: 100000,
               pricing: { prompt: "0.000001", completion: "0.000002" },
               supported_parameters: ["temperature", "reasoning"],
+            },
+            {
+              id: "mock/plain",
+              context_length: 100000,
+              pricing: { prompt: "0.000001", completion: "0.000002" },
+              supported_parameters: ["temperature"],
             },
           ],
         }),
@@ -106,6 +114,7 @@ function runCli(args, envOverrides = {}) {
   const home = mkdtempSync(join(tmpdir(), "ai-review-test-"));
   chatHits = 0;
   anyHits = 0;
+  modelsHits = 0;
   lastBody = undefined;
   /** @type {Record<string, string>} */
   const env = {
@@ -158,6 +167,36 @@ test("--dry-run needs no key and sends nothing", async () => {
   assert.equal(r.status, 0, r.output);
   assert.match(r.stdout, /Estimated cost/);
   assert.equal(chatHits, 0);
+});
+
+test("dry-run assumes 9000 output tokens for a reasoning model without its own entry", async () => {
+  const r = await runCli([...ARGS, "--dry-run"]);
+  assert.equal(r.status, 0, r.output);
+  assert.match(r.stdout, /Assumed output: 9000 tokens \(reasoning default\)/);
+});
+
+test("dry-run assumes 3000 output tokens for a model without reasoning", async () => {
+  const r = await runCli([...ARGS, "--dry-run"], { AI_REVIEW_MODEL: "mock/plain" });
+  assert.equal(r.status, 0, r.output);
+  assert.match(r.stdout, /Assumed output: 3000 tokens \(non-reasoning default\)/);
+});
+
+test("the shipped default model has its own measured entry", () => {
+  const defaults = JSON.parse(readFileSync(join(HERE, "..", "references", "models.json"), "utf8"));
+  assert.ok(defaults.expectedOutputTokens.models[defaults.model] > 3000, "the default model's entry must exist and exceed the old flat 3000");
+});
+
+test("pricing comes from the live catalog on every run, never from a cache", async () => {
+  const stateHome = mkdtempSync(join(tmpdir(), "ai-review-state-"));
+  try {
+    for (let i = 0; i < 2; i++) {
+      const r = await runCli([...ARGS, "--dry-run"], { XDG_STATE_HOME: stateHome });
+      assert.equal(r.status, 0, r.output);
+      assert.equal(modelsHits, 1, `run ${i + 1} must fetch the catalog itself`);
+    }
+  } finally {
+    rmSync(stateHome, { recursive: true, force: true });
+  }
 });
 
 test("401: exit 4 at once, one request, key never printed", async () => {

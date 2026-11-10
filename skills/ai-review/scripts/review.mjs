@@ -6,7 +6,7 @@
  * Usage:
  *   review.mjs [--staged | --branch [base] | --pr N | --input-file F | file...]
  *              [--model SLUG] [--context "..."] [--plan PATH] [--no-context]
- *              [--dry-run] [--yes] [--budget USD] [--timeout SECS] [--no-cache]
+ *              [--dry-run] [--yes] [--budget USD] [--timeout SECS]
  *
  * The review text is streamed to STDOUT as it arrives. Progress, cost and
  * errors go to STDERR. Run it with output to a file (never through a pipe):
@@ -103,7 +103,14 @@ function resolveSettings(flags, env) {
     reasoningEffort: /** @type {string|undefined} */ (pick("reasoningEffort", undefined, "AI_REVIEW_REASONING_EFFORT")),
     providerSort: /** @type {string|undefined} */ (user.providerSort ?? defaults.providerSort),
     maxOutputTokens: num(user.maxOutputTokens ?? defaults.maxOutputTokens ?? 24000, "maxOutputTokens"),
-    outputTokens: num(defaults.outputTokensPerModel ?? 3000, "outputTokensPerModel"),
+    expectedOutputTokens: {
+      nonReasoningDefault: num(user.expectedOutputTokens?.nonReasoningDefault ?? defaults.expectedOutputTokens?.nonReasoningDefault ?? 3000, "nonReasoningDefault"),
+      reasoningDefault: num(user.expectedOutputTokens?.reasoningDefault ?? defaults.expectedOutputTokens?.reasoningDefault ?? 9000, "reasoningDefault"),
+      /** @type {Record<string, number>} */
+      models: Object.fromEntries(
+        Object.entries({ ...defaults.expectedOutputTokens?.models, ...user.expectedOutputTokens?.models }).map(([slug, n]) => [slug, num(n, `expectedOutputTokens for ${slug}`)]),
+      ),
+    },
     baseUrl: String(env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"),
   };
 }
@@ -122,7 +129,6 @@ Options:
   --yes            confirm an estimate above the threshold (only after the human agreed)
   --budget USD     hard cap on the worst-case cost
   --timeout SECS   per-request time limit
-  --no-cache       refetch the model catalog
 
 Exit codes: 0 ok, 1 usage/input, 2 reviewer failed or timed out, 3 budget gate, 4 key missing or rejected.
 Key: AI_COUNCIL_OPENROUTER_API_KEY or OPENROUTER_API_KEY, in the environment of this process.`;
@@ -154,7 +160,6 @@ async function main() {
         yes: { type: "boolean" },
         budget: { type: "string" },
         timeout: { type: "string" },
-        "no-cache": { type: "boolean" },
         provider: { type: "string" },
         help: { type: "boolean", short: "h" },
       },
@@ -193,7 +198,8 @@ async function main() {
   /** @type {Awaited<ReturnType<typeof getModelsCatalog>>} */
   let catalog;
   try {
-    catalog = await getModelsCatalog({ baseUrl: cfg.baseUrl, stateDir, noCache: Boolean(flags["no-cache"]) });
+    // The price must be current on every run: never use the cached catalog.
+    catalog = await getModelsCatalog({ baseUrl: cfg.baseUrl, stateDir, noCache: true });
   } catch (err) {
     say(redactKeys(`could not load the OpenRouter model catalog: ${/** @type {Error} */ (err).message}`, env));
     return EXIT.FAILED;
@@ -215,17 +221,27 @@ async function main() {
   }
   const payload = fitted.payload;
 
+  // Expected output length: the model's own measured mean, else a class default.
+  const table = cfg.expectedOutputTokens;
+  const [assumedOutput, assumedSource] =
+    table.models[cfg.model] !== undefined
+      ? [table.models[cfg.model], "model entry"]
+      : info?.supportedParameters.includes("reasoning")
+        ? [table.reasoningDefault, "reasoning default"]
+        : [table.nonReasoningDefault, "non-reasoning default"];
+
   const estimate = estimateCost({
     payload,
     models: [cfg.model],
     catalog,
-    outputTokensPerModel: cfg.outputTokens,
+    outputTokensPerModel: assumedOutput,
     maxOutputTokens: cfg.maxOutputTokens,
   });
 
   if (flags["dry-run"]) {
     console.log(`Reviewing: ${input.description}`);
     console.log(`Model: ${cfg.model}  (timeout ${Math.round(cfg.timeoutMs / 1000)}s)`);
+    console.log(`Assumed output: ${assumedOutput} tokens (${assumedSource})`);
     if (fitted.dropped.length) console.log(`Dropped generated files: ${fitted.dropped.join(", ")}`);
     if (fitted.truncated.length) console.log(`Truncated sections: ${fitted.truncated.length}`);
     console.log(
@@ -259,7 +275,7 @@ async function main() {
 
   const retryAllowance = createRetryAllowance(cfg.budgetUsd, estimate.worstCaseUsd);
   say(
-    `${input.description} -> ${cfg.model}; estimate ${USD(estimate.totalUsd)}, worst case ${USD(estimate.worstCaseUsd)}; ` +
+    `${input.description} -> ${cfg.model}; estimate ${USD(estimate.totalUsd)} (assuming ${assumedOutput} output tokens), worst case ${USD(estimate.worstCaseUsd)}; ` +
       `timeout ${Math.round(cfg.timeoutMs / 1000)}s per request; key from ${apiKeySource}`,
   );
 

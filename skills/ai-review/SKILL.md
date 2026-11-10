@@ -25,7 +25,8 @@ One second model reviews your change and the review streams back while it is wri
 - Node.js >= 20 (`node --version`). No CLI to install.
 - An OpenRouter key in `AI_COUNCIL_OPENROUTER_API_KEY` (or `OPENROUTER_API_KEY` as a fallback), exported **in the environment of the process that runs the script** — your own shell, not only your login shell's profile. Get one at <https://openrouter.ai/keys>. If neither variable is set the script exits with code 4 before it does anything else. Ask your human partner for the key; do not hunt for it in keychains, dotfiles or session archives.
 - `gh` only for `--pr`.
-- Default model: `google/gemini-3.1-pro-preview`, about $0.06 for a 12k-token diff. Change it with `--model SLUG` or `AI_REVIEW_MODEL`.
+- Default model: `google/gemini-3.1-pro-preview`, about $0.14 for a 12k-token diff. Change it with `--model SLUG` or `AI_REVIEW_MODEL`.
+- The cost estimate prices the model from OpenRouter's live catalog on every run and assumes the average output length measured for that model (reasoning models write about 9,000 tokens), so it is close to the real cost. The hard cap uses the worst case.
 
 ## Data leaves the machine
 
