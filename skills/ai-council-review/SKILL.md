@@ -194,7 +194,8 @@ Precedence: flags > `AI_COUNCIL_*` env > repo `.ai-council.json` >
 `crowd`, `max`, `flagship`, `smoke` — see README.md for per-preset rosters
 and pricing; scalars: `budgetUsd`, `confirmThresholdUsd`, `timeoutMs`,
 `quorum`, `preset`, `reasoningEffort`, `providerSort`, and the object
-`expectedOutputTokens`).
+`expectedOutputTokens`, set in config files only, whose `models` map merges
+across the layers).
 
 The cost estimate prices each member from OpenRouter's live catalog on every
 run and assumes the average output length measured for that model (reasoning

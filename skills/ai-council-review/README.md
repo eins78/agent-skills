@@ -32,7 +32,7 @@ ai-council-review/
 │   ├── council.mjs             # CLI entry: review | models
 │   └── lib/
 │       ├── config.mjs          # config precedence, presets, UsageError
-│       ├── openrouter.mjs      # fetch client: catalog cache, retry/timeout, redact()
+│       ├── openrouter.mjs      # fetch client: catalog fetch, retry/timeout, redact()
 │       ├── budget.mjs          # token/cost estimate, budget gate
 │       ├── input.mjs           # diff/PR/file gathering, auto-context, trim ladder
 │       ├── prompts.mjs         # message assembly from rubric files
@@ -161,7 +161,7 @@ follow-up if this drifts.
 | `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
 | **Total** | | **17.11** | **87.36** | |
 
-**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At 3,000 output tokens per seat (the old flat estimate; a reasoning seat now assumes about 9,000, see `expectedOutputTokens`) a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
+**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At the assumed output lengths (`expectedOutputTokens`: about 9,000 tokens per reasoning seat, 9,500 for `gemini-3.1-pro-preview`) a four-seat run is about $1.07 in output alone, before input, so every `flagship` run **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
@@ -408,6 +408,9 @@ outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
   every run.
 - With `--reasoning-effort none` a reasoning model is still estimated at its
   reasoning figure (an over-estimate).
+- With `--reasoning-effort high` a reasoning model writes more than the
+  medium-effort means, so the estimate is low; the hard cap (worst case at
+  `maxOutputTokens`) still holds.
 - No streaming: the run waits on the slowest member (bounded by timeout).
 - No multi-call chunking for payloads exceeding the smallest council
   context; the trim ladder (drop generated files → truncate largest

@@ -40,7 +40,7 @@ import process from "node:process";
 
 import { UsageError } from "./lib/config.mjs";
 import { getModelsCatalog, validateSlugs, chatCompletionStream, redact, CompletionError } from "./lib/openrouter.mjs";
-import { estimateCost, budgetGate, createRetryAllowance, worstCaseRequestUsd } from "./lib/budget.mjs";
+import { estimateCost, budgetGate, createRetryAllowance, worstCaseRequestUsd, assumedOutputTokens } from "./lib/budget.mjs";
 import { gatherInput, fitPayload } from "./lib/input.mjs";
 import { assembleUserPayload } from "./lib/prompts.mjs";
 
@@ -194,12 +194,11 @@ async function main() {
   const input = gatherInput({ flags, positionals, cwd, env });
   const payloadRaw = assembleUserPayload(input.code, input.context);
 
-  const stateDir = join(env.XDG_STATE_HOME || join(homedir(), ".local", "state"), "ai-review");
   /** @type {Awaited<ReturnType<typeof getModelsCatalog>>} */
   let catalog;
   try {
-    // The price must be current on every run: never use the cached catalog.
-    catalog = await getModelsCatalog({ baseUrl: cfg.baseUrl, stateDir, noCache: true });
+    // Fetched on every run (there is no cache), so the price is current.
+    catalog = await getModelsCatalog({ baseUrl: cfg.baseUrl });
   } catch (err) {
     say(redactKeys(`could not load the OpenRouter model catalog: ${/** @type {Error} */ (err).message}`, env));
     return EXIT.FAILED;
@@ -222,13 +221,7 @@ async function main() {
   const payload = fitted.payload;
 
   // Expected output length: the model's own measured mean, else a class default.
-  const table = cfg.expectedOutputTokens;
-  const [assumedOutput, assumedSource] =
-    table.models[cfg.model] !== undefined
-      ? [table.models[cfg.model], "model entry"]
-      : info?.supportedParameters.includes("reasoning")
-        ? [table.reasoningDefault, "reasoning default"]
-        : [table.nonReasoningDefault, "non-reasoning default"];
+  const { tokens: assumedOutput, source: assumedSource } = assumedOutputTokens({ model: cfg.model, catalog, table: cfg.expectedOutputTokens });
 
   const estimate = estimateCost({
     payload,

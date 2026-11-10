@@ -9,7 +9,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -809,6 +809,35 @@ test("a repo .ai-council.json calibrates one member's estimate without touching 
   }
 });
 
+test("the user config and the repo config merge their expectedOutputTokens", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const cfgHome = mkdtempSync(join(tmpdir(), "council-cfg-"));
+  const repo = mkdtempSync(join(tmpdir(), "council-repo-merge-"));
+  try {
+    // The user config sets the reasoning default and one per-model entry; the
+    // repo config adds a second per-model entry. The models map merges across
+    // the layers; each model's own entry wins over the class default.
+    mkdirSync(join(cfgHome, "ai-council-review"), { recursive: true });
+    writeFileSync(
+      join(cfgHome, "ai-council-review", "config.json"),
+      JSON.stringify({ expectedOutputTokens: { reasoningDefault: 7777, models: { "mock/beta": 1234 } } }),
+    );
+    // The config is found at the git toplevel or, as here (no git repo), the cwd.
+    writeFileSync(join(repo, ".ai-council.json"), JSON.stringify({ expectedOutputTokens: { models: { "mock/alpha": 4321 } } }));
+    const r = await runCli(["review", "--input-file", DIFF, "--no-context", "--models", MOCK_MODELS.join(","), "--dry-run"], { XDG_CONFIG_HOME: cfgHome }, repo);
+    assert.equal(r.status, 0, r.output);
+    assert.match(r.stdout, /'mock\/alpha'.*4321.*'model entry'/, "repo model entry wins over everything");
+    assert.match(r.stdout, /'mock\/beta'.*1234.*'model entry'/, "user model entry wins over the class defaults");
+    assert.match(r.stdout, /'mock\/gamma'.*7777.*'reasoning default'/, "user reasoningDefault applies to unlisted reasoning members");
+    assert.match(r.stdout, /'mock\/delta'.*3000.*'non-reasoning default'/, "non-reasoning default stays bundled");
+    r.cleanup();
+  } finally {
+    rmSync(cfgHome, { recursive: true, force: true });
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
 test("pricing comes from the live catalog on every run, never from a cache", async () => {
   behavior = () => ({});
   completionHits = new Map();
@@ -818,7 +847,12 @@ test("pricing comes from the live catalog on every run, never from a cache", asy
       const r = await runCli([...REVIEW_ARGS, "--dry-run"], { XDG_STATE_HOME: stateHome });
       assert.equal(r.status, 0, r.output);
       assert.equal(modelsHits, 1, `run ${i + 1} must fetch the catalog itself`);
+      r.cleanup();
     }
+    assert.ok(
+      !readdirSync(stateHome, { recursive: true, encoding: "utf8" }).some((p) => p.split("/").pop() === "models-cache.json"),
+      "no models-cache.json anywhere under the state home",
+    );
   } finally {
     rmSync(stateHome, { recursive: true, force: true });
   }
@@ -830,6 +864,15 @@ test("--no-cache is accepted, exits 0 on --dry-run, and announces that it has no
   const r = await runCli([...REVIEW_ARGS, "--dry-run", "--no-cache"], { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: "" });
   assert.equal(r.status, 0, r.output);
   assert.equal(r.stderr.match(/--no-cache is no longer needed: the catalog is fetched on every run\./g)?.length, 1, "exactly one notice line on stderr");
+  r.cleanup();
+});
+
+test("outcomes show --no-cache exits 0 and prints no --no-cache notice", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli(["outcomes", "show", "--no-cache"]);
+  assert.equal(r.status, 0, r.output);
+  assert.ok(!r.stderr.includes("--no-cache is no longer needed"), "the outcomes branch must not print the notice");
   r.cleanup();
 });
 

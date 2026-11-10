@@ -6,15 +6,10 @@
  * throws, logs, or returns. Every error path goes through redact().
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from "node:fs";
-import { join } from "node:path";
-
 const ATTRIBUTION_HEADERS = {
   "HTTP-Referer": "https://github.com/eins78/agent-skills",
   "X-Title": "ai-council-review",
 };
-
-const MODELS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 /**
  * Replace any occurrence of the API key in a string with a placeholder.
@@ -36,40 +31,20 @@ export function redact(text, apiKey) {
  */
 
 /**
- * Fetch the public model catalog, cached on disk for 24h.
- * No auth required — safe to call before any key check for --dry-run flows.
+ * Fetch the public model catalog. Never cached: the price must be current on
+ * every run. No auth required — safe to call before any key check for
+ * --dry-run flows.
  *
  * @param {object} opts
  * @param {string} opts.baseUrl
- * @param {string} opts.stateDir directory for models-cache.json
- * @param {boolean} [opts.noCache]
  * @returns {Promise<Map<string, ModelInfo>>}
  */
-export async function getModelsCatalog({ baseUrl, stateDir, noCache = false }) {
-  const cacheFile = join(stateDir, "models-cache.json");
-  /** @type {{data: unknown[]}|undefined} */
-  let payload;
-
-  if (!noCache && existsSync(cacheFile)) {
-    const age = Date.now() - statSync(cacheFile).mtimeMs;
-    if (age < MODELS_CACHE_TTL_MS) {
-      try {
-        payload = JSON.parse(readFileSync(cacheFile, "utf8"));
-      } catch {
-        payload = undefined; // corrupt cache: fall through to refetch
-      }
-    }
+export async function getModelsCatalog({ baseUrl }) {
+  const res = await fetch(`${baseUrl}/models`, { headers: { ...ATTRIBUTION_HEADERS } });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch model catalog: HTTP ${res.status} ${res.statusText}`);
   }
-
-  if (!payload) {
-    const res = await fetch(`${baseUrl}/models`, { headers: { ...ATTRIBUTION_HEADERS } });
-    if (!res.ok) {
-      throw new Error(`Failed to fetch model catalog: HTTP ${res.status} ${res.statusText}`);
-    }
-    payload = /** @type {{data: unknown[]}} */ (await res.json());
-    mkdirSync(stateDir, { recursive: true, mode: 0o700 });
-    writeFileSync(cacheFile, JSON.stringify(payload));
-  }
+  const payload = /** @type {{data: unknown[]}} */ (await res.json());
 
   /** @type {Map<string, ModelInfo>} */
   const catalog = new Map();

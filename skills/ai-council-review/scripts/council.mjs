@@ -200,10 +200,6 @@ async function main() {
   const env = process.env;
   const cwd = process.cwd();
 
-  if (flags["no-cache"]) {
-    console.error("--no-cache is no longer needed: the catalog is fetched on every run.");
-  }
-
   // ---- outcomes (offline: no config resolution, no catalog, no network) ----
   if (command === "outcomes") {
     const sub = positionals[0];
@@ -237,13 +233,12 @@ async function main() {
     }
     throw new UsageError(`Unknown outcomes subcommand "${sub ?? ""}". Use: outcomes record|show.`);
   }
+  if (flags["no-cache"]) {
+    console.error("--no-cache is no longer needed: the catalog is fetched on every run.");
+  }
   const config = resolveConfig({ flags, env, cwd });
-  // The price must be current on every run: never use the cached catalog.
-  const catalog = await getModelsCatalog({
-    baseUrl: config.baseUrl,
-    stateDir: stateRoot(env),
-    noCache: true,
-  });
+  // Fetched on every run (there is no cache), so the price is current.
+  const catalog = await getModelsCatalog({ baseUrl: config.baseUrl });
 
   // Preflight: roster slugs must exist in the live catalog (slugs churn).
   // --verify only applies to the `models` subcommand — during `review` the
