@@ -26,6 +26,7 @@ Copy this checklist:
 ```
 - [ ] Write the markdown ballot as usual (the durable record)
 - [ ] Copy templates/ballot-artifact.html, edit CONFIG and DECS
+- [ ] Parse check: compile the page's script without running it (command below); fix any error before publishing
 - [ ] Publish with capabilities: {db: {}}
 - [ ] Verify: one ArtifactData list of the "ballots" collection (empty store expected)
 - [ ] Hand the Artifact link to the decider
@@ -34,6 +35,14 @@ Copy this checklist:
 ```
 
 **Template.** `${CLAUDE_SKILL_DIR}/templates/ballot-artifact.html` is data-driven. Edit only the `CONFIG` block (title, voter id, tier labels, `warnTiers`) and the `DECS` array (`id`, `tier`, `q`, `ctx`, `opts` with label and detail, `rec` index, `recText`, optional `word` field). The same DECs go in the markdown ballot; keep both in step.
+
+**Parse check.** Before publishing, compile the page's script without running it. One syntax error stops the whole script, and the page then shows no title and no cards. The usual cause is a `"` inside a `DECS` string, for example `ctx: "pick the "fast" option"`. This command needs only Node and works on macOS and Linux: it takes the last `<script>…</script>` of the file and compiles it with `vm.Script`.
+
+```bash
+node -e 'const f=process.argv[1],h=require("fs").readFileSync(f,"utf8"),m=[...h.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].pop();if(!m)throw new Error("no <script> in "+f);new(require("vm").Script)(m[1],{filename:f,lineOffset:h.slice(0,m.index).split("\n").length-1});console.log("ok: script parses")' ballot.html
+```
+
+It prints `ok: script parses` and exits 0, or prints the error with its line number in the HTML file (for example `SyntaxError: Unexpected identifier 'fast'`) and exits 1. Fix that line and run it again.
 
 **Publish.** Write the file to the scratchpad, then call `Artifact` with `file_path`, an `icon`, and `capabilities: {db: {}}`. Load the `artifact-design` and `artifact-capabilities` skills first, as the tool requires. Republish to the same `url` to change questions; stored answers survive.
 
