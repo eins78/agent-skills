@@ -42,19 +42,21 @@ export function estimateTokens(text) {
  * @param {string[]} opts.models
  * @param {Map<string, import("./openrouter.mjs").ModelInfo>} opts.catalog
  * @param {number} opts.outputTokensPerModel
+ * @param {Record<string, number>} [opts.outputTokensByModel]  per-model output-token estimates that override `outputTokensPerModel`; models not listed here fall back to `outputTokensPerModel`
  * @param {number} opts.maxOutputTokens
  * @returns {{perModel: ModelEstimate[], totalUsd: number, worstCaseUsd: number, inputTokens: number}}
  */
-export function estimateCost({ payload, models, catalog, outputTokensPerModel, maxOutputTokens }) {
+export function estimateCost({ payload, models, catalog, outputTokensPerModel, maxOutputTokens, outputTokensByModel }) {
   const inputTokens = estimateTokens(payload);
   /** @type {ModelEstimate[]} */
   const perModel = models.map((model) => {
     const info = catalog.get(model);
     const priced = Boolean(info && (info.promptPrice > 0 || info.completionPrice > 0));
+    const outputTokens = outputTokensByModel?.[model] ?? outputTokensPerModel;
     const usd = info
-      ? inputTokens * info.promptPrice + outputTokensPerModel * info.completionPrice
+      ? inputTokens * info.promptPrice + outputTokens * info.completionPrice
       : 0;
-    return { model, inputTokens, outputTokens: outputTokensPerModel, usd, priced };
+    return { model, inputTokens, outputTokens, usd, priced };
   });
   const totalUsd = perModel.reduce((sum, m) => sum + m.usd, 0);
   const worstCaseUsd = models.reduce(
@@ -62,6 +64,39 @@ export function estimateCost({ payload, models, catalog, outputTokensPerModel, m
     0,
   );
   return { perModel, totalUsd, worstCaseUsd, inputTokens };
+}
+
+/**
+ * The table of measured output lengths the cost estimate assumes.
+ * @typedef {object} ExpectedOutputTokens
+ * @property {number} nonReasoningDefault  mean output tokens of models without reasoning support
+ * @property {number} reasoningDefault     mean output tokens of reasoning models
+ * @property {Record<string, number>} models  per-model measured means (slug → tokens); a model's own entry wins
+ */
+
+/**
+ * Assumed output tokens for ONE council member, and where the figure came
+ * from (shown in the estimate table so the assumption is auditable).
+ *
+ * Precedence: the model's own measured entry, else the reasoning default when
+ * the live catalog advertises reasoning support, else the non-reasoning
+ * default. This only moves the EXPECTED cost; the hard cap still prices every
+ * member at maxOutputTokens (worstCaseRequestUsd).
+ *
+ * @param {object} opts
+ * @param {string} opts.model
+ * @param {Map<string, import("./openrouter.mjs").ModelInfo>} opts.catalog
+ * @param {ExpectedOutputTokens} opts.table
+ * @returns {{tokens: number, source: "model entry"|"reasoning default"|"non-reasoning default"}}
+ */
+export function assumedOutputTokens({ model, catalog, table }) {
+  if (table.models[model] !== undefined) {
+    return { tokens: table.models[model], source: "model entry" };
+  }
+  if (catalog.get(model)?.supportedParameters.includes("reasoning")) {
+    return { tokens: table.reasoningDefault, source: "reasoning default" };
+  }
+  return { tokens: table.nonReasoningDefault, source: "non-reasoning default" };
 }
 
 /**

@@ -31,7 +31,7 @@ export class UsageError extends Error {}
  * @property {number} timeoutMs  per-model request timeout
  * @property {string|undefined} reasoningEffort  reasoning.effort sent to models that support it ("none" disables)
  * @property {string|undefined} providerSort  provider.sort routing hint (e.g. "throughput")
- * @property {number} outputTokensPerModel  working estimate for cost math
+ * @property {{nonReasoningDefault: number, reasoningDefault: number, models: Record<string, number>}} expectedOutputTokens  per-model cost-estimate basis (mean output tokens); the models map merges across all layers
  * @property {number} maxOutputTokens  max_tokens per request; worst-case cost basis
  * @property {number} quorum     minimum successful members for a usable run
  * @property {string} baseUrl    OpenRouter API base URL
@@ -105,6 +105,36 @@ export function resolveConfig({ flags, env, cwd }) {
     return n;
   };
 
+  // Expected output lengths for the cost estimate. The two defaults follow the
+  // scalar precedence — the highest layer that sets the key wins (bundled
+  // fallbacks 3000/9000). The per-model map MERGES across all three layers, so
+  // a repo .ai-council.json can calibrate one model without restating the rest.
+  // Deliberately no CLI flag and no env variable: these are measured data, not
+  // a per-run knob.
+  /** The `expectedOutputTokens` object of one layer (empty when unset); its values are checked by num() below. */
+  const eot = (/** @type {Record<string, unknown>} */ layer) =>
+    /** @type {{nonReasoningDefault?: unknown, reasoningDefault?: unknown, models?: Record<string, unknown>}} */ (
+      layer.expectedOutputTokens ?? {}
+    );
+  const [repoEot, userEot, presetsEot] = [eot(repoConfig), eot(userConfig), eot(presetsFile)];
+  const expectedOutputTokens = {
+    nonReasoningDefault: num(
+      repoEot.nonReasoningDefault ?? userEot.nonReasoningDefault ?? presetsEot.nonReasoningDefault ?? 3000,
+      "expectedOutputTokens.nonReasoningDefault",
+    ),
+    reasoningDefault: num(
+      repoEot.reasoningDefault ?? userEot.reasoningDefault ?? presetsEot.reasoningDefault ?? 9000,
+      "expectedOutputTokens.reasoningDefault",
+    ),
+    /** @type {Record<string, number>} */
+    models: Object.fromEntries(
+      Object.entries({ ...presetsEot.models, ...userEot.models, ...repoEot.models }).map(([slug, n]) => [
+        slug,
+        num(n, `expectedOutputTokens.models for ${slug}`),
+      ]),
+    ),
+  };
+
   // Roster: --models wins over --preset wins over configured/default preset.
   /** @type {string[]} */
   let models;
@@ -153,7 +183,7 @@ export function resolveConfig({ flags, env, cwd }) {
     providerSort: /** @type {string|undefined} */ (
       pick("provider-sort", "AI_COUNCIL_PROVIDER_SORT", "providerSort")
     ),
-    outputTokensPerModel: num(presetsFile.outputTokensPerModel ?? 3000, "outputTokensPerModel"),
+    expectedOutputTokens,
     maxOutputTokens: num(pick("max-output-tokens", "AI_COUNCIL_MAX_OUTPUT_TOKENS", "maxOutputTokens") ?? 24000, "maxOutputTokens"),
     quorum: num(pick("quorum", "AI_COUNCIL_QUORUM", "quorum"), "quorum"),
     baseUrl: String(env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"),

@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { estimateTokens, estimateCost, budgetGate, createRetryAllowance, worstCaseRequestUsd } from "../scripts/lib/budget.mjs";
+import { estimateTokens, estimateCost, budgetGate, createRetryAllowance, worstCaseRequestUsd, assumedOutputTokens } from "../scripts/lib/budget.mjs";
 
 /** @returns {Map<string, import("../scripts/lib/openrouter.mjs").ModelInfo>} */
 function catalog() {
@@ -12,6 +12,17 @@ function catalog() {
     ["mock/unpriced", { id: "mock/unpriced", contextLength: 100000, promptPrice: 0, completionPrice: 0, supportedParameters: [] }],
   ]);
 }
+
+/** @returns {Map<string, import("../scripts/lib/openrouter.mjs").ModelInfo>} */
+function reasoningCatalog() {
+  return new Map([
+    ["mock/reasoner", { id: "mock/reasoner", contextLength: 100000, promptPrice: 1e-6, completionPrice: 1e-6, supportedParameters: ["temperature", "reasoning"] }],
+    ["mock/plain", { id: "mock/plain", contextLength: 100000, promptPrice: 1e-6, completionPrice: 1e-6, supportedParameters: ["temperature"] }],
+  ]);
+}
+
+/** Measured output-length table, as resolved from config. @type {import("../scripts/lib/budget.mjs").ExpectedOutputTokens} */
+const TABLE = { nonReasoningDefault: 3000, reasoningDefault: 9000, models: { "mock/measured": 4321 } };
 
 test("token estimate applies the bytes/4 heuristic with safety margin", () => {
   const tokens = estimateTokens("x".repeat(4000));
@@ -46,6 +57,54 @@ test("unpriced models are flagged rather than silently costing $0", () => {
     maxOutputTokens: 24000,
   });
   assert.equal(perModel[0].priced, false);
+});
+
+test("outputTokensByModel overrides outputTokensPerModel for a listed model and not for an unlisted one", () => {
+  const payload = "x".repeat(4000); // 1150 tokens
+  const { perModel } = estimateCost({
+    payload,
+    models: ["mock/pricey", "mock/cheap"],
+    catalog: catalog(),
+    outputTokensPerModel: 3000,
+    maxOutputTokens: 24000,
+    outputTokensByModel: { "mock/pricey": 9500 },
+  });
+  assert.equal(perModel[0].outputTokens, 9500, "the listed model uses its own figure");
+  assert.equal(perModel[1].outputTokens, 3000, "the unlisted model keeps the flat default");
+  assert.ok(Math.abs(perModel[0].usd - (1150 * 5e-6 + 9500 * 25e-6)) < 1e-9);
+  assert.ok(Math.abs(perModel[1].usd - (1150 * 1e-7 + 3000 * 2e-7)) < 1e-9);
+});
+
+test("a call without outputTokensByModel behaves exactly as before", () => {
+  const { perModel } = estimateCost({
+    payload: "x".repeat(4000),
+    models: ["mock/cheap"],
+    catalog: catalog(),
+    outputTokensPerModel: 3000,
+    maxOutputTokens: 24000,
+  });
+  assert.equal(perModel[0].outputTokens, 3000);
+});
+
+test("assumedOutputTokens: the model's own entry wins", () => {
+  assert.deepEqual(assumedOutputTokens({ model: "mock/measured", catalog: reasoningCatalog(), table: TABLE }), {
+    tokens: 4321,
+    source: "model entry",
+  });
+});
+
+test("assumedOutputTokens: reasoning default for a model that supports reasoning", () => {
+  assert.deepEqual(assumedOutputTokens({ model: "mock/reasoner", catalog: reasoningCatalog(), table: TABLE }), {
+    tokens: 9000,
+    source: "reasoning default",
+  });
+});
+
+test("assumedOutputTokens: non-reasoning default otherwise", () => {
+  assert.deepEqual(assumedOutputTokens({ model: "mock/plain", catalog: reasoningCatalog(), table: TABLE }), {
+    tokens: 3000,
+    source: "non-reasoning default",
+  });
 });
 
 test("gate: under threshold proceeds without --yes", () => {

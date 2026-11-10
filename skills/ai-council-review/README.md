@@ -161,7 +161,7 @@ follow-up if this drifts.
 | `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
 | **Total** | | **17.11** | **87.36** | |
 
-**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At `outputTokensPerModel: 3000` a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
+**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At 3,000 output tokens per seat (the old flat estimate; a reasoning seat now assumes about 9,000, see `expectedOutputTokens`) a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
@@ -234,6 +234,13 @@ directions.
 - **OpenRouter over per-provider CLIs** — one key, one OpenAI-compatible API
   shape, per-request cost accounting (`usage.cost`), and the roster is data
   (`references/presets.json`), not code.
+- **Estimate from measured runs, price from the live catalog.** Expected output
+  tokens per council member live in `references/presets.json`
+  (`expectedOutputTokens`, means of 51 council runs with reasoning effort
+  medium; a reasoning member writes about 9,000 tokens, most of them thinking).
+  A new model is a one-line change. The price is fetched from OpenRouter on
+  every run and never cached. The hard cap still uses the worst case
+  (`maxOutputTokens`).
 - **Its own key variable (`AI_COUNCIL_OPENROUTER_API_KEY`)** — a run fans one
   payload out to several third-party providers and spends real money doing it,
   so which key pays, and which account's privacy settings therefore apply,
@@ -397,8 +404,10 @@ outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
   slugs against the live catalog and fails loudly with suggestions — that
   failure is the roster-churn alarm, not flakiness. Fixes are data patches
   to `references/presets.json`.
-- Pricing snapshot in docs drifts; estimates always use the live catalog
-  (cached 24h).
+- Pricing snapshot in docs drifts; estimates use the live catalog, fetched on
+  every run.
+- With `--reasoning-effort none` a reasoning model is still estimated at its
+  reasoning figure (an over-estimate).
 - No streaming: the run waits on the slowest member (bounded by timeout).
 - No multi-call chunking for payloads exceeding the smallest council
   context; the trim ladder (drop generated files → truncate largest

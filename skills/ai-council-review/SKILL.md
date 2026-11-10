@@ -193,7 +193,12 @@ Precedence: flags > `AI_COUNCIL_*` env > repo `.ai-council.json` >
 `references/presets.json` (presets: `default`, `code`, `prose`, `budget`,
 `crowd`, `max`, `flagship`, `smoke` — see README.md for per-preset rosters
 and pricing; scalars: `budgetUsd`, `confirmThresholdUsd`, `timeoutMs`,
-`quorum`, `preset`, `reasoningEffort`, `providerSort`).
+`quorum`, `preset`, `reasoningEffort`, `providerSort`, and the object
+`expectedOutputTokens`).
+
+The cost estimate prices each member from OpenRouter's live catalog on every
+run and assumes the average output length measured for that model (reasoning
+models write about 9,000 tokens); the hard cap uses the worst case.
 
 `reasoningEffort` (`--reasoning-effort` / `AI_COUNCIL_REASONING_EFFORT`,
 bundled default `"medium"`) sets `reasoning.effort` on every request — but
