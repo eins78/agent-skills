@@ -10,6 +10,17 @@ where `ai-review`'s single second opinion is not enough.
 
 **Tier:** Publishable — reusable across projects and machines.
 
+## Shared library — `ai-review` copies `scripts/lib/`
+
+`ai-review` runs on the same OpenRouter library as this skill. **The files in `scripts/lib/` here are canonical; the council wins.** `skills/ai-review/scripts/lib/` holds byte-for-byte copies of `config`, `openrouter`, `budget`, `input`, `prompts` and `schema`, so that `ai-review` works when installed alone.
+
+- **Always keep the copies in sync.** Edit the library here only. Then run `pnpm run sync:lib` (copies these files over the copies) and commit both skills' `scripts/lib/` together. Never edit the copies by hand.
+- **`pnpm run validate` fails on any drift** (`.dev/scripts/sync-shared-lib.sh --check`); CI runs it on every pull request.
+- A change to a shared file therefore reaches `ai-review` too: run `pnpm run test:council` and `pnpm run test:review`, and bump both skills in the changeset. `chatCompletionStream` (in `openrouter.mjs`) is used only by `ai-review`; its tests are `tests/stream.test.mjs`.
+- To share another file, add it to `SHARED` in the sync script.
+
+Details and the reasoning: [`../ai-review/README.md`](../ai-review/README.md).
+
 ## Components
 
 ```
@@ -21,7 +32,7 @@ ai-council-review/
 │   ├── council.mjs             # CLI entry: review | models
 │   └── lib/
 │       ├── config.mjs          # config precedence, presets, UsageError
-│       ├── openrouter.mjs      # fetch client: catalog cache, retry/timeout, redact()
+│       ├── openrouter.mjs      # fetch client: catalog fetch, retry/timeout, redact()
 │       ├── budget.mjs          # token/cost estimate, budget gate
 │       ├── input.mjs           # diff/PR/file gathering, auto-context, trim ladder
 │       ├── prompts.mjs         # message assembly from rubric files
@@ -40,6 +51,7 @@ ai-council-review/
     ├── budget.test.mjs         # offline: estimate math, gate arithmetic
     ├── dispatch.test.mjs       # mock OpenRouter server (node:http)
     ├── outcomes.test.mjs       # offline: outcome archive record/show
+    ├── stream.test.mjs         # offline: the streamed completion ai-review uses
     └── live-smoke.test.mjs     # optional live test, skips without key
 ```
 
@@ -149,7 +161,7 @@ follow-up if this drifts.
 | `z-ai/glm-5.3-flash` | Z-AI | 0.02 | 0.18 | 1,048,576 |
 | **Total** | | **17.11** | **87.36** | |
 
-**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At `outputTokensPerModel: 3000` a four-seat run is ~$0.35 in output alone before input — a real diff-sized run lands near $1 and **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
+**`flagship`** — deliberately extravagant; four seats, four vendors, no correlated pair. Carries no second Anthropic seat: `claude-fable-5.1` ranks above `claude-opus-4.8`, so a second Anthropic seat would be the strictly weaker half of a same-vendor pair. At the assumed output lengths (`expectedOutputTokens`: about 9,000 tokens per reasoning seat, 9,500 for `gemini-3.1-pro-preview`) a four-seat run is about $1.07 in output alone, before input, so every `flagship` run **will** trip the $1 confirmation gate (`confirmThresholdUsd`).
 
 | Slug | Vendor | in $/M | out $/M | Context |
 |---|---|---|---|---|
@@ -222,6 +234,13 @@ directions.
 - **OpenRouter over per-provider CLIs** — one key, one OpenAI-compatible API
   shape, per-request cost accounting (`usage.cost`), and the roster is data
   (`references/presets.json`), not code.
+- **Estimate from measured runs, price from the live catalog.** Expected output
+  tokens per council member live in `references/presets.json`
+  (`expectedOutputTokens`, means of 51 council runs with reasoning effort
+  medium; a reasoning member writes about 9,000 tokens, most of them thinking).
+  A new model is a one-line change. The price is fetched from OpenRouter on
+  every run and never cached. The hard cap still uses the worst case
+  (`maxOutputTokens`).
 - **Its own key variable (`AI_COUNCIL_OPENROUTER_API_KEY`)** — a run fans one
   payload out to several third-party providers and spends real money doing it,
   so which key pays, and which account's privacy settings therefore apply,
@@ -363,7 +382,7 @@ Model roster slugs and per-token pricing verified live against the
 OpenRouter API on 2026-07-11 (`GET /api/v1/models`), including
 `deepseek/deepseek-v4-flash` (~$0.077/M input) for the live smoke test.
 Input-gathering semantics (diff modes, auto-context) ported from this repo's
-`ai-review` skill (`scripts/review.sh`). Packaging follows repo conventions
+`ai-review` skill (`scripts/review.sh`, replaced by `review.mjs` in `ai-review` 1.0.0). Packaging follows repo conventions
 as of `@eins78/agent-skills` v3.1.0. Grok was removed from the default
 preset by maintainer decision (2026-07-11); `z-ai/glm-5.2` backfills to keep
 a 4-member council (quorum unchanged at 2).
@@ -385,8 +404,13 @@ outcome archive (P7), no-debate non-goal (P8). All maintainer-approved.
   slugs against the live catalog and fails loudly with suggestions — that
   failure is the roster-churn alarm, not flakiness. Fixes are data patches
   to `references/presets.json`.
-- Pricing snapshot in docs drifts; estimates always use the live catalog
-  (cached 24h).
+- Pricing snapshot in docs drifts; estimates use the live catalog, fetched on
+  every run.
+- With `--reasoning-effort none` a reasoning model is still estimated at its
+  reasoning figure (an over-estimate).
+- With `--reasoning-effort high` a reasoning model writes more than the
+  medium-effort means, so the estimate is low; the hard cap (worst case at
+  `maxOutputTokens`) still holds.
 - No streaming: the run waits on the slowest member (bounded by timeout).
 - No multi-call chunking for payloads exceeding the smallest council
   context; the trim ladder (drop generated files → truncate largest

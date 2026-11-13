@@ -9,10 +9,13 @@
  *                      [--rubric code|plan|doc] [--preset NAME | --models a,b,c]
  *                      [--dry-run] [--yes] [--budget USD] [--timeout SECS]
  *                      [--out DIR] [--context "..."] [--plan PATH]
- *                      [--no-context] [--no-cache] [--personas]
+ *                      [--no-context] [--personas]
  *   council.mjs models [--preset NAME | --models a,b,c] [--verify slug,...]
  *   council.mjs outcomes record --run RUN_DIR --json '{"member-A": {"verified": 2, "refuted": 1, "uncertain": 0}, ...}'
  *   council.mjs outcomes show
+ *
+ * `--no-cache` is still accepted but has no effect: the model catalog is
+ * fetched fresh on every run.
  *
  * Exit codes:
  *   0  success (quorum met; possibly degraded — see manifest.json)
@@ -40,7 +43,7 @@ import process from "node:process";
 
 import { resolveConfig, gitToplevel } from "./lib/config.mjs";
 import { getModelsCatalog, validateSlugs, chatCompletion, redact, CompletionError } from "./lib/openrouter.mjs";
-import { estimateCost, budgetGate, estimateTokens, createRetryAllowance, worstCaseRequestUsd } from "./lib/budget.mjs";
+import { estimateCost, budgetGate, estimateTokens, createRetryAllowance, worstCaseRequestUsd, assumedOutputTokens } from "./lib/budget.mjs";
 import { gatherInput, fitPayload, UsageError } from "./lib/input.mjs";
 import { buildMessages, loadRubric, assembleUserPayload } from "./lib/prompts.mjs";
 import { RESPONSE_FORMAT, extractJson, validateReview } from "./lib/schema.mjs";
@@ -230,12 +233,12 @@ async function main() {
     }
     throw new UsageError(`Unknown outcomes subcommand "${sub ?? ""}". Use: outcomes record|show.`);
   }
+  if (flags["no-cache"]) {
+    console.error("--no-cache is no longer needed: the catalog is fetched on every run.");
+  }
   const config = resolveConfig({ flags, env, cwd });
-  const catalog = await getModelsCatalog({
-    baseUrl: config.baseUrl,
-    stateDir: stateRoot(env),
-    noCache: Boolean(flags["no-cache"]),
-  });
+  // Fetched on every run (there is no cache), so the price is current.
+  const catalog = await getModelsCatalog({ baseUrl: config.baseUrl });
 
   // Preflight: roster slugs must exist in the live catalog (slugs churn).
   // --verify only applies to the `models` subcommand — during `review` the
@@ -309,17 +312,31 @@ async function main() {
   }
   const payload = fitted.payload;
 
+  // Expected output length per member: the model's own measured mean, else a
+  // class default from the live catalog's reasoning support (see
+  // assumedOutputTokens). Only moves the estimate — the hard cap below still
+  // prices every member at maxOutputTokens.
+  const outputTable = config.expectedOutputTokens;
+  const assumedByModel = config.models.map((m) =>
+    assumedOutputTokens({ model: m, catalog, table: outputTable }),
+  );
+
   const estimate = estimateCost({
     payload,
     models: config.models,
     catalog,
-    outputTokensPerModel: config.outputTokensPerModel,
+    outputTokensPerModel: outputTable.nonReasoningDefault,
     maxOutputTokens: config.maxOutputTokens,
+    outputTokensByModel: Object.fromEntries(
+      config.models.map((m, i) => [m, assumedByModel[i].tokens]),
+    ),
   });
 
   const estimateTable = config.models.map((m, i) => ({
     model: m,
     "input tok": estimate.perModel[i].inputTokens,
+    "out tok": assumedByModel[i].tokens,
+    "assumed from": assumedByModel[i].source,
     "est cost": USD(estimate.perModel[i].usd),
   }));
 
@@ -591,7 +608,7 @@ async function main() {
   if (delivered < config.quorum) {
     console.error(
       `Quorum not met (${delivered} < ${config.quorum}). Do not synthesize from this run alone — ` +
-        `report the failure and consider the single-model ai-review skill as a fallback.`,
+        `report the failure and ask your human partner how to proceed (fewer members, another preset, or retry later).`,
     );
     process.exit(EXIT.QUORUM);
   }

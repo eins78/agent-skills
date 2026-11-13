@@ -9,7 +9,7 @@ import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -50,6 +50,7 @@ let baseUrl;
 let behavior = () => ({});
 /** @type {Map<string, number>} */
 let completionHits = new Map();
+let modelsHits = 0;
 /** @type {((raw: string) => void) | undefined} */
 let captureBody;
 /** @type {((auth: string) => void) | undefined} */
@@ -58,6 +59,7 @@ let captureAuth;
 before(async () => {
   server = createServer((req, res) => {
     if (req.method === "GET" && req.url === "/models") {
+      modelsHits++;
       res.writeHead(200, { "content-type": "application/json" });
       res.end(
         JSON.stringify({
@@ -149,6 +151,7 @@ after(() => server.close());
  */
 function runCli(args, envOverrides = {}, cwd) {
   const home = mkdtempSync(join(tmpdir(), "council-test-"));
+  modelsHits = 0;
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [CLI, ...args], {
       cwd: cwd ?? home,
@@ -655,7 +658,8 @@ test("quorum failure: 3 of 4 members down → exit 2", async () => {
   const r = await runCli(REVIEW_ARGS);
   assert.equal(r.status, 2, r.output);
   assert.match(r.output, /Quorum not met/);
-  assert.match(r.output, /ai-review/, "points at the single-model fallback");
+  assert.doesNotMatch(r.output, /ai-review skill|as a fallback/, "ai-review shares the backend, so it is no fallback");
+  assert.match(r.output, /ask your human partner how to proceed/);
   r.cleanup();
 });
 
@@ -770,6 +774,113 @@ test("dry-run makes no completion requests and prints the estimate table", async
   assert.equal(completionHits.size, 0);
   assert.match(r.stdout, /Estimated total/);
   r.cleanup();
+});
+
+test("dry-run assumes the measured output length per member, with its source", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli([...REVIEW_ARGS, "--dry-run"], { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: "" });
+  assert.equal(r.status, 0, r.output);
+  // alpha/gamma advertise reasoning support in the mock catalog, beta/delta do not.
+  assert.match(r.stdout, /'mock\/alpha'.*9000.*'reasoning default'/, "reasoning member assumes the reasoning default");
+  assert.match(r.stdout, /'mock\/gamma'.*9000.*'reasoning default'/);
+  assert.match(r.stdout, /'mock\/beta'.*3000.*'non-reasoning default'/, "non-reasoning member assumes the flat default");
+  assert.match(r.stdout, /'mock\/delta'.*3000.*'non-reasoning default'/);
+  r.cleanup();
+});
+
+test("a repo .ai-council.json calibrates one member's estimate without touching the others", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const repo = mkdtempSync(join(tmpdir(), "council-repo-config-"));
+  try {
+    // The config is found at the git toplevel or, as here (no git repo), the cwd.
+    writeFileSync(
+      join(repo, ".ai-council.json"),
+      JSON.stringify({ expectedOutputTokens: { models: { "mock/alpha": 4321 } } }),
+    );
+    const r = await runCli(["review", "--input-file", DIFF, "--no-context", "--models", MOCK_MODELS.join(","), "--dry-run"], {}, repo);
+    assert.equal(r.status, 0, r.output);
+    assert.match(r.stdout, /'mock\/alpha'.*4321.*'model entry'/, "the repo entry wins over the class defaults");
+    assert.match(r.stdout, /'mock\/beta'.*3000.*'non-reasoning default'/, "unlisted members keep their class default");
+    r.cleanup();
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("the user config and the repo config merge their expectedOutputTokens", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const cfgHome = mkdtempSync(join(tmpdir(), "council-cfg-"));
+  const repo = mkdtempSync(join(tmpdir(), "council-repo-merge-"));
+  try {
+    // The user config sets the reasoning default and one per-model entry; the
+    // repo config adds a second per-model entry. The models map merges across
+    // the layers; each model's own entry wins over the class default.
+    mkdirSync(join(cfgHome, "ai-council-review"), { recursive: true });
+    writeFileSync(
+      join(cfgHome, "ai-council-review", "config.json"),
+      JSON.stringify({ expectedOutputTokens: { reasoningDefault: 7777, models: { "mock/beta": 1234 } } }),
+    );
+    // The config is found at the git toplevel or, as here (no git repo), the cwd.
+    writeFileSync(join(repo, ".ai-council.json"), JSON.stringify({ expectedOutputTokens: { models: { "mock/alpha": 4321 } } }));
+    const r = await runCli(["review", "--input-file", DIFF, "--no-context", "--models", MOCK_MODELS.join(","), "--dry-run"], { XDG_CONFIG_HOME: cfgHome }, repo);
+    assert.equal(r.status, 0, r.output);
+    assert.match(r.stdout, /'mock\/alpha'.*4321.*'model entry'/, "repo model entry wins over everything");
+    assert.match(r.stdout, /'mock\/beta'.*1234.*'model entry'/, "user model entry wins over the class defaults");
+    assert.match(r.stdout, /'mock\/gamma'.*7777.*'reasoning default'/, "user reasoningDefault applies to unlisted reasoning members");
+    assert.match(r.stdout, /'mock\/delta'.*3000.*'non-reasoning default'/, "non-reasoning default stays bundled");
+    r.cleanup();
+  } finally {
+    rmSync(cfgHome, { recursive: true, force: true });
+    rmSync(repo, { recursive: true, force: true });
+  }
+});
+
+test("pricing comes from the live catalog on every run, never from a cache", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const stateHome = mkdtempSync(join(tmpdir(), "council-state-"));
+  try {
+    for (let i = 0; i < 2; i++) {
+      const r = await runCli([...REVIEW_ARGS, "--dry-run"], { XDG_STATE_HOME: stateHome });
+      assert.equal(r.status, 0, r.output);
+      assert.equal(modelsHits, 1, `run ${i + 1} must fetch the catalog itself`);
+      r.cleanup();
+    }
+    assert.ok(
+      !readdirSync(stateHome, { recursive: true, encoding: "utf8" }).some((p) => p.split("/").pop() === "models-cache.json"),
+      "no models-cache.json anywhere under the state home",
+    );
+  } finally {
+    rmSync(stateHome, { recursive: true, force: true });
+  }
+});
+
+test("--no-cache is accepted, exits 0 on --dry-run, and announces that it has no effect", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli([...REVIEW_ARGS, "--dry-run", "--no-cache"], { AI_COUNCIL_OPENROUTER_API_KEY: "", OPENROUTER_API_KEY: "" });
+  assert.equal(r.status, 0, r.output);
+  assert.equal(r.stderr.match(/--no-cache is no longer needed: the catalog is fetched on every run\./g)?.length, 1, "exactly one notice line on stderr");
+  r.cleanup();
+});
+
+test("outcomes show --no-cache exits 0 and prints no --no-cache notice", async () => {
+  behavior = () => ({});
+  completionHits = new Map();
+  const r = await runCli(["outcomes", "show", "--no-cache"]);
+  assert.equal(r.status, 0, r.output);
+  assert.ok(!r.stderr.includes("--no-cache is no longer needed"), "the outcomes branch must not print the notice");
+  r.cleanup();
+});
+
+test("every model of the default preset has its own measured entry", () => {
+  const presets = JSON.parse(readFileSync(join(HERE, "..", "references", "presets.json"), "utf8"));
+  for (const slug of presets.presets.default) {
+    assert.ok(presets.expectedOutputTokens.models[slug] > 0, `${slug} must have an expectedOutputTokens.models entry`);
+  }
 });
 
 test("unknown rubric fails as a usage error before any dispatch", async () => {

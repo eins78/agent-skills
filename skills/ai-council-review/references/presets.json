@@ -1,11 +1,21 @@
 {
-  "$comment": "Council presets for ai-council-review. Data, not code: model slugs churn — fixing a deprecated slug is a one-line patch here. All slugs verified live against https://openrouter.ai/api/v1/models on 2026-09-20 (council.mjs models --verify). See references/MODELS-CHANGELOG.md for roster history and the trigger behind each swap — models are external dependencies and sit outside this skill's semver contract. Users can override any of this via a repo .ai-council.json or ~/.config/ai-council-review/config.json.",
+  "$comment": "Council presets for ai-council-review. Data, not code: model slugs churn — fixing a deprecated slug is a one-line patch here. All slugs verified live against https://openrouter.ai/api/v1/models on 2026-09-20 (council.mjs models --verify). See references/MODELS-CHANGELOG.md for roster history and the trigger behind each swap — models are external dependencies and sit outside this skill's semver contract. Users can override any of this via a repo .ai-council.json or ~/.config/ai-council-review/config.json. expectedOutputTokens are mean output tokens per review from 51 council runs with reasoning effort medium (2026-10-01 to 2026-11-02); the model's own entry wins, else reasoningDefault for a model that supports reasoning, else nonReasoningDefault. They only move the cost estimate; the hard cap uses maxOutputTokens.",
   "confirmThresholdUsd": 1,
   "budgetUsd": 5,
   "timeoutMs": 600000,
   "reasoningEffort": "medium",
   "providerSort": "throughput",
-  "outputTokensPerModel": 3000,
+  "expectedOutputTokens": {
+    "nonReasoningDefault": 3000,
+    "reasoningDefault": 9000,
+    "models": {
+      "google/gemini-3.1-pro-preview": 9500,
+      "openai/gpt-5.3-codex": 3000,
+      "openai/gpt-5.5": 5200,
+      "z-ai/glm-5.3-flash": 11000,
+      "deepseek/deepseek-v4-flash": 12900
+    }
+  },
   "maxOutputTokens": 24000,
   "quorum": 2,
   "presets": {
