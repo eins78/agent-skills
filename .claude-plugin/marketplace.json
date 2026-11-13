@@ -9,7 +9,7 @@
     {
       "name": "eins78-skills",
       "description": "Agent skills collection: session management, TypeScript patterns, Chrome CDP, tmux, Apple integrations",
-      "version": "4.9.1",
+      "version": "5.0.0",
       "source": "./",
       "author": {
         "name": "Max Albrecht",
@@ -29,7 +29,7 @@
     {
       "name": "ai-council-review",
       "description": "Convene a council of ~4 frontier models via the OpenRouter API for independent parallel reviews of a PR, plan doc, or files, then synthesize agreements and dissents in-session. Use for high-stakes ...",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "source": "./skills/ai-council-review",
       "author": {
         "name": "Max Albrecht",
@@ -38,8 +38,8 @@
     },
     {
       "name": "ai-review",
-      "description": "Get AI code review from a second model (Gemini/OpenAI) mid-session via CLI. Use when asked to review code, get a second opinion, check quality, or verify implementation — especially in unfamiliar s...",
-      "version": "0.0.3",
+      "description": "Get a code review from one second AI model (via OpenRouter) mid-session. The review streams as it is written. Use when asked to review code, get a second opinion, check quality, or verify implement...",
+      "version": "1.0.0",
       "source": "./skills/ai-review",
       "author": {
         "name": "Max Albrecht",
