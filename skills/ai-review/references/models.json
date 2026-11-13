@@ -1,5 +1,5 @@
 {
-  "$comment": "Defaults for ai-review (one reviewer). Data, not code: a slug that is gone is a one-line fix here. ai-review stops before spending when the slug is not in the live OpenRouter catalog. Override per run with --model or AI_REVIEW_MODEL, or in ~/.config/ai-review/config.json (keys: model, timeoutMs, budgetUsd, confirmThresholdUsd, reasoningEffort, providerSort, maxOutputTokens, expectedOutputTokens). expectedOutputTokens are mean output tokens per review from 51 earlier council runs with reasoning effort medium (2026-10-01 to 2026-11-02); the model's own entry wins, else reasoningDefault for a model that supports reasoning, else nonReasoningDefault. They only move the cost estimate; the hard cap uses maxOutputTokens.",
+  "$comment": "Defaults for ai-review (one reviewer). Data, not code: a slug that is gone is a one-line fix here. ai-review stops before spending when the slug is not in the live OpenRouter catalog. Override per run with --model or AI_REVIEW_MODEL, or in ~/.config/ai-review/config.json (keys: model, timeoutMs, budgetUsd, confirmThresholdUsd, reasoningEffort, providerSort, maxOutputTokens, expectedOutputTokens, reasoningOverrunFactor). expectedOutputTokens are mean output tokens per review from 51 earlier council runs with reasoning effort medium (2026-10-01 to 2026-11-02); the model's own entry wins, else reasoningDefault for a model that supports reasoning, else nonReasoningDefault. They only move the cost estimate. The hard cap uses the worst case: maxOutputTokens, times reasoningOverrunFactor for a model that supports reasoning, because a provider can bill reasoning past max_tokens (recorded once in 77 responses: 32,675 billed against 24,000, a factor of 1.36; no other response went over). Factor 2 leaves margin over that; it is a bound from evidence, not a guarantee against a provider that ignores max_tokens entirely.",
   "model": "google/gemini-3.1-pro-preview",
   "timeoutMs": 600000,
   "budgetUsd": 5,
@@ -17,5 +17,6 @@
       "deepseek/deepseek-v4-flash": 12900
     }
   },
-  "maxOutputTokens": 24000
+  "maxOutputTokens": 24000,
+  "reasoningOverrunFactor": 2
 }

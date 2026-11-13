@@ -103,6 +103,8 @@ function resolveSettings(flags, env) {
     reasoningEffort: /** @type {string|undefined} */ (pick("reasoningEffort", undefined, "AI_REVIEW_REASONING_EFFORT")),
     providerSort: /** @type {string|undefined} */ (user.providerSort ?? defaults.providerSort),
     maxOutputTokens: num(user.maxOutputTokens ?? defaults.maxOutputTokens ?? 24000, "maxOutputTokens"),
+    // A provider may bill reasoning past max_tokens; the hard cap prices a reasoning model at max_tokens times this.
+    reasoningOverrunFactor: num(user.reasoningOverrunFactor ?? defaults.reasoningOverrunFactor ?? 2, "reasoningOverrunFactor"),
     expectedOutputTokens: {
       nonReasoningDefault: num(user.expectedOutputTokens?.nonReasoningDefault ?? defaults.expectedOutputTokens?.nonReasoningDefault ?? 3000, "nonReasoningDefault"),
       reasoningDefault: num(user.expectedOutputTokens?.reasoningDefault ?? defaults.expectedOutputTokens?.reasoningDefault ?? 9000, "reasoningDefault"),
@@ -229,6 +231,7 @@ async function main() {
     catalog,
     outputTokensPerModel: assumedOutput,
     maxOutputTokens: cfg.maxOutputTokens,
+    reasoningOverrunFactor: cfg.reasoningOverrunFactor,
   });
 
   if (flags["dry-run"]) {
@@ -297,7 +300,7 @@ async function main() {
       appTitle: "ai-review",
       mayRetryEmpty: () =>
         retryAllowance.reserve(
-          worstCaseRequestUsd({ model: cfg.model, inputTokens: estimate.inputTokens, catalog, maxOutputTokens: cfg.maxOutputTokens }),
+          worstCaseRequestUsd({ model: cfg.model, inputTokens: estimate.inputTokens, catalog, maxOutputTokens: cfg.maxOutputTokens, reasoningOverrunFactor: cfg.reasoningOverrunFactor }),
         ),
       onText: (delta) => {
         if (firstTextAt === 0) {

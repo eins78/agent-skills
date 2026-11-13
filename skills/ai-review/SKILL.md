@@ -88,6 +88,6 @@ Unless you pass `--no-context`, the script prepends project context: the impleme
 
 ## Configuration
 
-Flags > `AI_REVIEW_MODEL`, `AI_REVIEW_TIMEOUT_MS`, `AI_REVIEW_BUDGET_USD` > `~/.config/ai-review/config.json` > bundled `references/models.json`. The hard cap is on the worst-case cost (default $5); an estimate above $1 needs `--yes`.
+Flags > `AI_REVIEW_MODEL`, `AI_REVIEW_TIMEOUT_MS`, `AI_REVIEW_BUDGET_USD` > `~/.config/ai-review/config.json` > bundled `references/models.json`. The hard cap is on the worst-case cost (default $5); an estimate above $1 needs `--yes`. For a reasoning model the worst case counts `reasoningOverrunFactor` (2) × `maxOutputTokens`, because a provider can bill reasoning past that limit (one recorded response did: 1.36 times).
 
 `REVIEW_PROVIDER` and `--provider` from earlier versions are ignored with a notice: the Gemini and Codex CLIs are no longer used.

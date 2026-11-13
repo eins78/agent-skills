@@ -181,6 +181,21 @@ test("dry-run assumes 3000 output tokens for a model without reasoning", async (
   assert.match(r.stdout, /Assumed output: 3000 tokens \(non-reasoning default\)/);
 });
 
+test("hard cap counts reasoning past max_tokens: a $0.07 cap blocks a reasoning model but not a plain one", async () => {
+  // tiny diff: worst case at max_tokens only is about $0.048; with the overrun factor 2 it is about $0.096
+  behavior = () => ({ chunks: [{ text: "ok" }] });
+  const blocked = await runCli([...ARGS, "--budget", "0.07"]);
+  assert.equal(blocked.status, 3, blocked.output);
+  assert.equal(chatHits, 0, "nothing may be sent when the worst case exceeds the cap");
+  assert.match(blocked.stderr, /hard budget cap/);
+
+  const plain = await runCli([...ARGS, "--budget", "0.07"], { AI_REVIEW_MODEL: "mock/plain" });
+  assert.equal(plain.status, 0, plain.output);
+
+  const roomy = await runCli([...ARGS, "--budget", "0.2"]);
+  assert.equal(roomy.status, 0, roomy.output);
+});
+
 test("the shipped default model has its own measured entry", () => {
   const defaults = JSON.parse(readFileSync(join(HERE, "..", "references", "models.json"), "utf8"));
   assert.ok(defaults.expectedOutputTokens.models[defaults.model] > 3000, "the default model's entry must exist and exceed the old flat 3000");
@@ -205,6 +220,19 @@ test("401: exit 4 at once, one request, key never printed", async () => {
   assert.equal(r.status, 4, r.output);
   assert.equal(chatHits, 1, "an auth failure must not be retried");
   assert.ok(!r.output.includes(TEST_KEY), "the key must be redacted");
+});
+
+test("empty answer: the retry reserve counts the overrun factor, so a budget that fits one more plain-worst-case request still gets no retry", async () => {
+  // tiny diff: worst case about $0.048 at max_tokens, about $0.096 with factor 2. Budget $0.17 leaves $0.074
+  // after the gate: enough for a retry priced without the factor, not for one priced with it.
+  behavior = () => ({ chunks: [] });
+  const r = await runCli([...ARGS, "--budget", "0.17"]);
+  assert.equal(r.status, 2, r.output);
+  assert.equal(chatHits, 1, "no retry: the reserve for a second request is not there");
+
+  const roomy = await runCli([...ARGS, "--budget", "0.5"]);
+  assert.equal(roomy.status, 2, roomy.output);
+  assert.equal(chatHits, 2, "with room for a second worst-case request the empty answer is retried once");
 });
 
 test("429 then ok: one retry, exit 0, review on stdout", async () => {
